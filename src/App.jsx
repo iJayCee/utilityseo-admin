@@ -43,9 +43,9 @@ const Spinner = () => <div className="spin" style={{ width:20, height:20, border
 const EditModal = ({ user, onSave, onClose }) => {
   const [plan, setPlan] = useState(user.plan);
   const [status, setStatus] = useState(user.status);
-  const [tempOn, setTempOn] = useState(!!user.temp);
-  const [tempPlan, setTempPlan] = useState(user.temp?.plan || "pro");
-  const [tempDays, setTempDays] = useState(user.temp?.days || 7);
+  const [tempOn, setTempOn] = useState(!!user.tempPlan);
+  const [tempPlan, setTempPlan] = useState(user.tempPlan || "pro");
+  const [tempDays, setTempDays] = useState(7);
 
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", backdropFilter:"blur(6px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:50, padding:24 }} onClick={onClose}>
@@ -121,7 +121,7 @@ const EditModal = ({ user, onSave, onClose }) => {
 
         <div style={{ padding:"16px 24px", borderTop:"1px solid rgba(255,255,255,0.06)", display:"flex", gap:10 }}>
           <button onClick={onClose} style={{ flex:1, padding:"12px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:12, color:"#64748b", fontSize:14, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>Cancel</button>
-          <button onClick={() => onSave({ ...user, plan, status, temp: tempOn ? { plan:tempPlan, days:tempDays } : null })}
+          <button onClick={() => onSave({ ...user, plan, status, tempPlan: tempOn ? tempPlan : null, tempDays: tempOn ? tempDays : null, revokeTemp: !tempOn && !!user.tempPlan })}
             style={{ flex:2, padding:"12px", background:"#6366f1", border:"none", borderRadius:12, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
             Save Changes
           </button>
@@ -192,7 +192,8 @@ const AdminPanel = () => {
         status: 'active',
         joined: user.created_at,
         searches: user.scans_today || 0,
-        temp: null
+        tempPlan: user.temp_plan || null,
+        tempPlanExpiresAt: user.temp_plan_expires_at || null,
       }));
 
       setUsers(transformedUsers);
@@ -205,21 +206,33 @@ const AdminPanel = () => {
 
   const updateUser = async (userId, updates) => {
     try {
+      // Update permanent plan
       const response = await fetch(`${API_URL}/admin/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
+        body: JSON.stringify({ plan: updates.plan })
       });
 
       if (!response.ok) throw new Error('Failed to update user');
-
       const updatedUser = await response.json();
 
-      setUsers(prev => prev.map(u =>
-        u.id === userId
-          ? { ...u, plan: updatedUser.plan, ...updates }
-          : u
-      ));
+      // Handle temp plan — set or revoke
+      if (updates.tempPlan && updates.tempDays) {
+        const tempRes = await fetch(`${API_URL}/admin/users/${userId}/temp-plan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan: updates.tempPlan, days: updates.tempDays })
+        });
+        if (!tempRes.ok) throw new Error('Failed to set temp plan');
+        const tempData = await tempRes.json();
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan: updatedUser.plan, tempPlan: tempData.temp_plan, tempPlanExpiresAt: tempData.temp_plan_expires_at } : u));
+      } else if (updates.revokeTemp) {
+        const revokeRes = await fetch(`${API_URL}/admin/users/${userId}/temp-plan`, { method: 'DELETE' });
+        if (!revokeRes.ok) throw new Error('Failed to revoke temp plan');
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan: updatedUser.plan, tempPlan: null, tempPlanExpiresAt: null } : u));
+      } else {
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan: updatedUser.plan } : u));
+      }
 
       showToast(`${updatedUser.email} updated successfully`);
     } catch (error) {
@@ -233,7 +246,7 @@ const AdminPanel = () => {
     { label:"Total Users", val: users.length, icon:"👥", col:"#818cf8" },
     { label:"Active", val: users.filter(u=>u.status==="active").length, icon:"✅", col:"#22c55e" },
     { label:"Paid", val: users.filter(u=>u.plan!=="free").length, icon:"💰", col:"#f59e0b" },
-    { label:"Temp Access", val: users.filter(u=>u.temp).length, icon:"⏱", col:"#38bdf8" },
+    { label:"Temp Access", val: users.filter(u=>u.tempPlan).length, icon:"⏱", col:"#38bdf8" },
   ];
 
   // ─── LOGIN SCREEN ───────────────────────────────────────────────────────────
@@ -329,7 +342,11 @@ const AdminPanel = () => {
                 onMouseLeave={e => e.currentTarget.style.background="transparent"}>
                 <div>
                   <p style={{ fontSize:13, color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace" }}>{u.email}</p>
-                  {u.temp && <p style={{ fontSize:11, color:"#f59e0b", marginTop:3 }}>⏱ Temp {u.temp.plan} · {u.temp.days}d left</p>}
+                  {u.tempPlan && u.tempPlanExpiresAt && (() => {
+                    const daysLeft = Math.ceil((new Date(u.tempPlanExpiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+                    const planLabel = { free:"Free", pro:"Pro", proPlus:"Pro Plus" }[u.tempPlan] || u.tempPlan;
+                    return <p style={{ fontSize:11, color:"#f59e0b", marginTop:3 }}>⏱ Temp {planLabel} · {daysLeft > 0 ? `${daysLeft}d left` : "Expired"}</p>;
+                  })()}
                 </div>
                 <div><Badge plan={u.plan} /></div>
                 <div>
@@ -354,7 +371,9 @@ const AdminPanel = () => {
           updateUser(updated.id, {
             plan: updated.plan,
             status: updated.status,
-            temp: updated.temp
+            tempPlan: updated.tempPlan,
+            tempDays: updated.tempDays,
+            revokeTemp: updated.revokeTemp,
           });
           setEditing(null);
         }} />}
