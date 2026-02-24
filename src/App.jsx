@@ -133,7 +133,7 @@ const EditModal = ({ user, onSave, onClose }) => {
 
 // ─── ADMIN PANEL ──────────────────────────────────────────────────────────────
 const AdminPanel = () => {
-  const [authed, setAuthed] = useState(false);
+  const [authed, setAuthed] = useState(() => localStorage.getItem('admin_authed') === 'true');
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
@@ -145,6 +145,11 @@ const AdminPanel = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+  // Auto-load users if already authenticated (e.g. after page refresh)
+  useEffect(() => {
+    if (authed) loadUsers();
+  }, []);
 
   const showToast = (msg, isError = false) => {
     setToast({ msg, isError });
@@ -171,6 +176,7 @@ const AdminPanel = () => {
       }
 
       setAuthed(true);
+      localStorage.setItem('admin_authed', 'true');
       loadUsers();
     } catch (error) {
       setErr("Connection error. Please try again.");
@@ -292,7 +298,7 @@ const AdminPanel = () => {
           <span style={{ fontSize:16, fontWeight:700 }}>UtilitySEO</span>
           <span style={{ padding:"3px 12px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:99, fontSize:11, fontWeight:700, color:"#ef4444", letterSpacing:"0.05em" }}>SUPER ADMIN</span>
         </div>
-        <button onClick={() => { setAuthed(false); setEmail(""); setPass(""); }} style={{ padding:"8px 16px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, color:"#ef4444", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>Sign Out</button>
+        <button onClick={() => { setAuthed(false); setEmail(""); setPass(""); localStorage.removeItem('admin_authed'); }} style={{ padding:"8px 16px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, color:"#ef4444", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>Sign Out</button>
       </div>
 
       <div style={{ padding:"32px" }}>
