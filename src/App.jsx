@@ -251,7 +251,7 @@ const AdminPanel = () => {
         </div>
         <div className="glass" style={{ borderRadius:20, padding:28 }}>
           <form onSubmit={doLogin}>
-            <Input label="Admin Email" type="email" placeholder="james@utilityseo.com" value={email} onChange={e => setEmail(e.target.value)} />
+            <Input label="Admin Email" type="email" placeholder="enter your email" value={email} onChange={e => setEmail(e.target.value)} />
             <Input label="Password" type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)} />
             {err && <p style={{ color:"#ef4444", fontSize:13, marginBottom:12 }}>{err}</p>}
             <button type="submit" disabled={loading} style={{ width:"100%", padding:"13px", background:"#6366f1", border:"none", borderRadius:12, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
