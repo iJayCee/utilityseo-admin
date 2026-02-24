@@ -140,7 +140,7 @@ const EditModal = ({ user, onSave, onClose }) => {
 // ─── ADMIN PANEL ──────────────────────────────────────────────────────────────
 
 const UserRow = ({ u, i, total, onEdit }) => {
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = useState(false);
   const tempInfo = u.tempPlan && u.tempPlanExpiresAt ? (() => {
     const daysLeft = Math.ceil((new Date(u.tempPlanExpiresAt) - new Date()) / (1000 * 60 * 60 * 24));
     const planLabel = { free:"Free", pro:"Pro", proPlus:"Pro Plus" }[u.tempPlan] || u.tempPlan;
