@@ -17,6 +17,12 @@ const GlobalStyles = () => (
     .spin { animation: spin 1s linear infinite; }
     .glass { background: rgba(255,255,255,0.04); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
     input, select, textarea { font-family: 'Sora', sans-serif; }
+    .desktop-only { display: grid; }
+    .mobile-only { display: none; }
+    @media (max-width: 700px) {
+      .desktop-only { display: none !important; }
+      .mobile-only { display: block !important; }
+    }
   `}</style>
 );
 
@@ -132,6 +138,79 @@ const EditModal = ({ user, onSave, onClose }) => {
 };
 
 // ─── ADMIN PANEL ──────────────────────────────────────────────────────────────
+
+const UserRow = ({ u, i, total, onEdit }) => {
+  const [expanded, setExpanded] = React.useState(false);
+  const tempInfo = u.tempPlan && u.tempPlanExpiresAt ? (() => {
+    const daysLeft = Math.ceil((new Date(u.tempPlanExpiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+    const planLabel = { free:"Free", pro:"Pro", proPlus:"Pro Plus" }[u.tempPlan] || u.tempPlan;
+    return `⏱ Temp ${planLabel} · ${daysLeft > 0 ? `${daysLeft}d left` : "Expired"}`;
+  })() : null;
+
+  return (
+    <div style={{ borderBottom: i < total - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+      {/* Desktop row */}
+      <div className="desktop-only"
+        style={{ gridTemplateColumns:"2fr 100px 100px 80px 80px 100px", gap:16, padding:"16px 20px", alignItems:"center" }}
+        onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}
+        onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+        <div>
+          <p style={{ fontSize:13, color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace" }}>{u.email}</p>
+          {tempInfo && <p style={{ fontSize:11, color:"#f59e0b", marginTop:3 }}>{tempInfo}</p>}
+        </div>
+        <div><Badge plan={u.plan} /></div>
+        <div>
+          <span style={{ fontSize:12, fontWeight:600, color: u.status==="active" ? "#22c55e" : "#ef4444", background: u.status==="active" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", padding:"3px 10px", borderRadius:99 }}>
+            {u.status}
+          </span>
+        </div>
+        <span style={{ fontSize:13, color:"#94a3b8" }}>{u.searches}</span>
+        <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleDateString()}</span>
+        <button onClick={onEdit}
+          style={{ padding:"6px 14px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+          Edit
+        </button>
+      </div>
+
+      {/* Mobile row */}
+      <div className="mobile-only">
+        <button onClick={() => setExpanded(e => !e)}
+          style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 16px", background:"transparent", border:"none", color:"#e2e8f0", cursor:"pointer", fontFamily:"JetBrains Mono,monospace", fontSize:13, textAlign:"left" }}>
+          <span style={{ flex:1, minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginRight:8 }}>{u.email}</span>
+          <span style={{ fontSize:11, color:"#475569", marginRight:8, flexShrink:0 }}>{expanded ? "▲" : "▼"}</span>
+        </button>
+        {expanded && (
+          <div style={{ padding:"0 16px 16px", display:"flex", flexDirection:"column", gap:10 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span style={{ fontSize:11, color:"#475569" }}>PLAN</span>
+              <Badge plan={u.plan} />
+            </div>
+            {tempInfo && <p style={{ fontSize:11, color:"#f59e0b" }}>{tempInfo}</p>}
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span style={{ fontSize:11, color:"#475569" }}>STATUS</span>
+              <span style={{ fontSize:12, fontWeight:600, color: u.status==="active" ? "#22c55e" : "#ef4444", background: u.status==="active" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", padding:"3px 10px", borderRadius:99 }}>
+                {u.status}
+              </span>
+            </div>
+            <div style={{ display:"flex", justifyContent:"space-between" }}>
+              <span style={{ fontSize:11, color:"#475569" }}>SEARCHES</span>
+              <span style={{ fontSize:13, color:"#94a3b8" }}>{u.searches}</span>
+            </div>
+            <div style={{ display:"flex", justifyContent:"space-between" }}>
+              <span style={{ fontSize:11, color:"#475569" }}>JOINED</span>
+              <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleDateString()}</span>
+            </div>
+            <button onClick={onEdit}
+              style={{ width:"100%", padding:"10px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+              Edit
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const AdminPanel = () => {
   const [authed, setAuthed] = useState(() => localStorage.getItem('admin_authed') === 'true');
   const [email, setEmail] = useState("");
@@ -334,7 +413,8 @@ const AdminPanel = () => {
           </div>
         ) : (
           <div className="glass" style={{ borderRadius:18, overflow:"hidden" }}>
-            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 80px 80px 100px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
+            {/* Desktop header - hidden on mobile */}
+            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 80px 80px 100px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
               {["Email","Plan","Status","Searches","Joined","Actions"].map(h => (
                 <span key={h} style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</span>
               ))}
@@ -343,30 +423,7 @@ const AdminPanel = () => {
             {filtered.length === 0 ? (
               <div style={{ textAlign:"center", padding:60, color:"#334155" }}>No users found</div>
             ) : filtered.map((u, i) => (
-              <div key={u.id} style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 80px 80px 100px", gap:16, padding:"16px 20px", borderBottom: i<filtered.length-1 ? "1px solid rgba(255,255,255,0.04)" : "none", alignItems:"center" }}
-                onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}
-                onMouseLeave={e => e.currentTarget.style.background="transparent"}>
-                <div>
-                  <p style={{ fontSize:13, color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace" }}>{u.email}</p>
-                  {u.tempPlan && u.tempPlanExpiresAt && (() => {
-                    const daysLeft = Math.ceil((new Date(u.tempPlanExpiresAt) - new Date()) / (1000 * 60 * 60 * 24));
-                    const planLabel = { free:"Free", pro:"Pro", proPlus:"Pro Plus" }[u.tempPlan] || u.tempPlan;
-                    return <p style={{ fontSize:11, color:"#f59e0b", marginTop:3 }}>⏱ Temp {planLabel} · {daysLeft > 0 ? `${daysLeft}d left` : "Expired"}</p>;
-                  })()}
-                </div>
-                <div><Badge plan={u.plan} /></div>
-                <div>
-                  <span style={{ fontSize:12, fontWeight:600, color: u.status==="active" ? "#22c55e" : "#ef4444", background: u.status==="active" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", padding:"3px 10px", borderRadius:99 }}>
-                    {u.status}
-                  </span>
-                </div>
-                <span style={{ fontSize:13, color:"#94a3b8" }}>{u.searches}</span>
-                <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleDateString()}</span>
-                <button onClick={() => setEditing(u)}
-                  style={{ padding:"6px 14px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
-                  Edit
-                </button>
-              </div>
+              <UserRow key={u.id} u={u} i={i} total={filtered.length} onEdit={() => setEditing(u)} />
             ))}
           </div>
         )}
