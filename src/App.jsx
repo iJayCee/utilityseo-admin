@@ -139,7 +139,7 @@ const EditModal = ({ user, onSave, onClose }) => {
 
 // ─── ADMIN PANEL ──────────────────────────────────────────────────────────────
 
-const UserRow = ({ u, i, total, onEdit }) => {
+const UserRow = ({ u, i, total, onEdit, onAccess }) => {
   const [expanded, setExpanded] = useState(false);
   const tempInfo = u.tempPlan && u.tempPlanExpiresAt ? (() => {
     const daysLeft = Math.ceil((new Date(u.tempPlanExpiresAt) - new Date()) / (1000 * 60 * 60 * 24));
@@ -151,7 +151,7 @@ const UserRow = ({ u, i, total, onEdit }) => {
     <div style={{ borderBottom: i < total - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
       {/* Desktop row */}
       <div className="desktop-only"
-        style={{ gridTemplateColumns:"2fr 100px 100px 80px 80px 100px", gap:16, padding:"16px 20px", alignItems:"center" }}
+        style={{ gridTemplateColumns:"2fr 100px 100px 80px 80px 140px", gap:16, padding:"16px 20px", alignItems:"center" }}
         onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}
         onMouseLeave={e => e.currentTarget.style.background="transparent"}>
         <div>
@@ -166,10 +166,16 @@ const UserRow = ({ u, i, total, onEdit }) => {
         </div>
         <span style={{ fontSize:13, color:"#94a3b8" }}>{u.searches}</span>
         <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleDateString()}</span>
-        <button onClick={onEdit}
-          style={{ padding:"6px 14px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
-          Edit
-        </button>
+        <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+          <button onClick={onEdit}
+            style={{ padding:"6px 14px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+            Edit
+          </button>
+          <button onClick={onAccess}
+            style={{ padding:"6px 14px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, color:"#f87171", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, whiteSpace:"nowrap" }}>
+            👤 Access Account
+          </button>
+        </div>
       </div>
 
       {/* Mobile row */}
@@ -204,6 +210,10 @@ const UserRow = ({ u, i, total, onEdit }) => {
               style={{ width:"100%", padding:"10px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
               Edit
             </button>
+            <button onClick={onAccess}
+              style={{ width:"100%", padding:"10px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, color:"#f87171", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+              👤 Access Account
+            </button>
           </div>
         )}
       </div>
@@ -222,7 +232,9 @@ const AdminPanel = () => {
   const [editing, setEditing] = useState(null);
   const [toast, setToast] = useState(null);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [adminCreds, setAdminCreds] = useState(() => { try { return JSON.parse(sessionStorage.getItem('admin_creds') || 'null'); } catch { return null; } });
 
+  const MAIN_APP_URL = import.meta.env.VITE_MAIN_APP_URL || 'https://app.utilityseo.com';
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
   // Auto-load users if already authenticated (e.g. after page refresh)
@@ -254,6 +266,9 @@ const AdminPanel = () => {
         return;
       }
 
+      const creds = { email, password: pass };
+      setAdminCreds(creds);
+      sessionStorage.setItem('admin_creds', JSON.stringify(creds));
       setAuthed(true);
       localStorage.setItem('admin_authed', 'true');
       loadUsers();
@@ -287,6 +302,22 @@ const AdminPanel = () => {
     } finally {
       setLoadingUsers(false);
     }
+  };
+
+  const accessAccount = async (user) => {
+    if (!adminCreds) { showToast('Session expired — please log out and log in again', true); return; }
+    try {
+      const res = await fetch(`${API_URL}/admin/impersonate/${user.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminEmail: adminCreds.email, adminPassword: adminCreds.password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      // Redirect to main app with the impersonation token in the URL
+      const url = `${MAIN_APP_URL}?impersonate=${encodeURIComponent(data.token)}&as=${encodeURIComponent(user.email)}`;
+      window.open(url, '_blank');
+    } catch(e) { showToast(`Error: ${e.message}`, true); }
   };
 
   const updateUser = async (userId, updates) => {
@@ -414,7 +445,7 @@ const AdminPanel = () => {
         ) : (
           <div className="glass" style={{ borderRadius:18, overflow:"hidden" }}>
             {/* Desktop header - hidden on mobile */}
-            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 80px 80px 100px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
+            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 80px 80px 140px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
               {["Email","Plan","Status","Searches","Joined","Actions"].map(h => (
                 <span key={h} style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</span>
               ))}
@@ -423,7 +454,7 @@ const AdminPanel = () => {
             {filtered.length === 0 ? (
               <div style={{ textAlign:"center", padding:60, color:"#334155" }}>No users found</div>
             ) : filtered.map((u, i) => (
-              <UserRow key={u.id} u={u} i={i} total={filtered.length} onEdit={() => setEditing(u)} />
+              <UserRow key={u.id} u={u} i={i} total={filtered.length} onEdit={() => setEditing(u)} onAccess={() => accessAccount(u)} />
             ))}
           </div>
         )}
