@@ -315,7 +315,7 @@ const AdminPanel = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
       // Redirect to main app with the impersonation token in the URL
-      const url = `${MAIN_APP_URL}?impersonate=${encodeURIComponent(data.token)}&as=${encodeURIComponent(user.email)}`;
+      const url = `${MAIN_APP_URL}?impersonate=${encodeURIComponent(data.token)}&as=${encodeURIComponent(user.email)}&plan=${encodeURIComponent(data.user.plan || 'free')}`;
       window.open(url, '_blank');
     } catch(e) { showToast(`Error: ${e.message}`, true); }
   };
