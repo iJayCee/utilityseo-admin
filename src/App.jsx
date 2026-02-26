@@ -304,20 +304,35 @@ const AdminPanel = () => {
     }
   };
 
-  const accessAccount = async (user) => {
+  const accessAccount = (user) => {
     if (!adminCreds) { showToast('Session expired — please log out and log in again', true); return; }
-    try {
-      const res = await fetch(`${API_URL}/admin/impersonate/${user.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminEmail: adminCreds.email, adminPassword: adminCreds.password })
+    // Open the window immediately (same tick as the click) so mobile browsers allow it.
+    // We use _self to navigate in the same tab — more reliable on mobile than _blank.
+    // Show a loading state on the window while the fetch completes.
+    const newWin = window.open('', '_blank') || window;
+    const isSameTab = newWin === window;
+    if (newWin && !isSameTab) {
+      newWin.document.write('<html><body style="background:#0a0a0f;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#818cf8;font-size:15px;">Loading account…</body></html>');
+    }
+    fetch(`${API_URL}/admin/impersonate/${user.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminEmail: adminCreds.email, adminPassword: adminCreds.password })
+    })
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) throw new Error(data.error || 'Failed');
+        const url = `${MAIN_APP_URL}?impersonate=${encodeURIComponent(data.token)}&as=${encodeURIComponent(user.email)}&plan=${encodeURIComponent(data.user.plan || 'free')}`;
+        if (isSameTab) {
+          window.location.href = url;
+        } else {
+          newWin.location.href = url;
+        }
+      })
+      .catch(e => {
+        if (!isSameTab) newWin.close();
+        showToast(`Error: ${e.message}`, true);
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed');
-      // Redirect to main app with the impersonation token in the URL
-      const url = `${MAIN_APP_URL}?impersonate=${encodeURIComponent(data.token)}&as=${encodeURIComponent(user.email)}&plan=${encodeURIComponent(data.user.plan || 'free')}`;
-      window.open(url, '_blank');
-    } catch(e) { showToast(`Error: ${e.message}`, true); }
   };
 
   const updateUser = async (userId, updates) => {
