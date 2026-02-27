@@ -165,8 +165,8 @@ const UserRow = ({ u, i, total, onEdit, onAccess }) => {
           </span>
         </div>
         <span style={{ fontSize:13, color:"#94a3b8" }}>{u.searches}</span>
-        <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleDateString()}</span>
-        <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : '—'}</span>
+        <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' })}</span>
+        <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '—'}</span>
         <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
           <button onClick={onEdit}
             style={{ padding:"6px 14px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
@@ -205,11 +205,11 @@ const UserRow = ({ u, i, total, onEdit, onAccess }) => {
             </div>
             <div style={{ display:"flex", justifyContent:"space-between" }}>
               <span style={{ fontSize:11, color:"#475569" }}>JOINED</span>
-              <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleDateString()}</span>
+              <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' })}</span>
             </div>
             <div style={{ display:"flex", justifyContent:"space-between" }}>
               <span style={{ fontSize:11, color:"#475569" }}>LAST SEEN</span>
-              <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : '—'}</span>
+              <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '—'}</span>
             </div>
             <button onClick={onEdit}
               style={{ width:"100%", padding:"10px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
