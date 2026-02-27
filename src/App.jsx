@@ -151,7 +151,7 @@ const UserRow = ({ u, i, total, onEdit, onAccess }) => {
     <div style={{ borderBottom: i < total - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
       {/* Desktop row */}
       <div className="desktop-only"
-        style={{ gridTemplateColumns:"2fr 100px 100px 80px 80px 140px", gap:16, padding:"16px 20px", alignItems:"center" }}
+        style={{ gridTemplateColumns:"2fr 100px 100px 80px 80px 110px 140px", gap:16, padding:"16px 20px", alignItems:"center" }}
         onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}
         onMouseLeave={e => e.currentTarget.style.background="transparent"}>
         <div>
@@ -166,6 +166,7 @@ const UserRow = ({ u, i, total, onEdit, onAccess }) => {
         </div>
         <span style={{ fontSize:13, color:"#94a3b8" }}>{u.searches}</span>
         <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleDateString()}</span>
+        <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : '—'}</span>
         <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
           <button onClick={onEdit}
             style={{ padding:"6px 14px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
@@ -205,6 +206,10 @@ const UserRow = ({ u, i, total, onEdit, onAccess }) => {
             <div style={{ display:"flex", justifyContent:"space-between" }}>
               <span style={{ fontSize:11, color:"#475569" }}>JOINED</span>
               <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleDateString()}</span>
+            </div>
+            <div style={{ display:"flex", justifyContent:"space-between" }}>
+              <span style={{ fontSize:11, color:"#475569" }}>LAST SEEN</span>
+              <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : '—'}</span>
             </div>
             <button onClick={onEdit}
               style={{ width:"100%", padding:"10px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
@@ -289,8 +294,9 @@ const AdminPanel = () => {
         id: user.id.toString(),
         email: user.email,
         plan: user.plan || 'free',
-        status: 'active',
+        status: user.is_active === false ? 'deactivated' : 'active',
         joined: user.created_at,
+        lastLogin: user.last_login || null,
         searches: user.scans_today || 0,
         tempPlan: user.temp_plan || null,
         tempPlanExpiresAt: user.temp_plan_expires_at || null,
@@ -460,8 +466,8 @@ const AdminPanel = () => {
         ) : (
           <div className="glass" style={{ borderRadius:18, overflow:"hidden" }}>
             {/* Desktop header - hidden on mobile */}
-            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 80px 80px 140px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
-              {["Email","Plan","Status","Searches","Joined","Actions"].map(h => (
+            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 80px 80px 110px 140px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
+              {["Email","Plan","Status","Searches","Joined","Last Seen","Actions"].map(h => (
                 <span key={h} style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</span>
               ))}
             </div>
