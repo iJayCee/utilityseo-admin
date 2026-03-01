@@ -151,7 +151,7 @@ const UserRow = ({ u, i, total, onEdit, onAccess }) => {
     <div style={{ borderBottom: i < total - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
       {/* Desktop row */}
       <div className="desktop-only"
-        style={{ gridTemplateColumns:"2fr 100px 100px 80px 80px 110px 140px", gap:16, padding:"16px 20px", alignItems:"center" }}
+        style={{ gridTemplateColumns:"2fr 100px 100px 80px 90px 110px 140px", gap:16, padding:"16px 20px", alignItems:"center" }}
         onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}
         onMouseLeave={e => e.currentTarget.style.background="transparent"}>
         <div>
@@ -384,7 +384,7 @@ const AdminPanel = () => {
     }
   };
 
-  // ─── FILTERS ─────────────────────────────────────────────────────────────────
+  // ─── FILTERS & SORT ──────────────────────────────────────────────────────────
   const [filterPlan, setFilterPlan] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterSector, setFilterSector] = useState("all");
@@ -392,44 +392,71 @@ const AdminPanel = () => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [sortCol, setSortCol] = useState("joined");
+  const [sortDir, setSortDir] = useState("desc");
 
-  const filtered = users.filter(u => {
-    if (search && !u.email.toLowerCase().includes(search.toLowerCase()) &&
-        !(u.firstName + ' ' + u.lastName).toLowerCase().includes(search.toLowerCase()) &&
-        !(u.companyName||'').toLowerCase().includes(search.toLowerCase())) return false;
-    if (filterPlan !== "all") {
-      if (filterPlan === "trial") { if (!u.tempPlan) return false; }
-      else if (u.plan !== filterPlan) return false;
-    }
-    if (filterStatus !== "all" && u.status !== filterStatus) return false;
-    if (filterSector !== "all" && u.companySector !== filterSector) return false;
-    if (filterReferral !== "all" && u.referralSource !== filterReferral) return false;
-    if (dateFrom) { const d = new Date(u.joined); const f = new Date(dateFrom); if (d < f) return false; }
-    if (dateTo) { const d = new Date(u.joined); const t = new Date(dateTo); t.setHours(23,59,59); if (d > t) return false; }
-    return true;
-  });
+  const toggleSort = (col) => {
+    if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortCol(col); setSortDir("asc"); }
+  };
 
   const allSectors = [...new Set(users.map(u => u.companySector).filter(Boolean))].sort();
   const allReferrals = [...new Set(users.map(u => u.referralSource).filter(Boolean))].sort();
   const activeFiltersCount = [filterPlan!=="all", filterStatus!=="all", filterSector!=="all", filterReferral!=="all", dateFrom, dateTo].filter(Boolean).length;
 
+  const filtered = users
+    .filter(u => {
+      const q = search.toLowerCase();
+      if (q && !u.email.toLowerCase().includes(q) &&
+          !(u.firstName+' '+u.lastName).toLowerCase().includes(q) &&
+          !(u.companyName||'').toLowerCase().includes(q)) return false;
+      if (filterPlan !== "all") {
+        if (filterPlan === "trial") { if (!u.tempPlan) return false; }
+        else if (u.plan !== filterPlan) return false;
+      }
+      if (filterStatus !== "all" && u.status !== filterStatus) return false;
+      if (filterSector !== "all" && u.companySector !== filterSector) return false;
+      if (filterReferral !== "all" && u.referralSource !== filterReferral) return false;
+      if (dateFrom && new Date(u.joined) < new Date(dateFrom)) return false;
+      if (dateTo) { const t = new Date(dateTo); t.setHours(23,59,59); if (new Date(u.joined) > t) return false; }
+      return true;
+    })
+    .sort((a, b) => {
+      let av, bv;
+      if (sortCol === "email")     { av = a.email; bv = b.email; }
+      else if (sortCol === "plan") { av = a.plan; bv = b.plan; }
+      else if (sortCol === "status") { av = a.status; bv = b.status; }
+      else if (sortCol === "searches") { av = a.searches; bv = b.searches; }
+      else if (sortCol === "joined")   { av = new Date(a.joined); bv = new Date(b.joined); }
+      else if (sortCol === "lastLogin") { av = a.lastLogin ? new Date(a.lastLogin) : 0; bv = b.lastLogin ? new Date(b.lastLogin) : 0; }
+      else { av = a[sortCol]||""; bv = b[sortCol]||""; }
+      if (av < bv) return sortDir === "asc" ? -1 : 1;
+      if (av > bv) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+
   const exportCSV = () => {
     const headers = ["ID","Email","First Name","Last Name","Phone","Company","Sector","Job Role","Referral Source","Plan","Status","Joined","Last Login","Scans Today"];
     const rows = filtered.map(u => [
-      u.id, u.email, u.firstName||'', u.lastName||'', u.phone||'',
-      u.companyName||'', u.companySector||'', u.jobRole||'', u.referralSource||'',
+      u.id, u.email, u.firstName, u.lastName, u.phone,
+      u.companyName, u.companySector, u.jobRole, u.referralSource,
       u.plan, u.status,
       u.joined ? new Date(u.joined).toLocaleDateString('en-GB') : '',
       u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('en-GB') : '',
       u.searches
     ]);
-    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(",")).join("
-");
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url;
-    a.download = `utilityseo-users-${new Date().toISOString().slice(0,10)}.csv`;
-    a.click(); URL.revokeObjectURL(url);
+    const csv = [headers,...rows].map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(",")).join("\n");
+    const a = Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:`utilityseo-users-${new Date().toISOString().slice(0,10)}.csv`});
+    a.click();
+  };
+
+  const SortTh = ({ col, label }) => {
+    const active = sortCol === col;
+    return (
+      <span onClick={() => toggleSort(col)} style={{ cursor:"pointer", userSelect:"none", fontSize:11, color: active ? "#818cf8" : "#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", display:"flex", alignItems:"center", gap:3 }}>
+        {label} <span style={{ fontSize:9, opacity: active ? 1 : 0.4 }}>{active ? (sortDir==="asc"?"▲":"▼") : "⇅"}</span>
+      </span>
+    );
   };
 
   const stats = [
@@ -497,7 +524,7 @@ const AdminPanel = () => {
           ))}
         </div>
 
-        {/* Search + Filters */}
+        {/* Search + Filter + Export bar */}
         <div style={{ marginBottom:16 }}>
           <div style={{ display:"flex", gap:10, marginBottom:10, flexWrap:"wrap" }}>
             <div style={{ position:"relative", flex:1, minWidth:200 }}>
@@ -508,9 +535,9 @@ const AdminPanel = () => {
                 onBlur={e => e.target.style.border="1px solid rgba(255,255,255,0.1)"}
               />
             </div>
-            <button onClick={() => setShowFilters(!showFilters)}
-              style={{ padding:"12px 18px", background: showFilters ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.05)", border:`1px solid ${showFilters ? "#6366f1" : "rgba(255,255,255,0.1)"}`, borderRadius:14, color: showFilters ? "#818cf8" : "#94a3b8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
-              🎛 Filters {activeFiltersCount > 0 && <span style={{ background:"#6366f1", color:"#fff", borderRadius:99, padding:"1px 7px", fontSize:11 }}>{activeFiltersCount}</span>}
+            <button onClick={() => setShowFilters(f => !f)}
+              style={{ padding:"12px 18px", background: showFilters?"rgba(99,102,241,0.2)":"rgba(255,255,255,0.05)", border:`1px solid ${showFilters?"#6366f1":"rgba(255,255,255,0.1)"}`, borderRadius:14, color: showFilters?"#818cf8":"#94a3b8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
+              🎛 Filters {activeFiltersCount>0 && <span style={{ background:"#6366f1", color:"#fff", borderRadius:99, padding:"1px 7px", fontSize:11 }}>{activeFiltersCount}</span>}
             </button>
             <button onClick={exportCSV}
               style={{ padding:"12px 18px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:14, color:"#22c55e", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
@@ -523,8 +550,7 @@ const AdminPanel = () => {
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:14 }}>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Plan</label>
-                  <select value={filterPlan} onChange={e => setFilterPlan(e.target.value)}
-                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
+                  <select value={filterPlan} onChange={e=>setFilterPlan(e.target.value)} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
                     <option value="all">All plans</option>
                     <option value="free">Free</option>
                     <option value="pro">Pro</option>
@@ -534,8 +560,7 @@ const AdminPanel = () => {
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Status</label>
-                  <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
+                  <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
                     <option value="all">All statuses</option>
                     <option value="active">Active</option>
                     <option value="deactivated">Deactivated</option>
@@ -544,40 +569,36 @@ const AdminPanel = () => {
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Industry</label>
-                  <select value={filterSector} onChange={e => setFilterSector(e.target.value)}
-                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
+                  <select value={filterSector} onChange={e=>setFilterSector(e.target.value)} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
                     <option value="all">All industries</option>
-                    {allSectors.map(s => <option key={s} value={s}>{s}</option>)}
+                    {allSectors.map(s=><option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Heard via</label>
-                  <select value={filterReferral} onChange={e => setFilterReferral(e.target.value)}
-                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
+                  <select value={filterReferral} onChange={e=>setFilterReferral(e.target.value)} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
                     <option value="all">All sources</option>
-                    {allReferrals.map(r => <option key={r} value={r}>{r}</option>)}
+                    {allReferrals.map(r=><option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Joined from</label>
-                  <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color: dateFrom ? "#e2e8f0" : "#475569", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer", boxSizing:"border-box", colorScheme:"dark" }} />
+                  <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:dateFrom?"#e2e8f0":"#475569", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", boxSizing:"border-box", colorScheme:"dark" }} />
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Joined to</label>
-                  <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color: dateTo ? "#e2e8f0" : "#475569", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer", boxSizing:"border-box", colorScheme:"dark" }} />
+                  <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:dateTo?"#e2e8f0":"#475569", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", boxSizing:"border-box", colorScheme:"dark" }} />
                 </div>
               </div>
-              {activeFiltersCount > 0 && (
-                <button onClick={() => { setFilterPlan("all"); setFilterStatus("all"); setFilterSector("all"); setFilterReferral("all"); setDateFrom(""); setDateTo(""); }}
+              {activeFiltersCount>0 && (
+                <button onClick={()=>{setFilterPlan("all");setFilterStatus("all");setFilterSector("all");setFilterReferral("all");setDateFrom("");setDateTo("");}}
                   style={{ marginTop:14, padding:"7px 16px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:8, color:"#f87171", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
                   ✕ Clear all filters
                 </button>
               )}
             </div>
           )}
-          <p style={{ color:"#334155", fontSize:12 }}>{filtered.length} of {users.length} users{activeFiltersCount > 0 ? " (filtered)" : ""}</p>
+          <p style={{ color:"#334155", fontSize:12 }}>{filtered.length} of {users.length} users{activeFiltersCount>0?" (filtered)":""}</p>
         </div>
 
         {/* Users Table */}
@@ -589,10 +610,14 @@ const AdminPanel = () => {
         ) : (
           <div className="glass" style={{ borderRadius:18, overflow:"hidden" }}>
             {/* Desktop header - hidden on mobile */}
-            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 80px 80px 110px 140px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
-              {["Email","Plan","Status","Searches","Joined","Last Seen","Actions"].map(h => (
-                <span key={h} style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</span>
-              ))}
+            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 80px 90px 110px 140px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
+              <SortTh col="email" label="Email" />
+              <SortTh col="plan" label="Plan" />
+              <SortTh col="status" label="Status" />
+              <SortTh col="searches" label="Searches" />
+              <SortTh col="joined" label="Joined" />
+              <SortTh col="lastLogin" label="Last Seen" />
+              <span style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>Actions</span>
             </div>
 
             {filtered.length === 0 ? (
