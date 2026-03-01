@@ -293,6 +293,13 @@ const AdminPanel = () => {
       const transformedUsers = data.map(user => ({
         id: user.id.toString(),
         email: user.email,
+        firstName: user.first_name || '',
+        lastName: user.last_name || '',
+        phone: user.phone || '',
+        companyName: user.company_name || '',
+        companySector: user.company_sector || '',
+        jobRole: user.job_role || '',
+        referralSource: user.referral_source || '',
         plan: user.plan || 'free',
         status: user.is_active === false ? 'deactivated' : 'active',
         joined: user.created_at,
@@ -377,7 +384,53 @@ const AdminPanel = () => {
     }
   };
 
-  const filtered = users.filter(u => u.email.toLowerCase().includes(search.toLowerCase()));
+  // ─── FILTERS ─────────────────────────────────────────────────────────────────
+  const [filterPlan, setFilterPlan] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterSector, setFilterSector] = useState("all");
+  const [filterReferral, setFilterReferral] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+
+  const filtered = users.filter(u => {
+    if (search && !u.email.toLowerCase().includes(search.toLowerCase()) &&
+        !(u.firstName + ' ' + u.lastName).toLowerCase().includes(search.toLowerCase()) &&
+        !(u.companyName||'').toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterPlan !== "all") {
+      if (filterPlan === "trial") { if (!u.tempPlan) return false; }
+      else if (u.plan !== filterPlan) return false;
+    }
+    if (filterStatus !== "all" && u.status !== filterStatus) return false;
+    if (filterSector !== "all" && u.companySector !== filterSector) return false;
+    if (filterReferral !== "all" && u.referralSource !== filterReferral) return false;
+    if (dateFrom) { const d = new Date(u.joined); const f = new Date(dateFrom); if (d < f) return false; }
+    if (dateTo) { const d = new Date(u.joined); const t = new Date(dateTo); t.setHours(23,59,59); if (d > t) return false; }
+    return true;
+  });
+
+  const allSectors = [...new Set(users.map(u => u.companySector).filter(Boolean))].sort();
+  const allReferrals = [...new Set(users.map(u => u.referralSource).filter(Boolean))].sort();
+  const activeFiltersCount = [filterPlan!=="all", filterStatus!=="all", filterSector!=="all", filterReferral!=="all", dateFrom, dateTo].filter(Boolean).length;
+
+  const exportCSV = () => {
+    const headers = ["ID","Email","First Name","Last Name","Phone","Company","Sector","Job Role","Referral Source","Plan","Status","Joined","Last Login","Scans Today"];
+    const rows = filtered.map(u => [
+      u.id, u.email, u.firstName||'', u.lastName||'', u.phone||'',
+      u.companyName||'', u.companySector||'', u.jobRole||'', u.referralSource||'',
+      u.plan, u.status,
+      u.joined ? new Date(u.joined).toLocaleDateString('en-GB') : '',
+      u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('en-GB') : '',
+      u.searches
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(",")).join("
+");
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `utilityseo-users-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
 
   const stats = [
     { label:"Total Users", val: users.length, icon:"👥", col:"#818cf8" },
@@ -444,17 +497,87 @@ const AdminPanel = () => {
           ))}
         </div>
 
-        {/* Search */}
-        <div style={{ marginBottom:20 }}>
-          <div style={{ position:"relative" }}>
-            <span style={{ position:"absolute", left:16, top:"50%", transform:"translateY(-50%)", color:"#475569", fontSize:16 }}>🔍</span>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search users by email address…"
-              style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:14, padding:"14px 16px 14px 44px", color:"#fff", fontSize:14, outline:"none", fontFamily:"JetBrains Mono,monospace" }}
-              onFocus={e => e.target.style.border="1px solid #6366f1"}
-              onBlur={e => e.target.style.border="1px solid rgba(255,255,255,0.1)"}
-            />
+        {/* Search + Filters */}
+        <div style={{ marginBottom:16 }}>
+          <div style={{ display:"flex", gap:10, marginBottom:10, flexWrap:"wrap" }}>
+            <div style={{ position:"relative", flex:1, minWidth:200 }}>
+              <span style={{ position:"absolute", left:16, top:"50%", transform:"translateY(-50%)", color:"#475569", fontSize:16 }}>🔍</span>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by email, name or company…"
+                style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:14, padding:"12px 16px 12px 44px", color:"#fff", fontSize:14, outline:"none", fontFamily:"JetBrains Mono,monospace", boxSizing:"border-box" }}
+                onFocus={e => e.target.style.border="1px solid #6366f1"}
+                onBlur={e => e.target.style.border="1px solid rgba(255,255,255,0.1)"}
+              />
+            </div>
+            <button onClick={() => setShowFilters(!showFilters)}
+              style={{ padding:"12px 18px", background: showFilters ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.05)", border:`1px solid ${showFilters ? "#6366f1" : "rgba(255,255,255,0.1)"}`, borderRadius:14, color: showFilters ? "#818cf8" : "#94a3b8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
+              🎛 Filters {activeFiltersCount > 0 && <span style={{ background:"#6366f1", color:"#fff", borderRadius:99, padding:"1px 7px", fontSize:11 }}>{activeFiltersCount}</span>}
+            </button>
+            <button onClick={exportCSV}
+              style={{ padding:"12px 18px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:14, color:"#22c55e", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
+              ⬇ Export CSV
+            </button>
           </div>
-          <p style={{ color:"#334155", fontSize:12, marginTop:8 }}>{filtered.length} of {users.length} users</p>
+
+          {showFilters && (
+            <div className="glass" style={{ borderRadius:16, padding:20, marginBottom:12 }}>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:14 }}>
+                <div>
+                  <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Plan</label>
+                  <select value={filterPlan} onChange={e => setFilterPlan(e.target.value)}
+                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
+                    <option value="all">All plans</option>
+                    <option value="free">Free</option>
+                    <option value="pro">Pro</option>
+                    <option value="proPlus">Pro Plus</option>
+                    <option value="trial">Trial / Temp access</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Status</label>
+                  <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
+                    <option value="all">All statuses</option>
+                    <option value="active">Active</option>
+                    <option value="deactivated">Deactivated</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Industry</label>
+                  <select value={filterSector} onChange={e => setFilterSector(e.target.value)}
+                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
+                    <option value="all">All industries</option>
+                    {allSectors.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Heard via</label>
+                  <select value={filterReferral} onChange={e => setFilterReferral(e.target.value)}
+                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
+                    <option value="all">All sources</option>
+                    {allReferrals.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Joined from</label>
+                  <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color: dateFrom ? "#e2e8f0" : "#475569", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer", boxSizing:"border-box", colorScheme:"dark" }} />
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Joined to</label>
+                  <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color: dateTo ? "#e2e8f0" : "#475569", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer", boxSizing:"border-box", colorScheme:"dark" }} />
+                </div>
+              </div>
+              {activeFiltersCount > 0 && (
+                <button onClick={() => { setFilterPlan("all"); setFilterStatus("all"); setFilterSector("all"); setFilterReferral("all"); setDateFrom(""); setDateTo(""); }}
+                  style={{ marginTop:14, padding:"7px 16px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:8, color:"#f87171", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+                  ✕ Clear all filters
+                </button>
+              )}
+            </div>
+          )}
+          <p style={{ color:"#334155", fontSize:12 }}>{filtered.length} of {users.length} users{activeFiltersCount > 0 ? " (filtered)" : ""}</p>
         </div>
 
         {/* Users Table */}
