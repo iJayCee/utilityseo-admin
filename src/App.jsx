@@ -139,7 +139,7 @@ const EditModal = ({ user, onSave, onClose }) => {
 
 // ─── ADMIN PANEL ──────────────────────────────────────────────────────────────
 
-const UserRow = ({ u, i, total, onEdit, onAccess }) => {
+const UserRow = ({ u, i, total, onInfo, onEdit, onAccess }) => {
   const [expanded, setExpanded] = useState(false);
   const tempInfo = u.tempPlan && u.tempPlanExpiresAt ? (() => {
     const daysLeft = Math.ceil((new Date(u.tempPlanExpiresAt) - new Date()) / (1000 * 60 * 60 * 24));
@@ -168,6 +168,10 @@ const UserRow = ({ u, i, total, onEdit, onAccess }) => {
         <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' })}</span>
         <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '—'}</span>
         <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+          <button onClick={onInfo}
+            style={{ padding:"6px 14px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:8, color:"#4ade80", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+            Info
+          </button>
           <button onClick={onEdit}
             style={{ padding:"6px 14px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
             Edit
@@ -211,6 +215,10 @@ const UserRow = ({ u, i, total, onEdit, onAccess }) => {
               <span style={{ fontSize:11, color:"#475569" }}>LAST SEEN</span>
               <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '—'}</span>
             </div>
+            <button onClick={onInfo}
+              style={{ width:"100%", padding:"10px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:8, color:"#4ade80", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+              Info
+            </button>
             <button onClick={onEdit}
               style={{ width:"100%", padding:"10px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
               Edit
@@ -300,6 +308,7 @@ const AdminPanel = () => {
         companySector: user.company_sector || '',
         jobRole: user.job_role || '',
         referralSource: user.referral_source || '',
+        marketingConsent: user.marketing_consent === true ? 'Yes' : 'No',
         plan: user.plan || 'free',
         status: user.is_active === false ? 'deactivated' : 'active',
         joined: user.created_at,
@@ -389,6 +398,8 @@ const AdminPanel = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterSector, setFilterSector] = useState("all");
   const [filterReferral, setFilterReferral] = useState("all");
+  const [filterMarketing, setFilterMarketing] = useState("all");
+  const [viewingUser, setViewingUser] = useState(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -402,7 +413,7 @@ const AdminPanel = () => {
 
   const allSectors = [...new Set(users.map(u => u.companySector).filter(Boolean))].sort();
   const allReferrals = [...new Set(users.map(u => u.referralSource).filter(Boolean))].sort();
-  const activeFiltersCount = [filterPlan!=="all", filterStatus!=="all", filterSector!=="all", filterReferral!=="all", dateFrom, dateTo].filter(Boolean).length;
+  const activeFiltersCount = [filterPlan!=="all", filterStatus!=="all", filterSector!=="all", filterReferral!=="all", filterMarketing!=="all", dateFrom, dateTo].filter(Boolean).length;
 
   const filtered = users
     .filter(u => {
@@ -417,6 +428,7 @@ const AdminPanel = () => {
       if (filterStatus !== "all" && u.status !== filterStatus) return false;
       if (filterSector !== "all" && u.companySector !== filterSector) return false;
       if (filterReferral !== "all" && u.referralSource !== filterReferral) return false;
+      if (filterMarketing !== "all" && u.marketingConsent !== filterMarketing) return false;
       if (dateFrom && new Date(u.joined) < new Date(dateFrom)) return false;
       if (dateTo) { const t = new Date(dateTo); t.setHours(23,59,59); if (new Date(u.joined) > t) return false; }
       return true;
@@ -582,6 +594,14 @@ const AdminPanel = () => {
                   </select>
                 </div>
                 <div>
+                  <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Marketing</label>
+                  <select value={filterMarketing} onChange={e=>setFilterMarketing(e.target.value)} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
+                    <option value="all">All</option>
+                    <option value="Yes">✅ Opted in</option>
+                    <option value="No">❌ Opted out</option>
+                  </select>
+                </div>
+                <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Joined from</label>
                   <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:dateFrom?"#e2e8f0":"#475569", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", boxSizing:"border-box", colorScheme:"dark" }} />
                 </div>
@@ -591,7 +611,7 @@ const AdminPanel = () => {
                 </div>
               </div>
               {activeFiltersCount>0 && (
-                <button onClick={()=>{setFilterPlan("all");setFilterStatus("all");setFilterSector("all");setFilterReferral("all");setDateFrom("");setDateTo("");}}
+                <button onClick={()=>{setFilterPlan("all");setFilterStatus("all");setFilterSector("all");setFilterReferral("all");setFilterMarketing("all");setDateFrom("");setDateTo("");}}
                   style={{ marginTop:14, padding:"7px 16px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:8, color:"#f87171", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
                   ✕ Clear all filters
                 </button>
@@ -623,11 +643,70 @@ const AdminPanel = () => {
             {filtered.length === 0 ? (
               <div style={{ textAlign:"center", padding:60, color:"#334155" }}>No users found</div>
             ) : filtered.map((u, i) => (
-              <UserRow key={u.id} u={u} i={i} total={filtered.length} onEdit={() => setEditing(u)} onAccess={() => accessAccount(u)} />
+              <UserRow key={u.id} u={u} i={i} total={filtered.length} onInfo={() => setViewingUser(u)} onEdit={() => setEditing(u)} onAccess={() => accessAccount(u)} />
             ))}
           </div>
         )}
       </div>
+
+      {/* User Info Modal */}
+      {viewingUser && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
+          onClick={() => setViewingUser(null)}>
+          <div style={{ background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:20, padding:32, maxWidth:560, width:"100%", maxHeight:"88vh", overflowY:"auto" }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:24 }}>
+              <div>
+                <h2 style={{ fontSize:20, fontWeight:700, color:"#e2e8f0", marginBottom:4 }}>User Info</h2>
+                <p style={{ fontSize:13, color:"#475569", fontFamily:"JetBrains Mono,monospace" }}>ID #{viewingUser.id}</p>
+              </div>
+              <button onClick={() => setViewingUser(null)}
+                style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#94a3b8", fontSize:16, width:32, height:32, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"Sora,sans-serif" }}>✕</button>
+            </div>
+            {[
+              { title:"Account", icon:"👤", rows:[
+                ["Email", viewingUser.email],
+                ["Plan", viewingUser.plan ? viewingUser.plan.charAt(0).toUpperCase()+viewingUser.plan.slice(1) : "—"],
+                ["Status", viewingUser.status],
+                ["Joined", viewingUser.joined ? new Date(viewingUser.joined).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" }) : "—"],
+                ["Last Login", viewingUser.lastLogin ? new Date(viewingUser.lastLogin).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" }) : "Never"],
+                ["Scans Today", viewingUser.searches ?? "—"],
+              ]},
+              { title:"Personal", icon:"📋", rows:[
+                ["First Name", viewingUser.firstName || "—"],
+                ["Last Name", viewingUser.lastName || "—"],
+                ["Phone", viewingUser.phone || "—"],
+              ]},
+              { title:"Company", icon:"🏢", rows:[
+                ["Company Name", viewingUser.companyName || "—"],
+                ["Job Role", viewingUser.jobRole || "—"],
+                ["Sector", viewingUser.companySector || "—"],
+              ]},
+              { title:"Marketing & Acquisition", icon:"📣", rows:[
+                ["Heard About Us", viewingUser.referralSource || "—"],
+                ["Marketing Consent", viewingUser.marketingConsent],
+              ]},
+            ].map(section => (
+              <div key={section.title} style={{ marginBottom:20 }}>
+                <p style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>{section.icon} {section.title}</p>
+                <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, overflow:"hidden" }}>
+                  {section.rows.map(([label, value], i) => (
+                    <div key={label} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 16px", borderBottom: i < section.rows.length-1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                      <span style={{ fontSize:13, color:"#475569" }}>{label}</span>
+                      <span style={{ fontSize:13, fontWeight:500, textAlign:"right", maxWidth:"60%", wordBreak:"break-all",
+                        color: label==="Status" ? (value==="active" ? "#22c55e" : "#94a3b8")
+                             : label==="Marketing Consent" ? (value==="Yes" ? "#22c55e" : "#ef4444")
+                             : "#e2e8f0" }}>
+                        {label==="Marketing Consent" ? (value==="Yes" ? "✅ Opted in" : "❌ Opted out") : String(value ?? "—")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {editing && <EditModal user={editing} onClose={() => setEditing(null)}
         onSave={(updated) => {
