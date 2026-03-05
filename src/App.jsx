@@ -555,10 +555,13 @@ const AdminPanel = () => {
     return new Date(u.joined) >= cutoff;
   }).length;
 
+  const countFree   = users.filter(u => u.plan === "free").length;
+  const countPro    = users.filter(u => u.plan === "pro").length;
+  const countProPlus = users.filter(u => u.plan === "proPlus").length;
+
   const stats = [
     { label:"Total Users", val: users.length, icon:"👥", col:"#818cf8" },
     { label:"Active", val: users.filter(u=>u.status==="active").length, icon:"✅", col:"#22c55e" },
-    { label:"Paid", val: users.filter(u=>u.plan!=="free").length, icon:"💰", col:"#f59e0b" },
     { label:"Temp Access", val: users.filter(u=>u.tempPlan).length, icon:"⏱", col:"#38bdf8" },
   ];
 
@@ -618,6 +621,27 @@ const AdminPanel = () => {
               <div style={{ fontSize:13, color:"#475569", marginTop:4 }}>{s.label}</div>
             </div>
           ))}
+
+          {/* Plan breakdown card */}
+          <div className="glass" style={{ borderRadius:16, padding:20 }}>
+            <div style={{ fontSize:24, marginBottom:8 }}>💰</div>
+            <div style={{ fontSize:13, color:"#475569", marginBottom:12 }}>Plans</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
+              <div style={{ textAlign:"center" }}>
+                <div style={{ fontSize:22, fontWeight:800, color:"#64748b" }}>{countFree}</div>
+                <div style={{ fontSize:10, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Free</div>
+              </div>
+              <div style={{ textAlign:"center", borderLeft:"1px solid rgba(255,255,255,0.07)", borderRight:"1px solid rgba(255,255,255,0.07)" }}>
+                <div style={{ fontSize:22, fontWeight:800, color:"#818cf8" }}>{countPro}</div>
+                <div style={{ fontSize:10, fontWeight:700, color:"#6366f1", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Pro</div>
+              </div>
+              <div style={{ textAlign:"center" }}>
+                <div style={{ fontSize:22, fontWeight:800, color:"#f59e0b" }}>{countProPlus}</div>
+                <div style={{ fontSize:10, fontWeight:700, color:"#d97706", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Pro+</div>
+              </div>
+            </div>
+          </div>
+
           {/* New Signups card with period selector */}
           <div className="glass" style={{ borderRadius:16, padding:20 }}>
             <div style={{ fontSize:24, marginBottom:8 }}>📈</div>
