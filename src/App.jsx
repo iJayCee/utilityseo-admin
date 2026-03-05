@@ -546,6 +546,15 @@ const AdminPanel = () => {
     );
   };
 
+  const [statsWindow, setStatsWindow] = useState(7); // days: 7 | 30 | 90 | 365
+
+  const newSignups = users.filter(u => {
+    if (!u.joined) return false;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - statsWindow);
+    return new Date(u.joined) >= cutoff;
+  }).length;
+
   const stats = [
     { label:"Total Users", val: users.length, icon:"👥", col:"#818cf8" },
     { label:"Active", val: users.filter(u=>u.status==="active").length, icon:"✅", col:"#22c55e" },
@@ -601,7 +610,7 @@ const AdminPanel = () => {
 
       <div style={{ padding:"32px" }}>
         {/* Stats */}
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:32 }}>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:16, marginBottom:32 }}>
           {stats.map(s => (
             <div key={s.label} className="glass" style={{ borderRadius:16, padding:20 }}>
               <div style={{ fontSize:24, marginBottom:8 }}>{s.icon}</div>
@@ -609,6 +618,20 @@ const AdminPanel = () => {
               <div style={{ fontSize:13, color:"#475569", marginTop:4 }}>{s.label}</div>
             </div>
           ))}
+          {/* New Signups card with period selector */}
+          <div className="glass" style={{ borderRadius:16, padding:20 }}>
+            <div style={{ fontSize:24, marginBottom:8 }}>📈</div>
+            <div style={{ fontSize:32, fontWeight:800, color:"#34d399" }}>{newSignups}</div>
+            <div style={{ fontSize:13, color:"#475569", marginTop:4, marginBottom:10 }}>New Signups</div>
+            <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
+              {[{label:"7d",val:7},{label:"30d",val:30},{label:"90d",val:90},{label:"1yr",val:365}].map(p => (
+                <button key={p.val} onClick={() => setStatsWindow(p.val)}
+                  style={{ padding:"3px 8px", fontSize:10, fontWeight:700, fontFamily:"Sora,sans-serif", cursor:"pointer", borderRadius:6, border:`1px solid ${statsWindow===p.val ? "#34d399" : "rgba(255,255,255,0.1)"}`, background: statsWindow===p.val ? "rgba(52,211,153,0.15)" : "rgba(255,255,255,0.04)", color: statsWindow===p.val ? "#34d399" : "#475569", transition:"all 0.12s" }}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Tab Bar */}
