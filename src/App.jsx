@@ -529,6 +529,16 @@ const AdminPanel = () => {
   const [filterSector, setFilterSector] = useState("all");
   const [filterReferral, setFilterReferral] = useState("all");
   const [filterMarketing, setFilterMarketing] = useState("all");
+  const [filterStarred, setFilterStarred] = useState(false);
+
+  const allSectors = [...new Set(users.map(u => u.companySector).filter(Boolean))].sort();
+  const allReferrals = [...new Set(users.map(u => u.referralSource).filter(Boolean))].sort();
+  const activeFiltersCount = [filterPlan!=="all", filterStatus!=="all", filterSector!=="all", filterReferral!=="all", filterMarketing!=="all", dateFrom, dateTo].filter(Boolean).length;
+
+  const [starredIds, setStarredIds] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('admin_starred') || '[]')); }
+    catch { return new Set(); }
+  });
   const [viewingUser, setViewingUser] = useState(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -541,9 +551,14 @@ const AdminPanel = () => {
     else { setSortCol(col); setSortDir("asc"); }
   };
 
-  const allSectors = [...new Set(users.map(u => u.companySector).filter(Boolean))].sort();
-  const allReferrals = [...new Set(users.map(u => u.referralSource).filter(Boolean))].sort();
-  const activeFiltersCount = [filterPlan!=="all", filterStatus!=="all", filterSector!=="all", filterReferral!=="all", filterMarketing!=="all", dateFrom, dateTo].filter(Boolean).length;
+  const toggleStar = (id) => {
+    setStarredIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      localStorage.setItem('admin_starred', JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   const filtered = users
     .filter(u => {
@@ -603,20 +618,6 @@ const AdminPanel = () => {
   };
 
   const [statsWindow, setStatsWindow] = useState(7); // days: 7 | 30 | 90 | 365
-  const [starredIds, setStarredIds] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('admin_starred') || '[]')); }
-    catch { return new Set(); }
-  });
-  const [filterStarred, setFilterStarred] = useState(false);
-
-  const toggleStar = (id) => {
-    setStarredIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      localStorage.setItem('admin_starred', JSON.stringify([...next]));
-      return next;
-    });
-  };
 
   const newSignups = users.filter(u => {
     if (!u.joined) return false;
