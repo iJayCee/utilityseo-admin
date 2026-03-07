@@ -595,9 +595,9 @@ const AdminPanel = () => {
       return next;
     });
     try {
-      await fetch(`${API}/admin/users/${id}/star`, {
+      await fetch(`${API_URL}/admin/users/${id}/star`, {
         method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Content-Type': 'application/json' }
       });
     } catch (err) {
       console.error('Failed to toggle star:', err);
