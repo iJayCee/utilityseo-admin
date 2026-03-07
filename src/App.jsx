@@ -429,9 +429,11 @@ const AdminPanel = () => {
         totalScans: user.total_scans || 0,
         tempPlan: user.temp_plan || null,
         tempPlanExpiresAt: user.temp_plan_expires_at || null,
+        isStarred: user.is_starred || false,
       }));
 
       setUsers(transformedUsers);
+      setStarredIds(new Set(transformedUsers.filter(u => u.isStarred).map(u => String(u.id))));
     } catch (error) {
       showToast('Failed to load users', true);
     } finally {
