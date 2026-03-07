@@ -28,12 +28,16 @@ const GlobalStyles = () => (
       .admin-chart-card { grid-column: 1 / -1 !important; }
       .tab-bar { gap: 4px !important; }
       .tab-btn { padding: 8px 12px !important; font-size: 12px !important; }
+      .promo-table-header { display: none !important; }
+      .promo-row { display: flex !important; flex-direction: column !important; gap: 8px !important; padding: 16px !important; }
+      .promo-row-grid { display: contents !important; }
     }
   `}</style>
 );
 
 // ── Monthly signups sparkline chart ─────────────────────────────────────────
 const MonthlyChart = ({ users }) => {
+  const [activeBar, setActiveBar] = useState(null);
   const months = [];
   const now = new Date();
   for (let i = 11; i >= 0; i--) {
@@ -48,14 +52,22 @@ const MonthlyChart = ({ users }) => {
     }).length
   );
   const max = Math.max(...counts, 1);
-  const barW = 100 / 12;
   return (
     <div style={{ width:"100%", marginTop:8 }}>
+      {activeBar !== null && (
+        <div style={{ textAlign:"center", marginBottom:6, fontSize:12, fontWeight:700, color:"#818cf8" }}>
+          {months[activeBar].label}: <span style={{ color:"#e2e8f0" }}>{counts[activeBar]} signup{counts[activeBar] !== 1 ? "s" : ""}</span>
+        </div>
+      )}
       <div style={{ display:"flex", alignItems:"flex-end", gap:3, height:48 }}>
         {counts.map((c, i) => (
-          <div key={i} title={`${months[i].label}: ${c} signups`}
-            style={{ flex:1, background: i === 11 ? "#818cf8" : "rgba(129,140,248,0.35)", borderRadius:"3px 3px 0 0",
-              height: `${Math.max((c / max) * 100, 4)}%`, transition:"height 0.3s", cursor:"default" }} />
+          <div key={i}
+            onClick={() => setActiveBar(activeBar === i ? null : i)}
+            onMouseEnter={() => setActiveBar(i)}
+            onMouseLeave={() => setActiveBar(null)}
+            style={{ flex:1, background: activeBar === i ? "#a78bfa" : i === 11 ? "#818cf8" : "rgba(129,140,248,0.35)",
+              borderRadius:"3px 3px 0 0", height:`${Math.max((c / max) * 100, 4)}%`,
+              transition:"all 0.15s", cursor:"pointer" }} />
         ))}
       </div>
       <div style={{ display:"flex", justifyContent:"space-between", marginTop:4 }}>
@@ -965,7 +977,7 @@ const AdminPanel = () => {
 
             {/* Promo codes table */}
             <div className="glass" style={{ borderRadius:18, overflow:"hidden" }}>
-              <div style={{ display:"grid", gridTemplateColumns:"160px 1fr 90px 70px 70px 100px 80px 110px", gap:12, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
+              <div className="promo-table-header" style={{ display:"grid", gridTemplateColumns:"160px 1fr 90px 70px 70px 100px 80px 110px", gap:12, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
                 {["Code","Description","Plan","Days","Uses","Max Uses","Expiry","Actions"].map(h => (
                   <span key={h} style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</span>
                 ))}
@@ -975,20 +987,28 @@ const AdminPanel = () => {
               ) : promos.length === 0 ? (
                 <div style={{ textAlign:"center", padding:60, color:"#334155" }}>No promo codes yet — create one above</div>
               ) : promos.map((p, i) => (
-                <div key={p.id} style={{ display:"grid", gridTemplateColumns:"160px 1fr 90px 70px 70px 100px 80px 110px", gap:12, padding:"14px 20px", borderBottom: i < promos.length-1 ? "1px solid rgba(255,255,255,0.04)" : "none", alignItems:"center", opacity: p.is_active ? 1 : 0.45 }}
+                <div key={p.id} className="promo-row" style={{ display:"grid", gridTemplateColumns:"160px 1fr 90px 70px 70px 100px 80px 110px", gap:12, padding:"14px 20px", borderBottom: i < promos.length-1 ? "1px solid rgba(255,255,255,0.04)" : "none", alignItems:"center", opacity: p.is_active ? 1 : 0.45 }}
                   onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.02)"}
                   onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                  <span style={{ fontFamily:"JetBrains Mono,monospace", fontSize:13, fontWeight:700, color: p.is_active ? "#a5b4fc" : "#64748b", letterSpacing:"0.05em" }}>{p.code}</span>
+                  {/* Code + description row on mobile */}
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:6 }}>
+                    <span style={{ fontFamily:"JetBrains Mono,monospace", fontSize:13, fontWeight:700, color: p.is_active ? "#a5b4fc" : "#64748b", letterSpacing:"0.05em" }}>{p.code}</span>
+                    <span style={{ fontSize:12, padding:"3px 8px", borderRadius:6, background: p.trial_plan==="proPlus" ? "rgba(245,158,11,0.15)" : "rgba(99,102,241,0.15)", color: p.trial_plan==="proPlus" ? "#f59e0b" : "#818cf8", fontWeight:600 }}>
+                      {p.trial_plan==="proPlus" ? "Pro+" : p.trial_plan==="pro" ? "Pro" : "Free"}
+                    </span>
+                  </div>
                   <span style={{ fontSize:12, color:"#64748b", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.description || "—"}</span>
-                  <span style={{ fontSize:12, padding:"3px 8px", borderRadius:6, background: p.trial_plan==="proPlus" ? "rgba(245,158,11,0.15)" : "rgba(99,102,241,0.15)", color: p.trial_plan==="proPlus" ? "#f59e0b" : "#818cf8", fontWeight:600, textAlign:"center", display:"inline-block" }}>
-                    {p.trial_plan==="proPlus" ? "Pro+" : p.trial_plan==="pro" ? "Pro" : "Free"}
-                  </span>
-                  <span style={{ fontSize:13, color:"#94a3b8", textAlign:"center" }}>{p.trial_days}d</span>
-                  <span style={{ fontSize:13, color:"#94a3b8", textAlign:"center" }}>{p.uses_count}</span>
-                  <span style={{ fontSize:13, color:"#94a3b8", textAlign:"center" }}>{p.max_uses ?? "∞"}</span>
-                  <span style={{ fontSize:11, color: p.expires_at && new Date(p.expires_at) < new Date() ? "#ef4444" : "#64748b" }}>
-                    {p.expires_at ? new Date(p.expires_at).toLocaleDateString("en-GB") : "Never"}
-                  </span>
+                  <span style={{ display:"none" }}></span>{/* plan — hidden on mobile (shown above) */}
+                  <div style={{ display:"flex", gap:16, flexWrap:"wrap" }}>
+                    <span style={{ fontSize:12, color:"#94a3b8" }}><span style={{ fontSize:10, color:"#475569" }}>DAYS </span>{p.trial_days}</span>
+                    <span style={{ fontSize:12, color:"#94a3b8" }}><span style={{ fontSize:10, color:"#475569" }}>USES </span>{p.uses_count}{p.max_uses ? `/${p.max_uses}` : ""}</span>
+                    <span style={{ fontSize:12, color: p.expires_at && new Date(p.expires_at) < new Date() ? "#ef4444" : "#64748b" }}>
+                      <span style={{ fontSize:10, color:"#475569" }}>EXPIRY </span>{p.expires_at ? new Date(p.expires_at).toLocaleDateString("en-GB") : "Never"}
+                    </span>
+                  </div>
+                  <span style={{ display:"none" }}></span>{/* uses */}
+                  <span style={{ display:"none" }}></span>{/* max uses */}
+                  <span style={{ display:"none" }}></span>{/* expiry */}
                   <div style={{ display:"flex", gap:6 }}>
                     <button onClick={() => togglePromoActive(p)}
                       title={p.is_active ? "Deactivate" : "Activate"}
