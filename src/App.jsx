@@ -151,7 +151,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess }) => {
     <div style={{ borderBottom: i < total - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
       {/* Desktop row */}
       <div className="desktop-only"
-        style={{ gridTemplateColumns:"2fr 100px 100px 80px 90px 110px 140px", gap:16, padding:"16px 20px", alignItems:"center" }}
+        style={{ gridTemplateColumns:"2fr 100px 100px 80px 50px 90px 110px 140px", gap:16, padding:"16px 20px", alignItems:"center" }}
         onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}
         onMouseLeave={e => e.currentTarget.style.background="transparent"}>
         <div>
@@ -165,6 +165,9 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess }) => {
           </span>
         </div>
         <span style={{ fontSize:13, color:"#94a3b8" }}>{u.searches}</span>
+        <span title={`Cookie: ${u.cookieConsent || "not set"}`} style={{ fontSize:14, textAlign:"center" }}>
+          {u.cookieConsent === "accepted" ? "✅" : u.cookieConsent === "declined" ? "❌" : "⏳"}
+        </span>
         <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' })}</span>
         <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '—'}</span>
         <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
@@ -309,6 +312,7 @@ const AdminPanel = () => {
         jobRole: user.job_role || '',
         referralSource: user.referral_source || '',
         marketingConsent: user.marketing_consent === true ? 'Yes' : 'No',
+        cookieConsent: user.cookie_consent || null,
         plan: user.plan || 'free',
         status: user.is_active === false ? 'deactivated' : 'active',
         joined: user.created_at,
@@ -767,11 +771,12 @@ const AdminPanel = () => {
         ) : (
           <div className="glass" style={{ borderRadius:18, overflow:"hidden" }}>
             {/* Desktop header - hidden on mobile */}
-            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 80px 90px 110px 140px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
+            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 80px 50px 90px 110px 140px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
               <SortTh col="email" label="Email" />
               <SortTh col="plan" label="Plan" />
               <SortTh col="status" label="Status" />
               <SortTh col="searches" label="Searches" />
+              <span title="Cookie Consent" style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>🍪</span>
               <SortTh col="joined" label="Joined" />
               <SortTh col="lastLogin" label="Last Seen" />
               <span style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>Actions</span>
@@ -925,6 +930,9 @@ const AdminPanel = () => {
                 ["Heard About Us", viewingUser.referralSource || "—"],
                 ["Marketing Consent", viewingUser.marketingConsent],
               ]},
+              { title:"Privacy & Consent", icon:"🍪", rows:[
+                ["Cookie Consent", viewingUser.cookieConsent],
+              ]},
             ].map(section => (
               <div key={section.title} style={{ marginBottom:20 }}>
                 <p style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>{section.icon} {section.title}</p>
@@ -935,8 +943,11 @@ const AdminPanel = () => {
                       <span style={{ fontSize:13, fontWeight:500, textAlign:"right", maxWidth:"60%", wordBreak:"break-all",
                         color: label==="Status" ? (value==="active" ? "#22c55e" : "#94a3b8")
                              : label==="Marketing Consent" ? (value==="Yes" ? "#22c55e" : "#ef4444")
+                             : label==="Cookie Consent" ? (value==="accepted" ? "#22c55e" : value==="declined" ? "#ef4444" : "#f59e0b")
                              : "#e2e8f0" }}>
-                        {label==="Marketing Consent" ? (value==="Yes" ? "✅ Opted in" : "❌ Opted out") : String(value ?? "—")}
+                        {label==="Marketing Consent" ? (value==="Yes" ? "✅ Opted in" : "❌ Opted out")
+                          : label==="Cookie Consent" ? (value==="accepted" ? "✅ Accepted" : value==="declined" ? "❌ Declined" : "⏳ Not yet set")
+                          : String(value ?? "—")}
                       </span>
                     </div>
                   ))}
