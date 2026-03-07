@@ -63,8 +63,6 @@ const MonthlyChart = ({ users }) => {
         {counts.map((c, i) => (
           <div key={i}
             onClick={() => setActiveBar(activeBar === i ? null : i)}
-            onMouseEnter={() => setActiveBar(i)}
-            onMouseLeave={() => setActiveBar(null)}
             style={{ flex:1, background: activeBar === i ? "#a78bfa" : i === 11 ? "#818cf8" : "rgba(129,140,248,0.35)",
               borderRadius:"3px 3px 0 0", height:`${Math.max((c / max) * 100, 4)}%`,
               transition:"all 0.15s", cursor:"pointer" }} />
@@ -349,10 +347,7 @@ const AdminPanel = () => {
   const [filterReferral, setFilterReferral] = useState("all");
   const [filterMarketing, setFilterMarketing] = useState("all");
   const [filterStarred, setFilterStarred] = useState(false);
-  const [starredIds, setStarredIds] = useState(() => {
-    try { return new Set((JSON.parse(localStorage.getItem('admin_starred') || '[]')).map(String)); }
-    catch { return new Set(); }
-  });
+  const [starredIds, setStarredIds] = useState(new Set());
   const [viewingUser, setViewingUser] = useState(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -591,14 +586,28 @@ const AdminPanel = () => {
     else { setSortCol(col); setSortDir("asc"); }
   };
 
-  const toggleStar = (id) => {
+  const toggleStar = async (id) => {
+    const sid = String(id);
+    // Optimistic update
     setStarredIds(prev => {
       const next = new Set(prev);
-      const sid = String(id);
       next.has(sid) ? next.delete(sid) : next.add(sid);
-      localStorage.setItem('admin_starred', JSON.stringify([...next]));
       return next;
     });
+    try {
+      await fetch(`${API}/admin/users/${id}/star`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (err) {
+      console.error('Failed to toggle star:', err);
+      // Revert on failure
+      setStarredIds(prev => {
+        const next = new Set(prev);
+        next.has(sid) ? next.delete(sid) : next.add(sid);
+        return next;
+      });
+    }
   };
 
   const filtered = users
@@ -615,7 +624,7 @@ const AdminPanel = () => {
       if (filterSector !== "all" && u.companySector !== filterSector) return false;
       if (filterReferral !== "all" && u.referralSource !== filterReferral) return false;
       if (filterMarketing !== "all" && u.marketingConsent !== filterMarketing) return false;
-      if (filterStarred && !starredIds.has(u.id)) return false;
+      if (filterStarred && !starredIds.has(String(u.id))) return false;
       if (dateFrom && new Date(u.joined) < new Date(dateFrom)) return false;
       if (dateTo) { const t = new Date(dateTo); t.setHours(23,59,59); if (new Date(u.joined) > t) return false; }
       return true;
