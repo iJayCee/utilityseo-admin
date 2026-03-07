@@ -594,13 +594,12 @@ const AdminPanel = () => {
   const saveNote = async (userId, text) => {
     setNoteSaving(true);
     try {
-      const res = await fetch(`${API}/admin/users/${userId}/notes`, {
+      const res = await fetch(`${API_URL}/admin/users/${userId}/notes`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes: text })
       });
       if (!res.ok) throw new Error('Save failed');
-      // Update the users list so the note persists after re-opening modal
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, adminNotes: text } : u));
       showToast('Note saved');
     } catch {
