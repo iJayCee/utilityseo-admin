@@ -349,6 +349,8 @@ const AdminPanel = () => {
   const [filterStarred, setFilterStarred] = useState(false);
   const [starredIds, setStarredIds] = useState(new Set());
   const [viewingUser, setViewingUser] = useState(null);
+  const [noteText, setNoteText] = useState('');
+  const [noteSaving, setNoteSaving] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -430,6 +432,7 @@ const AdminPanel = () => {
         tempPlan: user.temp_plan || null,
         tempPlanExpiresAt: user.temp_plan_expires_at || null,
         isStarred: user.is_starred || false,
+        adminNotes: user.admin_notes || '',
       }));
 
       setUsers(transformedUsers);
@@ -923,7 +926,7 @@ const AdminPanel = () => {
             {filtered.length === 0 ? (
               <div style={{ textAlign:"center", padding:60, color:"#334155" }}>No users found</div>
             ) : filtered.map((u, i) => (
-              <UserRow key={u.id} u={u} i={i} total={filtered.length} onInfo={() => setViewingUser(u)} onEdit={() => setEditing(u)} onAccess={() => accessAccount(u)} starred={starredIds.has(String(u.id))} onToggleStar={() => toggleStar(String(u.id))} />
+              <UserRow key={u.id} u={u} i={i} total={filtered.length} onInfo={() => { setViewingUser(u); setNoteText(u.adminNotes || ''); }} onEdit={() => setEditing(u)} onAccess={() => accessAccount(u)} starred={starredIds.has(String(u.id))} onToggleStar={() => toggleStar(String(u.id))} />
             ))}
           </div>
         )}
@@ -1101,6 +1104,23 @@ const AdminPanel = () => {
                 </div>
               </div>
             ))}
+            {/* Admin Notes */}
+            <div style={{ marginTop:8 }}>
+              <p style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>📝 Admin Notes</p>
+              <textarea
+                value={noteText}
+                onChange={e => setNoteText(e.target.value)}
+                placeholder="Internal notes about this account — visible to admins only..."
+                rows={4}
+                style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, padding:"12px 14px", color:"#e2e8f0", fontSize:13, fontFamily:"JetBrains Mono,monospace", resize:"vertical", outline:"none", boxSizing:"border-box", lineHeight:1.6 }}
+              />
+              <button
+                onClick={() => saveNote(viewingUser.id, noteText)}
+                disabled={noteSaving}
+                style={{ marginTop:10, width:"100%", padding:"10px 0", background: noteSaving ? "rgba(124,58,237,0.3)" : "#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor: noteSaving ? "default" : "pointer", fontFamily:"Sora,sans-serif", transition:"background 0.2s" }}>
+                {noteSaving ? "Saving..." : "Save Note"}
+              </button>
+            </div>
           </div>
         </div>
       )}
