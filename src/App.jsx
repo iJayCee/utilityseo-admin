@@ -533,12 +533,12 @@ const AdminPanel = () => {
 
   const allSectors = [...new Set(users.map(u => u.companySector).filter(Boolean))].sort();
   const allReferrals = [...new Set(users.map(u => u.referralSource).filter(Boolean))].sort();
-  const activeFiltersCount = [filterPlan!=="all", filterStatus!=="all", filterSector!=="all", filterReferral!=="all", filterMarketing!=="all", dateFrom, dateTo].filter(Boolean).length;
-
   const [starredIds, setStarredIds] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('admin_starred') || '[]')); }
     catch { return new Set(); }
   });
+  const activeFiltersCount = [filterPlan!=="all", filterStatus!=="all", filterSector!=="all", filterReferral!=="all", filterMarketing!=="all", dateFrom, dateTo].filter(Boolean).length;
+
   const [viewingUser, setViewingUser] = useState(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
