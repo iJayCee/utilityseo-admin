@@ -301,6 +301,29 @@ const AdminPanel = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [adminCreds, setAdminCreds] = useState(() => { try { return JSON.parse(sessionStorage.getItem('admin_creds') || 'null'); } catch { return null; } });
 
+  const [activeTab, setActiveTab] = useState("users"); // "users" | "promos"
+  const [promos, setPromos] = useState([]);
+  const [loadingPromos, setLoadingPromos] = useState(false);
+  const [promoForm, setPromoForm] = useState({ code:"", description:"", trial_plan:"pro", trial_days:"14", max_uses:"", expires_at:"" });
+  const [promoFormError, setPromoFormError] = useState("");
+  const [savingPromo, setSavingPromo] = useState(false);
+  const [editingPromo, setEditingPromo] = useState(null); // promo being edited inline
+  const [filterPlan, setFilterPlan] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterSector, setFilterSector] = useState("all");
+  const [filterReferral, setFilterReferral] = useState("all");
+  const [filterMarketing, setFilterMarketing] = useState("all");
+  const [filterStarred, setFilterStarred] = useState(false);
+  const [starredIds, setStarredIds] = useState(() => {
+  const [viewingUser, setViewingUser] = useState(null);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortCol, setSortCol] = useState("joined");
+  const [sortDir, setSortDir] = useState("desc");
+  const [statsWindow, setStatsWindow] = useState(7); // days: 7 | 30 | 90 | 365
+
+
   const MAIN_APP_URL = import.meta.env.VITE_MAIN_APP_URL || 'https://app.utilityseo.com';
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -449,15 +472,8 @@ const AdminPanel = () => {
   };
 
   // ─── TABS ────────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState("users"); // "users" | "promos"
 
   // ─── PROMO CODES ─────────────────────────────────────────────────────────────
-  const [promos, setPromos] = useState([]);
-  const [loadingPromos, setLoadingPromos] = useState(false);
-  const [promoForm, setPromoForm] = useState({ code:"", description:"", trial_plan:"pro", trial_days:"14", max_uses:"", expires_at:"" });
-  const [promoFormError, setPromoFormError] = useState("");
-  const [savingPromo, setSavingPromo] = useState(false);
-  const [editingPromo, setEditingPromo] = useState(null); // promo being edited inline
 
   const loadPromos = async () => {
     setLoadingPromos(true);
@@ -524,27 +540,14 @@ const AdminPanel = () => {
   };
 
   // ─── FILTERS & SORT ──────────────────────────────────────────────────────────
-  const [filterPlan, setFilterPlan] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterSector, setFilterSector] = useState("all");
-  const [filterReferral, setFilterReferral] = useState("all");
-  const [filterMarketing, setFilterMarketing] = useState("all");
-  const [filterStarred, setFilterStarred] = useState(false);
 
   const allSectors = [...new Set(users.map(u => u.companySector).filter(Boolean))].sort();
   const allReferrals = [...new Set(users.map(u => u.referralSource).filter(Boolean))].sort();
-  const [starredIds, setStarredIds] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('admin_starred') || '[]')); }
     catch { return new Set(); }
   });
   const activeFiltersCount = [filterPlan!=="all", filterStatus!=="all", filterSector!=="all", filterReferral!=="all", filterMarketing!=="all", dateFrom, dateTo].filter(Boolean).length;
 
-  const [viewingUser, setViewingUser] = useState(null);
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortCol, setSortCol] = useState("joined");
-  const [sortDir, setSortDir] = useState("desc");
 
   const toggleSort = (col) => {
     if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -617,7 +620,6 @@ const AdminPanel = () => {
     );
   };
 
-  const [statsWindow, setStatsWindow] = useState(7); // days: 7 | 30 | 90 | 365
 
   const newSignups = users.filter(u => {
     if (!u.joined) return false;
