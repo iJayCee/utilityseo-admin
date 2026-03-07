@@ -22,9 +22,49 @@ const GlobalStyles = () => (
     @media (max-width: 700px) {
       .desktop-only { display: none !important; }
       .mobile-only { display: block !important; }
+      .admin-header { padding: 12px 16px !important; }
+      .admin-body { padding: 16px !important; }
+      .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+      .admin-chart-card { grid-column: 1 / -1 !important; }
+      .tab-bar { gap: 4px !important; }
+      .tab-btn { padding: 8px 12px !important; font-size: 12px !important; }
     }
   `}</style>
 );
+
+// ── Monthly signups sparkline chart ─────────────────────────────────────────
+const MonthlyChart = ({ users }) => {
+  const months = [];
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ label: d.toLocaleString('en-GB', { month: 'short' }), year: d.getFullYear(), month: d.getMonth() });
+  }
+  const counts = months.map(m =>
+    users.filter(u => {
+      if (!u.joined) return false;
+      const d = new Date(u.joined);
+      return d.getFullYear() === m.year && d.getMonth() === m.month;
+    }).length
+  );
+  const max = Math.max(...counts, 1);
+  const barW = 100 / 12;
+  return (
+    <div style={{ width:"100%", marginTop:8 }}>
+      <div style={{ display:"flex", alignItems:"flex-end", gap:3, height:48 }}>
+        {counts.map((c, i) => (
+          <div key={i} title={`${months[i].label}: ${c} signups`}
+            style={{ flex:1, background: i === 11 ? "#818cf8" : "rgba(129,140,248,0.35)", borderRadius:"3px 3px 0 0",
+              height: `${Math.max((c / max) * 100, 4)}%`, transition:"height 0.3s", cursor:"default" }} />
+        ))}
+      </div>
+      <div style={{ display:"flex", justifyContent:"space-between", marginTop:4 }}>
+        <span style={{ fontSize:9, color:"#334155" }}>{months[0].label}</span>
+        <span style={{ fontSize:9, color:"#334155" }}>{months[11].label}</span>
+      </div>
+    </div>
+  );
+};
 
 const Badge = ({ plan }) => {
   const cfg = { free:["#64748b","#1e293b"], pro:["#818cf8","#1e1b4b"], proPlus:["#f59e0b","#1c1407"] };
@@ -139,7 +179,7 @@ const EditModal = ({ user, onSave, onClose }) => {
 
 // ─── ADMIN PANEL ──────────────────────────────────────────────────────────────
 
-const UserRow = ({ u, i, total, onInfo, onEdit, onAccess }) => {
+const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar }) => {
   const [expanded, setExpanded] = useState(false);
   const tempInfo = u.tempPlan && u.tempPlanExpiresAt ? (() => {
     const daysLeft = Math.ceil((new Date(u.tempPlanExpiresAt) - new Date()) / (1000 * 60 * 60 * 24));
@@ -171,6 +211,11 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess }) => {
         <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' })}</span>
         <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '—'}</span>
         <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+          <button onClick={onToggleStar}
+            title={starred ? "Unstar" : "Star user"}
+            style={{ padding:"6px 14px", background: starred ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)", border:`1px solid ${starred ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.08)"}`, borderRadius:8, color: starred ? "#f59e0b" : "#475569", fontSize:14, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+            {starred ? "★" : "☆"}
+          </button>
           <button onClick={onInfo}
             style={{ padding:"6px 14px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:8, color:"#4ade80", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
             Info
@@ -218,10 +263,16 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess }) => {
               <span style={{ fontSize:11, color:"#475569" }}>LAST SEEN</span>
               <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '—'}</span>
             </div>
-            <button onClick={onInfo}
-              style={{ width:"100%", padding:"10px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:8, color:"#4ade80", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
-              Info
-            </button>
+            <div style={{ display:"flex", gap:8 }}>
+              <button onClick={onToggleStar}
+                style={{ flex:1, padding:"10px", background: starred ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)", border:`1px solid ${starred ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.08)"}`, borderRadius:8, color: starred ? "#f59e0b" : "#475569", fontSize:14, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                {starred ? "★ Starred" : "☆ Star"}
+              </button>
+              <button onClick={onInfo}
+                style={{ flex:1, padding:"10px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:8, color:"#4ade80", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+                Info
+              </button>
+            </div>
             <button onClick={onEdit}
               style={{ width:"100%", padding:"10px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
               Edit
@@ -508,6 +559,7 @@ const AdminPanel = () => {
       if (filterSector !== "all" && u.companySector !== filterSector) return false;
       if (filterReferral !== "all" && u.referralSource !== filterReferral) return false;
       if (filterMarketing !== "all" && u.marketingConsent !== filterMarketing) return false;
+      if (filterStarred && !starredIds.has(u.id)) return false;
       if (dateFrom && new Date(u.joined) < new Date(dateFrom)) return false;
       if (dateTo) { const t = new Date(dateTo); t.setHours(23,59,59); if (new Date(u.joined) > t) return false; }
       return true;
@@ -551,6 +603,20 @@ const AdminPanel = () => {
   };
 
   const [statsWindow, setStatsWindow] = useState(7); // days: 7 | 30 | 90 | 365
+  const [starredIds, setStarredIds] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('admin_starred') || '[]')); }
+    catch { return new Set(); }
+  });
+  const [filterStarred, setFilterStarred] = useState(false);
+
+  const toggleStar = (id) => {
+    setStarredIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      localStorage.setItem('admin_starred', JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   const newSignups = users.filter(u => {
     if (!u.joined) return false;
@@ -607,7 +673,7 @@ const AdminPanel = () => {
       )}
 
       {/* Header */}
-      <div style={{ background:"#0d0d18", borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"16px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+      <div className="admin-header" style={{ background:"#0d0d18", borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"16px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
           <img src={LOGO_BASE64} alt="UtilitySEO" style={{ width:32, height:32, borderRadius:8, objectFit:"cover" }} />
           <span style={{ fontSize:16, fontWeight:700 }}>UtilitySEO</span>
@@ -616,9 +682,9 @@ const AdminPanel = () => {
         <button onClick={() => { setAuthed(false); setEmail(""); setPass(""); localStorage.removeItem('admin_authed'); }} style={{ padding:"8px 16px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, color:"#ef4444", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>Sign Out</button>
       </div>
 
-      <div style={{ padding:"32px" }}>
+      <div className="admin-body" style={{ padding:"32px" }}>
         {/* Stats */}
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:16, marginBottom:32 }}>
+        <div className="stats-grid" style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:16, marginBottom:32 }}>
           {stats.map(s => (
             <div key={s.label} className="glass" style={{ borderRadius:16, padding:20 }}>
               <div style={{ fontSize:24, marginBottom:8 }}>{s.icon}</div>
@@ -652,24 +718,35 @@ const AdminPanel = () => {
 
           {/* New Signups card with period selector */}
           <div className="glass" style={{ borderRadius:16, padding:20 }}>
-            <div style={{ fontSize:24, marginBottom:8 }}>📈</div>
-            <div style={{ fontSize:32, fontWeight:800, color:"#34d399" }}>{newSignups}</div>
-            <div style={{ fontSize:13, color:"#475569", marginTop:4, marginBottom:10 }}>New Signups</div>
-            <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
-              {[{label:"7d",val:7},{label:"30d",val:30},{label:"90d",val:90},{label:"1yr",val:365}].map(p => (
-                <button key={p.val} onClick={() => setStatsWindow(p.val)}
-                  style={{ padding:"3px 8px", fontSize:10, fontWeight:700, fontFamily:"Sora,sans-serif", cursor:"pointer", borderRadius:6, border:`1px solid ${statsWindow===p.val ? "#34d399" : "rgba(255,255,255,0.1)"}`, background: statsWindow===p.val ? "rgba(52,211,153,0.15)" : "rgba(255,255,255,0.04)", color: statsWindow===p.val ? "#34d399" : "#475569", transition:"all 0.12s" }}>
-                  {p.label}
-                </button>
-              ))}
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:2 }}>
+              <span style={{ fontSize:20 }}>📈</span>
+              <div style={{ display:"flex", gap:3 }}>
+                {[{label:"7d",val:7},{label:"30d",val:30},{label:"90d",val:90},{label:"1yr",val:365}].map(p => (
+                  <button key={p.val} onClick={() => setStatsWindow(p.val)}
+                    style={{ padding:"2px 6px", fontSize:9, fontWeight:700, fontFamily:"Sora,sans-serif", cursor:"pointer", borderRadius:5, border:`1px solid ${statsWindow===p.val ? "#34d399" : "rgba(255,255,255,0.1)"}`, background: statsWindow===p.val ? "rgba(52,211,153,0.15)" : "rgba(255,255,255,0.04)", color: statsWindow===p.val ? "#34d399" : "#475569" }}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
+            <div style={{ fontSize:28, fontWeight:800, color:"#34d399", marginTop:4 }}>{newSignups}</div>
+            <div style={{ fontSize:12, color:"#475569", marginBottom:4 }}>New Signups</div>
+          </div>
+
+          {/* Monthly chart card — full width */}
+          <div className="glass" style={{ borderRadius:16, padding:20, gridColumn:"1 / -1" }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
+              <span style={{ fontSize:13, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em" }}>Monthly Signups — Last 12 Months</span>
+              <span style={{ fontSize:11, color:"#334155" }}>Current month highlighted</span>
+            </div>
+            <MonthlyChart users={users} />
           </div>
         </div>
 
         {/* Tab Bar */}
-        <div style={{ display:"flex", gap:8, marginBottom:28, borderBottom:"1px solid rgba(255,255,255,0.07)", paddingBottom:0 }}>
+        <div className="tab-bar" style={{ display:"flex", gap:8, marginBottom:28, borderBottom:"1px solid rgba(255,255,255,0.07)", paddingBottom:0 }}>
           {[{ id:"users", label:"👥 Users" }, { id:"promos", label:"🎟 Promo Codes" }].map(tab => (
-            <button key={tab.id} onClick={() => handleTabSwitch(tab.id)}
+            <button key={tab.id} className="tab-btn" onClick={() => handleTabSwitch(tab.id)}
               style={{ padding:"10px 22px", background: activeTab===tab.id ? "rgba(99,102,241,0.2)" : "transparent", border:"none", borderBottom: activeTab===tab.id ? "2px solid #6366f1" : "2px solid transparent", color: activeTab===tab.id ? "#a5b4fc" : "#64748b", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", borderRadius:"8px 8px 0 0", marginBottom:-1, transition:"all 0.15s" }}>
               {tab.label}
             </button>
@@ -759,7 +836,14 @@ const AdminPanel = () => {
               )}
             </div>
           )}
-          <p style={{ color:"#334155", fontSize:12 }}>{filtered.length} of {users.length} users{activeFiltersCount>0?" (filtered)":""}</p>
+          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+            <button onClick={() => setFilterStarred(s => !s)}
+              title="Show starred only"
+              style={{ padding:"6px 14px", background: filterStarred ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)", border:`1px solid ${filterStarred ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.08)"}`, borderRadius:8, color: filterStarred ? "#f59e0b" : "#475569", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+              {filterStarred ? "★ Starred" : "☆ Starred"}
+            </button>
+            <p style={{ color:"#334155", fontSize:12 }}>{filtered.length} of {users.length} users{activeFiltersCount>0?" (filtered)":""}</p>
+          </div>
         </div>
 
         {/* Users Table */}
@@ -785,7 +869,7 @@ const AdminPanel = () => {
             {filtered.length === 0 ? (
               <div style={{ textAlign:"center", padding:60, color:"#334155" }}>No users found</div>
             ) : filtered.map((u, i) => (
-              <UserRow key={u.id} u={u} i={i} total={filtered.length} onInfo={() => setViewingUser(u)} onEdit={() => setEditing(u)} onAccess={() => accessAccount(u)} />
+              <UserRow key={u.id} u={u} i={i} total={filtered.length} onInfo={() => setViewingUser(u)} onEdit={() => setEditing(u)} onAccess={() => accessAccount(u)} starred={starredIds.has(u.id)} onToggleStar={() => toggleStar(u.id)} />
             ))}
           </div>
         )}
