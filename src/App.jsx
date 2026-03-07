@@ -89,6 +89,7 @@ const Spinner = () => <div className="spin" style={{ width:20, height:20, border
 const EditModal = ({ user, onSave, onClose }) => {
   const [plan, setPlan] = useState(user.plan);
   const [status, setStatus] = useState(user.status);
+  const [cookieConsent, setCookieConsent] = useState(user.cookieConsent || null);
   const [tempOn, setTempOn] = useState(!!user.tempPlan);
   const [tempPlan, setTempPlan] = useState(user.tempPlan || "pro");
   const [tempDays, setTempDays] = useState(7);
@@ -122,6 +123,17 @@ const EditModal = ({ user, onSave, onClose }) => {
             {[["active","Active","#22c55e"],["suspended","Suspended","#ef4444"]].map(([id,label,col]) => (
               <button key={id} onClick={() => setStatus(id)}
                 style={{ padding:"12px", borderRadius:12, border:`2px solid ${status===id ? col : "rgba(255,255,255,0.08)"}`, background: status===id ? `${col}18` : "rgba(255,255,255,0.03)", color: status===id ? col : "#64748b", fontWeight:600, fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Cookie Consent */}
+          <p style={{ fontSize:12, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Cookie Consent</p>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:20 }}>
+            {[["accepted","✅ Accepted","#22c55e"],["declined","❌ Declined","#ef4444"],[null,"⏳ Not Set","#475569"]].map(([val, label, col]) => (
+              <button key={String(val)} onClick={() => setCookieConsent(val)}
+                style={{ padding:"10px 8px", borderRadius:12, border:`2px solid ${cookieConsent===val ? col : "rgba(255,255,255,0.08)"}`, background: cookieConsent===val ? `${col}18` : "rgba(255,255,255,0.03)", color: cookieConsent===val ? col : "#64748b", fontWeight:600, fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", transition:"all 0.15s" }}>
                 {label}
               </button>
             ))}
@@ -167,7 +179,7 @@ const EditModal = ({ user, onSave, onClose }) => {
 
         <div style={{ padding:"16px 24px", borderTop:"1px solid rgba(255,255,255,0.06)", display:"flex", gap:10 }}>
           <button onClick={onClose} style={{ flex:1, padding:"12px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:12, color:"#64748b", fontSize:14, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>Cancel</button>
-          <button onClick={() => onSave({ ...user, plan, status, tempPlan: tempOn ? tempPlan : null, tempDays: tempOn ? tempDays : null, revokeTemp: !tempOn && !!user.tempPlan })}
+          <button onClick={() => onSave({ ...user, plan, status, cookieConsent, tempPlan: tempOn ? tempPlan : null, tempDays: tempOn ? tempDays : null, revokeTemp: !tempOn && !!user.tempPlan })}
             style={{ flex:2, padding:"12px", background:"#6366f1", border:"none", borderRadius:12, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
             Save Changes
           </button>
@@ -390,6 +402,7 @@ const AdminPanel = () => {
         referralSource: user.referral_source || '',
         marketingConsent: user.marketing_consent === true ? 'Yes' : 'No',
         cookieConsent: user.cookie_consent || null,
+        cookieConsentAt: user.cookie_consent_at || null,
         plan: user.plan || 'free',
         status: user.is_active === false ? 'deactivated' : 'active',
         joined: user.created_at,
@@ -444,7 +457,7 @@ const AdminPanel = () => {
       const response = await fetch(`${API_URL}/admin/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: updates.plan })
+        body: JSON.stringify({ plan: updates.plan, status: updates.status, cookie_consent: updates.cookieConsent })
       });
 
       if (!response.ok) throw new Error('Failed to update user');
@@ -465,7 +478,7 @@ const AdminPanel = () => {
         if (!revokeRes.ok) throw new Error('Failed to revoke temp plan');
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan: updatedUser.plan, tempPlan: null, tempPlanExpiresAt: null } : u));
       } else {
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan: updatedUser.plan } : u));
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan: updatedUser.plan, cookieConsent: updatedUser.cookie_consent || u.cookieConsent } : u));
       }
 
       showToast(`${updatedUser.email} updated successfully`);
@@ -862,7 +875,7 @@ const AdminPanel = () => {
               <SortTh col="email" label="Email" />
               <SortTh col="plan" label="Plan" />
               <SortTh col="status" label="Status" />
-              <SortTh col="searches" label="Searches" />
+              <SortTh col="searches" label="Today's Scans" />
               <span title="Cookie Consent" style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>🍪</span>
               <SortTh col="joined" label="Joined" />
               <SortTh col="lastLogin" label="Last Seen" />
