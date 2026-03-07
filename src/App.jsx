@@ -338,7 +338,7 @@ const AdminPanel = () => {
   const [filterMarketing, setFilterMarketing] = useState("all");
   const [filterStarred, setFilterStarred] = useState(false);
   const [starredIds, setStarredIds] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('admin_starred') || '[]')); }
+    try { return new Set((JSON.parse(localStorage.getItem('admin_starred') || '[]')).map(String)); }
     catch { return new Set(); }
   });
   const [viewingUser, setViewingUser] = useState(null);
@@ -582,7 +582,8 @@ const AdminPanel = () => {
   const toggleStar = (id) => {
     setStarredIds(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      const sid = String(id);
+      next.has(sid) ? next.delete(sid) : next.add(sid);
       localStorage.setItem('admin_starred', JSON.stringify([...next]));
       return next;
     });
@@ -899,7 +900,7 @@ const AdminPanel = () => {
             {filtered.length === 0 ? (
               <div style={{ textAlign:"center", padding:60, color:"#334155" }}>No users found</div>
             ) : filtered.map((u, i) => (
-              <UserRow key={u.id} u={u} i={i} total={filtered.length} onInfo={() => setViewingUser(u)} onEdit={() => setEditing(u)} onAccess={() => accessAccount(u)} starred={starredIds.has(u.id)} onToggleStar={() => toggleStar(u.id)} />
+              <UserRow key={u.id} u={u} i={i} total={filtered.length} onInfo={() => setViewingUser(u)} onEdit={() => setEditing(u)} onAccess={() => accessAccount(u)} starred={starredIds.has(String(u.id))} onToggleStar={() => toggleStar(String(u.id))} />
             ))}
           </div>
         )}
