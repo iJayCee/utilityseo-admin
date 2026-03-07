@@ -203,7 +203,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
     <div style={{ borderBottom: i < total - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
       {/* Desktop row */}
       <div className="desktop-only"
-        style={{ gridTemplateColumns:"2fr 100px 100px 80px 50px 90px 110px 140px", gap:16, padding:"16px 20px", alignItems:"center" }}
+        style={{ gridTemplateColumns:"2fr 100px 100px 60px 60px 50px 90px 110px 140px", gap:16, padding:"16px 20px", alignItems:"center" }}
         onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}
         onMouseLeave={e => e.currentTarget.style.background="transparent"}>
         <div>
@@ -216,7 +216,14 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
             {u.status}
           </span>
         </div>
-        <span style={{ fontSize:13, color:"#94a3b8" }}>{u.searches}</span>
+        <div>
+          <span style={{ fontSize:13, color:"#94a3b8" }}>{u.searches}</span>
+          <span style={{ fontSize:10, color:"#334155", display:"block" }}>today</span>
+        </div>
+        <div>
+          <span style={{ fontSize:13, color:"#94a3b8" }}>{u.totalScans}</span>
+          <span style={{ fontSize:10, color:"#334155", display:"block" }}>lifetime</span>
+        </div>
         <span title={`Cookie: ${u.cookieConsent || "not set"}`} style={{ fontSize:14, textAlign:"center" }}>
           {u.cookieConsent === "accepted" ? "✅" : u.cookieConsent === "declined" ? "❌" : "⏳"}
         </span>
@@ -264,8 +271,12 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
               </span>
             </div>
             <div style={{ display:"flex", justifyContent:"space-between" }}>
-              <span style={{ fontSize:11, color:"#475569" }}>SEARCHES</span>
+              <span style={{ fontSize:11, color:"#475569" }}>TODAY'S SCANS</span>
               <span style={{ fontSize:13, color:"#94a3b8" }}>{u.searches}</span>
+            </div>
+            <div style={{ display:"flex", justifyContent:"space-between" }}>
+              <span style={{ fontSize:11, color:"#475569" }}>LIFETIME SCANS</span>
+              <span style={{ fontSize:13, color:"#94a3b8" }}>{u.totalScans}</span>
             </div>
             <div style={{ display:"flex", justifyContent:"space-between" }}>
               <span style={{ fontSize:11, color:"#475569" }}>JOINED</span>
@@ -408,6 +419,7 @@ const AdminPanel = () => {
         joined: user.created_at,
         lastLogin: user.last_login || null,
         searches: user.scans_today || 0,
+        totalScans: user.total_scans || 0,
         tempPlan: user.temp_plan || null,
         tempPlanExpiresAt: user.temp_plan_expires_at || null,
       }));
@@ -601,6 +613,7 @@ const AdminPanel = () => {
       else if (sortCol === "plan") { av = a.plan; bv = b.plan; }
       else if (sortCol === "status") { av = a.status; bv = b.status; }
       else if (sortCol === "searches") { av = a.searches; bv = b.searches; }
+      else if (sortCol === "totalScans") { av = a.totalScans; bv = b.totalScans; }
       else if (sortCol === "joined")   { av = new Date(a.joined); bv = new Date(b.joined); }
       else if (sortCol === "lastLogin") { av = a.lastLogin ? new Date(a.lastLogin) : 0; bv = b.lastLogin ? new Date(b.lastLogin) : 0; }
       else { av = a[sortCol]||""; bv = b[sortCol]||""; }
@@ -610,14 +623,14 @@ const AdminPanel = () => {
     });
 
   const exportCSV = () => {
-    const headers = ["ID","Email","First Name","Last Name","Phone","Company","Sector","Job Role","Referral Source","Plan","Status","Joined","Last Login","Scans Today"];
+    const headers = ["ID","Email","First Name","Last Name","Phone","Company","Sector","Job Role","Referral Source","Plan","Status","Joined","Last Login","Scans Today","Lifetime Scans"];
     const rows = filtered.map(u => [
       u.id, u.email, u.firstName, u.lastName, u.phone,
       u.companyName, u.companySector, u.jobRole, u.referralSource,
       u.plan, u.status,
       u.joined ? new Date(u.joined).toLocaleDateString('en-GB') : '',
       u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('en-GB') : '',
-      u.searches
+      u.searches, u.totalScans
     ]);
     const csv = [headers,...rows].map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(",")).join("\n");
     const a = Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:`utilityseo-users-${new Date().toISOString().slice(0,10)}.csv`});
@@ -871,11 +884,12 @@ const AdminPanel = () => {
         ) : (
           <div className="glass" style={{ borderRadius:18, overflow:"hidden" }}>
             {/* Desktop header - hidden on mobile */}
-            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 80px 50px 90px 110px 140px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
+            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 60px 60px 50px 90px 110px 140px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
               <SortTh col="email" label="Email" />
               <SortTh col="plan" label="Plan" />
               <SortTh col="status" label="Status" />
-              <SortTh col="searches" label="Today's Scans" />
+              <SortTh col="searches" label="Today" />
+              <SortTh col="totalScans" label="Lifetime" />
               <span title="Cookie Consent" style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>🍪</span>
               <SortTh col="joined" label="Joined" />
               <SortTh col="lastLogin" label="Last Seen" />
@@ -1015,6 +1029,7 @@ const AdminPanel = () => {
                 ["Joined", viewingUser.joined ? new Date(viewingUser.joined).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" }) : "—"],
                 ["Last Login", viewingUser.lastLogin ? new Date(viewingUser.lastLogin).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" }) : "Never"],
                 ["Scans Today", viewingUser.searches ?? "—"],
+                ["Lifetime Scans", viewingUser.totalScans ?? "—"],
               ]},
               { title:"Personal", icon:"📋", rows:[
                 ["First Name", viewingUser.firstName || "—"],
