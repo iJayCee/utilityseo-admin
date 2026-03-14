@@ -464,8 +464,17 @@ const AdminPanel = () => {
         if (!ok) throw new Error(data.error || 'Failed');
         const url = `${MAIN_APP_URL}?impersonate=${encodeURIComponent(data.token)}&as=${encodeURIComponent(user.email)}&plan=${encodeURIComponent(data.user.plan || 'free')}`;
         if (isSameTab) {
+          sessionStorage.setItem('impersonationToken', data.token);
+          sessionStorage.setItem('impersonationEmail', user.email);
+          sessionStorage.setItem('impersonationPlan', data.user.plan || 'free');
           window.location.href = url;
         } else {
+          // Write token into new window sessionStorage before navigating
+          try {
+            newWin.sessionStorage.setItem('impersonationToken', data.token);
+            newWin.sessionStorage.setItem('impersonationEmail', user.email);
+            newWin.sessionStorage.setItem('impersonationPlan', data.user.plan || 'free');
+          } catch(e) {}
           newWin.location.href = url;
         }
       })
