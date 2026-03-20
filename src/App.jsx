@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 
 const LOGO_BASE64 = "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCABBAEEDASIAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAAAAQCAwUGAQcI/8QALhAAAgIBAgQEBgEFAAAAAAAAAAECAwQRYQUSMVEGcXKxFCEjJDSRQVJTYpKh/8QAGgEAAgMBAQAAAAAAAAAAAAAAAgQDBQYBB//EACoRAAICAgEBBgYDAAAAAAAAAAABAgMEERIhBRMUMVFxIjIzNEFhUpHB/9oADAMBAAIRAxEAPwD8jQqSrjol0B1rshmEPpx8kDgazwy4roOcBN1rsRcF2G3AawuDcSzo82Jg5F0f6owfL++hD4NzeorbOcDHdexFw2N3M8PcZxa3ZfwzKjBLVyVbaXm10MpwF7cKUHqUdAOGhRwIuA24EHATnjAOIrygXcoC/cA8Tcqh9KHpQOAxTD6FfpXsShWpWRT6NrU9A8PqCf6LLj0NrwvwfHcY5udBWa/OuuXTTu+50lOWkko6JL5JL+Dk6ctJJJ6JDdWZuS42VCpaiDGejraszc5vxh4axOJ0TzMGqFObFczUVordmu+/7JVZm41Vmbjtl9eTDhYtoNyUlpnyeVbTaa0aK3A3/FOPCvjeQ4LSNjU0t2tX/wB1MlwMtbi8ZNC7gIcoF/KBW9wR8Tfoh9vX6F7HsoNJtdS/Hh9tV6F7EnA9HWKpVpeqLPhtCFWZuNVZm5l8VxbaZPIpi5Qfzkl1W/kJVZm5gMmVuFc6ren+r1RWT5Vy0zrKszcaqzNzk6szcexrrJx5lrp3GcTJndNQh1YUJOT0izjNnxGdOfVJKP6EHAclAg4F9LGf5GuBmcoF3KBUdwQ8To8WH2tXoj7EnAtwVGeDRODUouuOjXkWOB6dXj7qi16ItlHohNwE8jhmHdLmnjx5n1a1jr+jVcCDgLZGBXcuNkU1+1sGVal5oyquGYlT1jSm/wDJt+5e4LsOOBBwFIdn1UrVcFH2WgFUo+SFHAg4DjgQcCOeMccTI5QD4jF/v1/7AZrdX8l/aFPh9RTgn4K9THWAC/Z/2tfsga/kRFnjABhhHhFgBEzjPGU5f49npYALX/Tl7MCXkzBAAMGVx//Z";
 
-// ─── FONTS & GLOBAL STYLES ────────────────────────────────────────────────────
 const GlobalStyles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -35,7 +34,6 @@ const GlobalStyles = () => (
   `}</style>
 );
 
-// ── Monthly signups sparkline chart ─────────────────────────────────────────
 const MonthlyChart = ({ users }) => {
   const [activeBar, setActiveBar] = useState(null);
   const months = [];
@@ -83,6 +81,23 @@ const Badge = ({ plan }) => {
   return <span style={{ color:col[0], background:col[1], border:`1px solid ${col[0]}33`, padding:"2px 10px", borderRadius:99, fontSize:11, fontWeight:600, letterSpacing:"0.03em" }}>{text}</span>;
 };
 
+// ── Status badge — distinct colours per state ─────────────────────────────────
+const StatusBadge = ({ status }) => {
+  const cfg = {
+    active:      { color:"#22c55e", bg:"rgba(34,197,94,0.1)",   border:"rgba(34,197,94,0.3)",   icon:"●", label:"Active" },
+    deactivated: { color:"#94a3b8", bg:"rgba(148,163,184,0.1)", border:"rgba(148,163,184,0.3)", icon:"○", label:"Deactivated" },
+    suspended:   { color:"#ef4444", bg:"rgba(239,68,68,0.1)",   border:"rgba(239,68,68,0.3)",   icon:"⊘", label:"Suspended" },
+  };
+  const c = cfg[status] || cfg.active;
+  return (
+    <span style={{ fontSize:12, fontWeight:600, color:c.color, background:c.bg,
+      border:`1px solid ${c.border}`, padding:"3px 10px", borderRadius:99,
+      display:"inline-flex", alignItems:"center", gap:4 }}>
+      <span style={{ fontSize:8 }}>{c.icon}</span>{c.label}
+    </span>
+  );
+};
+
 const Input = ({ label, ...props }) => (
   <div style={{ marginBottom:16 }}>
     {label && <label style={{ display:"block", fontSize:13, color:"#94a3b8", marginBottom:6, fontWeight:500 }}>{label}</label>}
@@ -127,16 +142,26 @@ const EditModal = ({ user, onSave, onClose }) => {
             ))}
           </div>
 
-          {/* Status */}
+          {/* Status — now includes Deactivated */}
           <p style={{ fontSize:12, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Account Status</p>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:20 }}>
-            {[["active","Active","#22c55e"],["suspended","Suspended","#ef4444"]].map(([id,label,col]) => (
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:20 }}>
+            {[
+              ["active","● Active","#22c55e"],
+              ["deactivated","○ Deactivated","#94a3b8"],
+              ["suspended","⊘ Suspended","#ef4444"],
+            ].map(([id,label,col]) => (
               <button key={id} onClick={() => setStatus(id)}
-                style={{ padding:"12px", borderRadius:12, border:`2px solid ${status===id ? col : "rgba(255,255,255,0.08)"}`, background: status===id ? `${col}18` : "rgba(255,255,255,0.03)", color: status===id ? col : "#64748b", fontWeight:600, fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                style={{ padding:"12px 8px", borderRadius:12, border:`2px solid ${status===id ? col : "rgba(255,255,255,0.08)"}`, background: status===id ? `${col}18` : "rgba(255,255,255,0.03)", color: status===id ? col : "#64748b", fontWeight:600, fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
                 {label}
               </button>
             ))}
           </div>
+
+          {status === "deactivated" && (
+            <div style={{ padding:"10px 14px", background:"rgba(148,163,184,0.08)", border:"1px solid rgba(148,163,184,0.2)", borderRadius:10, marginBottom:20 }}>
+              <p style={{ fontSize:12, color:"#94a3b8" }}>⚠️ Deactivated accounts cannot log in. The user deactivated their own account and can be reactivated here.</p>
+            </div>
+          )}
 
           {/* Cookie Consent */}
           <p style={{ fontSize:12, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Cookie Consent</p>
@@ -199,8 +224,7 @@ const EditModal = ({ user, onSave, onClose }) => {
   );
 };
 
-// ─── ADMIN PANEL ──────────────────────────────────────────────────────────────
-
+// ─── USER ROW ──────────────────────────────────────────────────────────────────
 const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar }) => {
   const [expanded, setExpanded] = useState(false);
   const tempInfo = u.tempPlan && u.tempPlanExpiresAt ? (() => {
@@ -209,23 +233,26 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
     return `⏱ Temp ${planLabel} · ${daysLeft > 0 ? `${daysLeft}d left` : "Expired"}`;
   })() : null;
 
+  const isDeactivated = u.status === "deactivated";
+
   return (
-    <div style={{ borderBottom: i < total - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+    <div style={{ borderBottom: i < total - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+      background: isDeactivated ? "rgba(148,163,184,0.03)" : "transparent" }}>
       {/* Desktop row */}
       <div className="desktop-only"
-        style={{ gridTemplateColumns:"2fr 100px 100px 60px 60px 50px 90px 110px 140px", gap:16, padding:"16px 20px", alignItems:"center" }}
+        style={{ gridTemplateColumns:"2fr 100px 130px 60px 60px 50px 90px 110px 140px", gap:16, padding:"16px 20px", alignItems:"center",
+          opacity: isDeactivated ? 0.65 : 1 }}
         onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}
-        onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+        onMouseLeave={e => e.currentTarget.style.background=isDeactivated ? "rgba(148,163,184,0.03)" : "transparent"}>
         <div>
-          <p style={{ fontSize:13, color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace" }}>{u.email}</p>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <p style={{ fontSize:13, color: isDeactivated ? "#64748b" : "#e2e8f0", fontFamily:"JetBrains Mono,monospace" }}>{u.email}</p>
+            {isDeactivated && <span style={{ fontSize:10, color:"#94a3b8", background:"rgba(148,163,184,0.1)", border:"1px solid rgba(148,163,184,0.2)", padding:"1px 6px", borderRadius:4, fontWeight:700, letterSpacing:"0.05em" }}>DEACTIVATED</span>}
+          </div>
           {tempInfo && <p style={{ fontSize:11, color:"#f59e0b", marginTop:3 }}>{tempInfo}</p>}
         </div>
         <div><Badge plan={u.plan} /></div>
-        <div>
-          <span style={{ fontSize:12, fontWeight:600, color: u.status==="active" ? "#22c55e" : "#ef4444", background: u.status==="active" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", padding:"3px 10px", borderRadius:99 }}>
-            {u.status}
-          </span>
-        </div>
+        <div><StatusBadge status={u.status} /></div>
         <div>
           <span style={{ fontSize:13, color:"#94a3b8" }}>{u.searches}</span>
           <span style={{ fontSize:10, color:"#334155", display:"block" }}>today</span>
@@ -253,18 +280,21 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
             style={{ padding:"6px 14px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
             Edit
           </button>
-          <button onClick={onAccess}
-            style={{ padding:"6px 14px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, color:"#f87171", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, whiteSpace:"nowrap" }}>
-            👤 Access Account
-          </button>
+          {!isDeactivated && (
+            <button onClick={onAccess}
+              style={{ padding:"6px 14px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, color:"#f87171", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, whiteSpace:"nowrap" }}>
+              👤 Access Account
+            </button>
+          )}
         </div>
       </div>
 
       {/* Mobile row */}
       <div className="mobile-only">
         <button onClick={() => setExpanded(e => !e)}
-          style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 16px", background:"transparent", border:"none", color:"#e2e8f0", cursor:"pointer", fontFamily:"JetBrains Mono,monospace", fontSize:13, textAlign:"left" }}>
+          style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 16px", background:"transparent", border:"none", color: isDeactivated ? "#64748b" : "#e2e8f0", cursor:"pointer", fontFamily:"JetBrains Mono,monospace", fontSize:13, textAlign:"left" }}>
           <span style={{ flex:1, minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginRight:8 }}>{u.email}</span>
+          {isDeactivated && <span style={{ fontSize:9, color:"#94a3b8", background:"rgba(148,163,184,0.1)", padding:"1px 5px", borderRadius:3, fontWeight:700, marginRight:6, flexShrink:0 }}>OFF</span>}
           <span style={{ fontSize:11, color:"#475569", marginRight:8, flexShrink:0 }}>{expanded ? "▲" : "▼"}</span>
         </button>
         {expanded && (
@@ -276,9 +306,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
             {tempInfo && <p style={{ fontSize:11, color:"#f59e0b" }}>{tempInfo}</p>}
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <span style={{ fontSize:11, color:"#475569" }}>STATUS</span>
-              <span style={{ fontSize:12, fontWeight:600, color: u.status==="active" ? "#22c55e" : "#ef4444", background: u.status==="active" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)", padding:"3px 10px", borderRadius:99 }}>
-                {u.status}
-              </span>
+              <StatusBadge status={u.status} />
             </div>
             <div style={{ display:"flex", justifyContent:"space-between" }}>
               <span style={{ fontSize:11, color:"#475569" }}>TODAY'S SCANS</span>
@@ -310,16 +338,19 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
               style={{ width:"100%", padding:"10px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
               Edit
             </button>
-            <button onClick={onAccess}
-              style={{ width:"100%", padding:"10px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, color:"#f87171", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
-              👤 Access Account
-            </button>
+            {!isDeactivated && (
+              <button onClick={onAccess}
+                style={{ width:"100%", padding:"10px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, color:"#f87171", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+                👤 Access Account
+              </button>
+            )}
           </div>
         )}
       </div>
     </div>
   );
 };
+
 
 const AdminPanel = () => {
   const [authed, setAuthed] = useState(() => localStorage.getItem('admin_authed') === 'true');
@@ -334,13 +365,12 @@ const AdminPanel = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [adminCreds, setAdminCreds] = useState(() => { try { return JSON.parse(sessionStorage.getItem('admin_creds') || 'null'); } catch { return null; } });
 
-  const [activeTab, setActiveTab] = useState("users"); // "users" | "promos"
+  const [activeTab, setActiveTab] = useState("users");
   const [promos, setPromos] = useState([]);
   const [loadingPromos, setLoadingPromos] = useState(false);
   const [promoForm, setPromoForm] = useState({ code:"", description:"", trial_plan:"pro", trial_days:"14", max_uses:"", expires_at:"" });
   const [promoFormError, setPromoFormError] = useState("");
   const [savingPromo, setSavingPromo] = useState(false);
-  const [editingPromo, setEditingPromo] = useState(null); // promo being edited inline
   const [filterPlan, setFilterPlan] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterSector, setFilterSector] = useState("all");
@@ -356,16 +386,12 @@ const AdminPanel = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [sortCol, setSortCol] = useState("joined");
   const [sortDir, setSortDir] = useState("desc");
-  const [statsWindow, setStatsWindow] = useState(7); // days: 7 | 30 | 90 | 365
-
+  const [statsWindow, setStatsWindow] = useState(7);
 
   const MAIN_APP_URL = import.meta.env.VITE_MAIN_APP_URL || 'https://app.utilityseo.com';
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
-  // Auto-load users if already authenticated (e.g. after page refresh)
-  useEffect(() => {
-    if (authed) loadUsers();
-  }, []);
+  useEffect(() => { if (authed) loadUsers(); }, []);
 
   const showToast = (msg, isError = false) => {
     setToast({ msg, isError });
@@ -374,34 +400,18 @@ const AdminPanel = () => {
 
   const doLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setErr("");
-
+    setLoading(true); setErr("");
     try {
-      const response = await fetch(`${API_URL}/admin/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pass })
-      });
-
-      if (!response.ok) {
-        // If wrong credentials, show error — do NOT let them in
-        setErr("Access denied. Invalid credentials.");
-        setLoading(false);
-        return;
-      }
-
-      const creds = { email, password: pass };
+      const response = await fetch(`${API_URL}/admin/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email, password:pass }) });
+      if (!response.ok) { setErr("Access denied. Invalid credentials."); setLoading(false); return; }
+      const creds = { email, password:pass };
       setAdminCreds(creds);
       sessionStorage.setItem('admin_creds', JSON.stringify(creds));
       setAuthed(true);
       localStorage.setItem('admin_authed', 'true');
       loadUsers();
-    } catch (error) {
-      setErr("Connection error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setErr("Connection error. Please try again."); }
+    finally { setLoading(false); }
   };
 
   const loadUsers = async () => {
@@ -409,8 +419,7 @@ const AdminPanel = () => {
     try {
       const response = await fetch(`${API_URL}/admin/users`);
       const data = await response.json();
-
-      const transformedUsers = data.map(user => ({
+      const transformed = data.map(user => ({
         id: user.id.toString(),
         email: user.email,
         firstName: user.first_name || '',
@@ -434,103 +443,55 @@ const AdminPanel = () => {
         isStarred: user.is_starred || false,
         adminNotes: user.admin_notes || '',
       }));
-
-      setUsers(transformedUsers);
-      setStarredIds(new Set(transformedUsers.filter(u => u.isStarred).map(u => String(u.id))));
-    } catch (error) {
-      showToast('Failed to load users', true);
-    } finally {
-      setLoadingUsers(false);
-    }
+      setUsers(transformed);
+      setStarredIds(new Set(transformed.filter(u => u.isStarred).map(u => String(u.id))));
+    } catch { showToast('Failed to load users', true); }
+    finally { setLoadingUsers(false); }
   };
 
   const accessAccount = (user) => {
     if (!adminCreds) { showToast('Session expired — please log out and log in again', true); return; }
-    // Open the window immediately (same tick as the click) so mobile browsers allow it.
-    // We use _self to navigate in the same tab — more reliable on mobile than _blank.
-    // Show a loading state on the window while the fetch completes.
     const newWin = window.open('', '_blank') || window;
     const isSameTab = newWin === window;
     if (newWin && !isSameTab) {
       newWin.document.write('<html><body style="background:#0a0a0f;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#818cf8;font-size:15px;">Loading account…</body></html>');
     }
-    fetch(`${API_URL}/admin/impersonate/${user.id}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminEmail: adminCreds.email, adminPassword: adminCreds.password })
-    })
-      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    fetch(`${API_URL}/admin/impersonate/${user.id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ adminEmail:adminCreds.email, adminPassword:adminCreds.password }) })
+      .then(r => r.json().then(data => ({ ok:r.ok, data })))
       .then(({ ok, data }) => {
         if (!ok) throw new Error(data.error || 'Failed');
         const url = `${MAIN_APP_URL}?impersonate=${encodeURIComponent(data.token)}&as=${encodeURIComponent(user.email)}&plan=${encodeURIComponent(data.user.plan || 'free')}`;
-        if (isSameTab) {
-          sessionStorage.setItem('impersonationToken', data.token);
-          sessionStorage.setItem('impersonationEmail', user.email);
-          sessionStorage.setItem('impersonationPlan', data.user.plan || 'free');
-          window.location.href = url;
-        } else {
-          // Write token into new window sessionStorage before navigating
-          try {
-            newWin.sessionStorage.setItem('impersonationToken', data.token);
-            newWin.sessionStorage.setItem('impersonationEmail', user.email);
-            newWin.sessionStorage.setItem('impersonationPlan', data.user.plan || 'free');
-          } catch(e) {}
-          newWin.location.href = url;
-        }
+        if (isSameTab) { sessionStorage.setItem('impersonationToken', data.token); sessionStorage.setItem('impersonationEmail', user.email); sessionStorage.setItem('impersonationPlan', data.user.plan || 'free'); window.location.href = url; }
+        else { try { newWin.sessionStorage.setItem('impersonationToken', data.token); newWin.sessionStorage.setItem('impersonationEmail', user.email); newWin.sessionStorage.setItem('impersonationPlan', data.user.plan || 'free'); } catch(e) {} newWin.location.href = url; }
       })
-      .catch(e => {
-        if (!isSameTab) newWin.close();
-        showToast(`Error: ${e.message}`, true);
-      });
+      .catch(e => { if (!isSameTab) newWin.close(); showToast(`Error: ${e.message}`, true); });
   };
 
   const updateUser = async (userId, updates) => {
     try {
-      // Update permanent plan
-      const response = await fetch(`${API_URL}/admin/users/${userId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: updates.plan, status: updates.status, cookie_consent: updates.cookieConsent })
-      });
-
+      const response = await fetch(`${API_URL}/admin/users/${userId}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ plan:updates.plan, status:updates.status, cookie_consent:updates.cookieConsent }) });
       if (!response.ok) throw new Error('Failed to update user');
       const updatedUser = await response.json();
-
-      // Handle temp plan — set or revoke
       if (updates.tempPlan && updates.tempDays) {
-        const tempRes = await fetch(`${API_URL}/admin/users/${userId}/temp-plan`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plan: updates.tempPlan, days: updates.tempDays })
-        });
+        const tempRes = await fetch(`${API_URL}/admin/users/${userId}/temp-plan`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ plan:updates.tempPlan, days:updates.tempDays }) });
         if (!tempRes.ok) throw new Error('Failed to set temp plan');
         const tempData = await tempRes.json();
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan: updatedUser.plan, tempPlan: tempData.temp_plan, tempPlanExpiresAt: tempData.temp_plan_expires_at } : u));
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan:updatedUser.plan, status:updates.status, tempPlan:tempData.temp_plan, tempPlanExpiresAt:tempData.temp_plan_expires_at } : u));
       } else if (updates.revokeTemp) {
-        const revokeRes = await fetch(`${API_URL}/admin/users/${userId}/temp-plan`, { method: 'DELETE' });
+        const revokeRes = await fetch(`${API_URL}/admin/users/${userId}/temp-plan`, { method:'DELETE' });
         if (!revokeRes.ok) throw new Error('Failed to revoke temp plan');
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan: updatedUser.plan, tempPlan: null, tempPlanExpiresAt: null } : u));
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan:updatedUser.plan, status:updates.status, tempPlan:null, tempPlanExpiresAt:null } : u));
       } else {
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan: updatedUser.plan, cookieConsent: updatedUser.cookie_consent || u.cookieConsent } : u));
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan:updatedUser.plan, status:updates.status, cookieConsent:updatedUser.cookie_consent || u.cookieConsent } : u));
       }
-
       showToast(`${updatedUser.email} updated successfully`);
-    } catch (error) {
-      showToast('Failed to update user', true);
-    }
+    } catch { showToast('Failed to update user', true); }
   };
-
-  // ─── TABS ────────────────────────────────────────────────────────────────────
-
-  // ─── PROMO CODES ─────────────────────────────────────────────────────────────
 
   const loadPromos = async () => {
     setLoadingPromos(true);
-    try {
-      const res = await fetch(`${API_URL}/admin/promo-codes`);
-      const data = await res.json();
-      setPromos(data);
-    } catch { showToast("Failed to load promo codes", true); }
+    try { const res = await fetch(`${API_URL}/admin/promo-codes`); const data = await res.json(); setPromos(data); }
+    catch { showToast("Failed to load promo codes", true); }
     finally { setLoadingPromos(false); }
   };
 
@@ -540,17 +501,7 @@ const AdminPanel = () => {
     if (!promoForm.trial_days || isNaN(promoForm.trial_days) || Number(promoForm.trial_days) < 1) { setPromoFormError("Trial days must be a positive number"); return; }
     setSavingPromo(true);
     try {
-      const res = await fetch(`${API_URL}/admin/promo-codes`, {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({
-          code: promoForm.code.trim().toUpperCase(),
-          description: promoForm.description.trim() || null,
-          trial_plan: promoForm.trial_plan,
-          trial_days: Number(promoForm.trial_days),
-          max_uses: promoForm.max_uses ? Number(promoForm.max_uses) : null,
-          expires_at: promoForm.expires_at || null,
-        })
-      });
+      const res = await fetch(`${API_URL}/admin/promo-codes`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ code:promoForm.code.trim().toUpperCase(), description:promoForm.description.trim()||null, trial_plan:promoForm.trial_plan, trial_days:Number(promoForm.trial_days), max_uses:promoForm.max_uses?Number(promoForm.max_uses):null, expires_at:promoForm.expires_at||null }) });
       const data = await res.json();
       if (!res.ok) { setPromoFormError(data.error || "Failed"); return; }
       setPromos(prev => [data, ...prev]);
@@ -562,10 +513,7 @@ const AdminPanel = () => {
 
   const togglePromoActive = async (promo) => {
     try {
-      const res = await fetch(`${API_URL}/admin/promo-codes/${promo.id}`, {
-        method:"PATCH", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ is_active: !promo.is_active })
-      });
+      const res = await fetch(`${API_URL}/admin/promo-codes/${promo.id}`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ is_active:!promo.is_active }) });
       const data = await res.json();
       if (!res.ok) { showToast("Failed to update", true); return; }
       setPromos(prev => prev.map(p => p.id === promo.id ? data : p));
@@ -582,18 +530,14 @@ const AdminPanel = () => {
     } catch { showToast("Network error", true); }
   };
 
-  // Load promo codes when switching to promos tab
   const handleTabSwitch = (tab) => {
     setActiveTab(tab);
     if (tab === "promos" && promos.length === 0) loadPromos();
   };
 
-  // ─── FILTERS & SORT ──────────────────────────────────────────────────────────
-
   const allSectors = [...new Set(users.map(u => u.companySector).filter(Boolean))].sort();
   const allReferrals = [...new Set(users.map(u => u.referralSource).filter(Boolean))].sort();
   const activeFiltersCount = [filterPlan!=="all", filterStatus!=="all", filterSector!=="all", filterReferral!=="all", filterMarketing!=="all", dateFrom, dateTo].filter(Boolean).length;
-
 
   const toggleSort = (col) => {
     if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -603,54 +547,26 @@ const AdminPanel = () => {
   const saveNote = async (userId, text) => {
     setNoteSaving(true);
     try {
-      const res = await fetch(`${API_URL}/admin/users/${userId}/notes`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes: text })
-      });
+      const res = await fetch(`${API_URL}/admin/users/${userId}/notes`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ notes:text }) });
       if (!res.ok) throw new Error('Save failed');
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, adminNotes: text } : u));
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, adminNotes:text } : u));
       showToast('Note saved');
-    } catch {
-      showToast('Failed to save note', true);
-    }
+    } catch { showToast('Failed to save note', true); }
     setNoteSaving(false);
   };
 
   const toggleStar = async (id) => {
     const sid = String(id);
-    // Optimistic update
-    setStarredIds(prev => {
-      const next = new Set(prev);
-      next.has(sid) ? next.delete(sid) : next.add(sid);
-      return next;
-    });
-    try {
-      await fetch(`${API_URL}/admin/users/${id}/star`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' }
-      });
-    } catch (err) {
-      console.error('Failed to toggle star:', err);
-      // Revert on failure
-      setStarredIds(prev => {
-        const next = new Set(prev);
-        next.has(sid) ? next.delete(sid) : next.add(sid);
-        return next;
-      });
-    }
+    setStarredIds(prev => { const next = new Set(prev); next.has(sid) ? next.delete(sid) : next.add(sid); return next; });
+    try { await fetch(`${API_URL}/admin/users/${id}/star`, { method:'PATCH', headers:{'Content-Type':'application/json'} }); }
+    catch { setStarredIds(prev => { const next = new Set(prev); next.has(sid) ? next.delete(sid) : next.add(sid); return next; }); }
   };
 
   const filtered = users
     .filter(u => {
       const q = search.toLowerCase();
-      if (q && !u.email.toLowerCase().includes(q) &&
-          !(u.firstName+' '+u.lastName).toLowerCase().includes(q) &&
-          !(u.companyName||'').toLowerCase().includes(q)) return false;
-      if (filterPlan !== "all") {
-        if (filterPlan === "trial") { if (!u.tempPlan) return false; }
-        else if (u.plan !== filterPlan) return false;
-      }
+      if (q && !u.email.toLowerCase().includes(q) && !(u.firstName+' '+u.lastName).toLowerCase().includes(q) && !(u.companyName||'').toLowerCase().includes(q)) return false;
+      if (filterPlan !== "all") { if (filterPlan === "trial") { if (!u.tempPlan) return false; } else if (u.plan !== filterPlan) return false; }
       if (filterStatus !== "all" && u.status !== filterStatus) return false;
       if (filterSector !== "all" && u.companySector !== filterSector) return false;
       if (filterReferral !== "all" && u.referralSource !== filterReferral) return false;
@@ -662,29 +578,22 @@ const AdminPanel = () => {
     })
     .sort((a, b) => {
       let av, bv;
-      if (sortCol === "email")     { av = a.email; bv = b.email; }
-      else if (sortCol === "plan") { av = a.plan; bv = b.plan; }
-      else if (sortCol === "status") { av = a.status; bv = b.status; }
-      else if (sortCol === "searches") { av = a.searches; bv = b.searches; }
-      else if (sortCol === "totalScans") { av = a.totalScans; bv = b.totalScans; }
-      else if (sortCol === "joined")   { av = new Date(a.joined); bv = new Date(b.joined); }
-      else if (sortCol === "lastLogin") { av = a.lastLogin ? new Date(a.lastLogin) : 0; bv = b.lastLogin ? new Date(b.lastLogin) : 0; }
-      else { av = a[sortCol]||""; bv = b[sortCol]||""; }
-      if (av < bv) return sortDir === "asc" ? -1 : 1;
-      if (av > bv) return sortDir === "asc" ? 1 : -1;
+      if (sortCol === "email") { av=a.email; bv=b.email; }
+      else if (sortCol === "plan") { av=a.plan; bv=b.plan; }
+      else if (sortCol === "status") { av=a.status; bv=b.status; }
+      else if (sortCol === "searches") { av=a.searches; bv=b.searches; }
+      else if (sortCol === "totalScans") { av=a.totalScans; bv=b.totalScans; }
+      else if (sortCol === "joined") { av=new Date(a.joined); bv=new Date(b.joined); }
+      else if (sortCol === "lastLogin") { av=a.lastLogin?new Date(a.lastLogin):0; bv=b.lastLogin?new Date(b.lastLogin):0; }
+      else { av=a[sortCol]||""; bv=b[sortCol]||""; }
+      if (av < bv) return sortDir==="asc"?-1:1;
+      if (av > bv) return sortDir==="asc"?1:-1;
       return 0;
     });
 
   const exportCSV = () => {
     const headers = ["ID","Email","First Name","Last Name","Phone","Company","Sector","Job Role","Referral Source","Plan","Status","Joined","Last Login","Scans Today","Lifetime Scans"];
-    const rows = filtered.map(u => [
-      u.id, u.email, u.firstName, u.lastName, u.phone,
-      u.companyName, u.companySector, u.jobRole, u.referralSource,
-      u.plan, u.status,
-      u.joined ? new Date(u.joined).toLocaleDateString('en-GB') : '',
-      u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('en-GB') : '',
-      u.searches, u.totalScans
-    ]);
+    const rows = filtered.map(u => [u.id,u.email,u.firstName,u.lastName,u.phone,u.companyName,u.companySector,u.jobRole,u.referralSource,u.plan,u.status,u.joined?new Date(u.joined).toLocaleDateString('en-GB'):'',u.lastLogin?new Date(u.lastLogin).toLocaleDateString('en-GB'):'',u.searches,u.totalScans]);
     const csv = [headers,...rows].map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(",")).join("\n");
     const a = Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:`utilityseo-users-${new Date().toISOString().slice(0,10)}.csv`});
     a.click();
@@ -693,32 +602,28 @@ const AdminPanel = () => {
   const SortTh = ({ col, label }) => {
     const active = sortCol === col;
     return (
-      <span onClick={() => toggleSort(col)} style={{ cursor:"pointer", userSelect:"none", fontSize:11, color: active ? "#818cf8" : "#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", display:"flex", alignItems:"center", gap:3 }}>
-        {label} <span style={{ fontSize:9, opacity: active ? 1 : 0.4 }}>{active ? (sortDir==="asc"?"▲":"▼") : "⇅"}</span>
+      <span onClick={() => toggleSort(col)} style={{ cursor:"pointer", userSelect:"none", fontSize:11, color:active?"#818cf8":"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", display:"flex", alignItems:"center", gap:3 }}>
+        {label} <span style={{ fontSize:9, opacity:active?1:0.4 }}>{active?(sortDir==="asc"?"▲":"▼"):"⇅"}</span>
       </span>
     );
   };
 
-
-  const newSignups = users.filter(u => {
-    if (!u.joined) return false;
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - statsWindow);
-    return new Date(u.joined) >= cutoff;
-  }).length;
-
-  const countFree    = users.filter(u => u.plan === "free").length;
-  const countPro     = users.filter(u => u.plan === "pro").length;
-  const countProPlus = users.filter(u => u.plan === "proPlus").length;
+  const newSignups = users.filter(u => { if (!u.joined) return false; const c=new Date(); c.setDate(c.getDate()-statsWindow); return new Date(u.joined)>=c; }).length;
+  const countFree    = users.filter(u => u.plan==="free").length;
+  const countPro     = users.filter(u => u.plan==="pro").length;
+  const countProPlus = users.filter(u => u.plan==="proPlus").length;
   const countPaid    = countPro + countProPlus;
+  const countDeactivated = users.filter(u => u.status==="deactivated").length;
 
   const stats = [
-    { label:"Total Users", val: users.length, icon:"👥", col:"#818cf8" },
-    { label:"Active", val: users.filter(u=>u.status==="active").length, icon:"✅", col:"#22c55e" },
-    { label:"Temp Access", val: users.filter(u=>u.tempPlan).length, icon:"⏱", col:"#38bdf8" },
+    { label:"Total Users",   val:users.length,                                      icon:"👥", col:"#818cf8" },
+    { label:"Active",        val:users.filter(u=>u.status==="active").length,        icon:"✅", col:"#22c55e" },
+    { label:"Deactivated",   val:countDeactivated,                                   icon:"○",  col:"#94a3b8",
+      onClick: () => { setFilterStatus("deactivated"); setShowFilters(true); } },
+    { label:"Temp Access",   val:users.filter(u=>u.tempPlan).length,                 icon:"⏱", col:"#38bdf8" },
   ];
 
-  // ─── LOGIN SCREEN ───────────────────────────────────────────────────────────
+  // ─── LOGIN ───────────────────────────────────────────────────────────────────
   if (!authed) return (
     <div style={{ minHeight:"100vh", background:"#070710", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
       <div style={{ width:"100%", maxWidth:400 }}>
@@ -745,16 +650,11 @@ const AdminPanel = () => {
     </div>
   );
 
-  // ─── ADMIN DASHBOARD ────────────────────────────────────────────────────────
+  // ─── DASHBOARD ───────────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight:"100vh", background:"#070710", fontFamily:"Sora,sans-serif" }}>
-      {toast && (
-        <div style={{ position:"fixed", top:20, right:20, zIndex:999, background: toast.isError ? "#ef4444" : "#22c55e", color:"#fff", padding:"12px 20px", borderRadius:12, fontSize:13, fontWeight:600, boxShadow:"0 8px 32px rgba(0,0,0,0.4)" }}>
-          {toast.isError ? "✗" : "✓"} {toast.msg}
-        </div>
-      )}
+      {toast && <div style={{ position:"fixed", top:20, right:20, zIndex:999, background:toast.isError?"#ef4444":"#22c55e", color:"#fff", padding:"12px 20px", borderRadius:12, fontSize:13, fontWeight:600, boxShadow:"0 8px 32px rgba(0,0,0,0.4)" }}>{toast.isError?"✗":"✓"} {toast.msg}</div>}
 
-      {/* Header */}
       <div className="admin-header" style={{ background:"#0d0d18", borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"16px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
           <img src={LOGO_BASE64} alt="UtilitySEO" style={{ width:32, height:32, borderRadius:8, objectFit:"cover" }} />
@@ -768,14 +668,17 @@ const AdminPanel = () => {
         {/* Stats */}
         <div className="stats-grid" style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:16, marginBottom:32 }}>
           {stats.map(s => (
-            <div key={s.label} className="glass" style={{ borderRadius:16, padding:20 }}>
+            <div key={s.label} className="glass" style={{ borderRadius:16, padding:20, cursor:s.onClick?"pointer":"default", transition:"border-color 0.15s" }}
+              onClick={s.onClick}
+              onMouseEnter={e => { if(s.onClick) e.currentTarget.style.borderColor="rgba(255,255,255,0.15)"; }}
+              onMouseLeave={e => { if(s.onClick) e.currentTarget.style.borderColor="rgba(255,255,255,0.08)"; }}>
               <div style={{ fontSize:24, marginBottom:8 }}>{s.icon}</div>
               <div style={{ fontSize:32, fontWeight:800, color:s.col }}>{s.val}</div>
               <div style={{ fontSize:13, color:"#475569", marginTop:4 }}>{s.label}</div>
+              {s.onClick && <div style={{ fontSize:10, color:"#334155", marginTop:4 }}>click to filter ↗</div>}
             </div>
           ))}
 
-          {/* Plan breakdown card */}
           <div className="glass" style={{ borderRadius:16, padding:20 }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:2 }}>
               <span style={{ fontSize:24 }}>💰</span>
@@ -783,29 +686,19 @@ const AdminPanel = () => {
             </div>
             <div style={{ fontSize:13, color:"#475569", marginBottom:12 }}>Paid</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
-              <div style={{ textAlign:"center" }}>
-                <div style={{ fontSize:20, fontWeight:800, color:"#64748b" }}>{countFree}</div>
-                <div style={{ fontSize:10, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Free</div>
-              </div>
-              <div style={{ textAlign:"center", borderLeft:"1px solid rgba(255,255,255,0.07)", borderRight:"1px solid rgba(255,255,255,0.07)" }}>
-                <div style={{ fontSize:20, fontWeight:800, color:"#818cf8" }}>{countPro}</div>
-                <div style={{ fontSize:10, fontWeight:700, color:"#6366f1", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Pro</div>
-              </div>
-              <div style={{ textAlign:"center" }}>
-                <div style={{ fontSize:20, fontWeight:800, color:"#f59e0b" }}>{countProPlus}</div>
-                <div style={{ fontSize:10, fontWeight:700, color:"#d97706", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Pro+</div>
-              </div>
+              <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:"#64748b" }}>{countFree}</div><div style={{ fontSize:10, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Free</div></div>
+              <div style={{ textAlign:"center", borderLeft:"1px solid rgba(255,255,255,0.07)", borderRight:"1px solid rgba(255,255,255,0.07)" }}><div style={{ fontSize:20, fontWeight:800, color:"#818cf8" }}>{countPro}</div><div style={{ fontSize:10, fontWeight:700, color:"#6366f1", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Pro</div></div>
+              <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:"#f59e0b" }}>{countProPlus}</div><div style={{ fontSize:10, fontWeight:700, color:"#d97706", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Pro+</div></div>
             </div>
           </div>
 
-          {/* New Signups card with period selector */}
           <div className="glass" style={{ borderRadius:16, padding:20 }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:2 }}>
               <span style={{ fontSize:20 }}>📈</span>
               <div style={{ display:"flex", gap:3 }}>
                 {[{label:"7d",val:7},{label:"30d",val:30},{label:"90d",val:90},{label:"1yr",val:365}].map(p => (
                   <button key={p.val} onClick={() => setStatsWindow(p.val)}
-                    style={{ padding:"2px 6px", fontSize:9, fontWeight:700, fontFamily:"Sora,sans-serif", cursor:"pointer", borderRadius:5, border:`1px solid ${statsWindow===p.val ? "#34d399" : "rgba(255,255,255,0.1)"}`, background: statsWindow===p.val ? "rgba(52,211,153,0.15)" : "rgba(255,255,255,0.04)", color: statsWindow===p.val ? "#34d399" : "#475569" }}>
+                    style={{ padding:"2px 6px", fontSize:9, fontWeight:700, fontFamily:"Sora,sans-serif", cursor:"pointer", borderRadius:5, border:`1px solid ${statsWindow===p.val?"#34d399":"rgba(255,255,255,0.1)"}`, background:statsWindow===p.val?"rgba(52,211,153,0.15)":"rgba(255,255,255,0.04)", color:statsWindow===p.val?"#34d399":"#475569" }}>
                     {p.label}
                   </button>
                 ))}
@@ -815,7 +708,6 @@ const AdminPanel = () => {
             <div style={{ fontSize:12, color:"#475569", marginBottom:4 }}>New Signups</div>
           </div>
 
-          {/* Monthly chart card — full width */}
           <div className="glass" style={{ borderRadius:16, padding:20, gridColumn:"1 / -1" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
               <span style={{ fontSize:13, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em" }}>Monthly Signups — Last 12 Months</span>
@@ -827,9 +719,9 @@ const AdminPanel = () => {
 
         {/* Tab Bar */}
         <div className="tab-bar" style={{ display:"flex", gap:8, marginBottom:28, borderBottom:"1px solid rgba(255,255,255,0.07)", paddingBottom:0 }}>
-          {[{ id:"users", label:"👥 Users" }, { id:"promos", label:"🎟 Promo Codes" }].map(tab => (
+          {[{id:"users",label:"👥 Users"},{id:"promos",label:"🎟 Promo Codes"}].map(tab => (
             <button key={tab.id} className="tab-btn" onClick={() => handleTabSwitch(tab.id)}
-              style={{ padding:"10px 22px", background: activeTab===tab.id ? "rgba(99,102,241,0.2)" : "transparent", border:"none", borderBottom: activeTab===tab.id ? "2px solid #6366f1" : "2px solid transparent", color: activeTab===tab.id ? "#a5b4fc" : "#64748b", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", borderRadius:"8px 8px 0 0", marginBottom:-1, transition:"all 0.15s" }}>
+              style={{ padding:"10px 22px", background:activeTab===tab.id?"rgba(99,102,241,0.2)":"transparent", border:"none", borderBottom:activeTab===tab.id?"2px solid #6366f1":"2px solid transparent", color:activeTab===tab.id?"#a5b4fc":"#64748b", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", borderRadius:"8px 8px 0 0", marginBottom:-1, transition:"all 0.15s" }}>
               {tab.label}
             </button>
           ))}
@@ -843,12 +735,10 @@ const AdminPanel = () => {
               <span style={{ position:"absolute", left:16, top:"50%", transform:"translateY(-50%)", color:"#475569", fontSize:16 }}>🔍</span>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by email, name or company…"
                 style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:14, padding:"12px 16px 12px 44px", color:"#fff", fontSize:14, outline:"none", fontFamily:"JetBrains Mono,monospace", boxSizing:"border-box" }}
-                onFocus={e => e.target.style.border="1px solid #6366f1"}
-                onBlur={e => e.target.style.border="1px solid rgba(255,255,255,0.1)"}
-              />
+                onFocus={e => e.target.style.border="1px solid #6366f1"} onBlur={e => e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
             </div>
             <button onClick={() => setShowFilters(f => !f)}
-              style={{ padding:"12px 18px", background: showFilters?"rgba(99,102,241,0.2)":"rgba(255,255,255,0.05)", border:`1px solid ${showFilters?"#6366f1":"rgba(255,255,255,0.1)"}`, borderRadius:14, color: showFilters?"#818cf8":"#94a3b8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
+              style={{ padding:"12px 18px", background:showFilters?"rgba(99,102,241,0.2)":"rgba(255,255,255,0.05)", border:`1px solid ${showFilters?"#6366f1":"rgba(255,255,255,0.1)"}`, borderRadius:14, color:showFilters?"#818cf8":"#94a3b8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
               🎛 Filters {activeFiltersCount>0 && <span style={{ background:"#6366f1", color:"#fff", borderRadius:99, padding:"1px 7px", fontSize:11 }}>{activeFiltersCount}</span>}
             </button>
             <button onClick={exportCSV}
@@ -874,9 +764,9 @@ const AdminPanel = () => {
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Status</label>
                   <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
                     <option value="all">All statuses</option>
-                    <option value="active">Active</option>
-                    <option value="deactivated">Deactivated</option>
-                    <option value="suspended">Suspended</option>
+                    <option value="active">● Active</option>
+                    <option value="deactivated">○ Deactivated</option>
+                    <option value="suspended">⊘ Suspended</option>
                   </select>
                 </div>
                 <div>
@@ -920,24 +810,24 @@ const AdminPanel = () => {
           )}
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <button onClick={() => setFilterStarred(s => !s)}
-              title="Show starred only"
-              style={{ padding:"6px 14px", background: filterStarred ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)", border:`1px solid ${filterStarred ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.08)"}`, borderRadius:8, color: filterStarred ? "#f59e0b" : "#475569", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+              style={{ padding:"6px 14px", background:filterStarred?"rgba(245,158,11,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${filterStarred?"rgba(245,158,11,0.4)":"rgba(255,255,255,0.08)"}`, borderRadius:8, color:filterStarred?"#f59e0b":"#475569", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
               {filterStarred ? "★ Starred" : "☆ Starred"}
             </button>
             <p style={{ color:"#334155", fontSize:12 }}>{filtered.length} of {users.length} users{activeFiltersCount>0?" (filtered)":""}</p>
+            {countDeactivated > 0 && filterStatus !== "deactivated" && (
+              <button onClick={() => { setFilterStatus("deactivated"); setShowFilters(true); }}
+                style={{ padding:"4px 10px", background:"rgba(148,163,184,0.1)", border:"1px solid rgba(148,163,184,0.25)", borderRadius:6, color:"#94a3b8", fontSize:11, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+                ○ {countDeactivated} deactivated account{countDeactivated!==1?"s":""}
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Users Table */}
         {loadingUsers ? (
-          <div style={{ textAlign:"center", padding:60 }}>
-            <Spinner />
-            <p style={{ color:"#64748b", marginTop:16 }}>Loading users...</p>
-          </div>
+          <div style={{ textAlign:"center", padding:60 }}><Spinner /><p style={{ color:"#64748b", marginTop:16 }}>Loading users...</p></div>
         ) : (
           <div className="glass" style={{ borderRadius:18, overflow:"hidden" }}>
-            {/* Desktop header - hidden on mobile */}
-            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 100px 60px 60px 50px 90px 110px 140px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
+            <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 130px 60px 60px 50px 90px 110px 140px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
               <SortTh col="email" label="Email" />
               <SortTh col="plan" label="Plan" />
               <SortTh col="status" label="Status" />
@@ -948,11 +838,15 @@ const AdminPanel = () => {
               <SortTh col="lastLogin" label="Last Seen" />
               <span style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>Actions</span>
             </div>
-
             {filtered.length === 0 ? (
               <div style={{ textAlign:"center", padding:60, color:"#334155" }}>No users found</div>
             ) : filtered.map((u, i) => (
-              <UserRow key={u.id} u={u} i={i} total={filtered.length} onInfo={() => { setViewingUser(u); setNoteText(u.adminNotes || ''); }} onEdit={() => setEditing(u)} onAccess={() => accessAccount(u)} starred={starredIds.has(String(u.id))} onToggleStar={() => toggleStar(String(u.id))} />
+              <UserRow key={u.id} u={u} i={i} total={filtered.length}
+                onInfo={() => { setViewingUser(u); setNoteText(u.adminNotes || ''); }}
+                onEdit={() => setEditing(u)}
+                onAccess={() => accessAccount(u)}
+                starred={starredIds.has(String(u.id))}
+                onToggleStar={() => toggleStar(String(u.id))} />
             ))}
           </div>
         )}
@@ -961,21 +855,18 @@ const AdminPanel = () => {
         {/* ── PROMO CODES TAB ── */}
         {activeTab === "promos" && (
           <div>
-            {/* Create new promo code form */}
             <div className="glass" style={{ borderRadius:18, padding:28, marginBottom:28 }}>
               <h3 style={{ fontSize:16, fontWeight:700, color:"#e2e8f0", marginBottom:20 }}>🎟 Create Promo Code</h3>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:14, marginBottom:16 }}>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Code <span style={{ color:"#ef4444" }}>*</span></label>
-                  <input value={promoForm.code} onChange={e => setPromoForm(f=>({...f, code:e.target.value.toUpperCase()}))}
-                    placeholder="e.g. LAUNCH50"
+                  <input value={promoForm.code} onChange={e => setPromoForm(f=>({...f,code:e.target.value.toUpperCase()}))} placeholder="e.g. LAUNCH50"
                     style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:"#fff", fontSize:14, outline:"none", fontFamily:"JetBrains Mono,monospace", boxSizing:"border-box", textTransform:"uppercase" }}
                     onFocus={e=>e.target.style.border="1px solid #6366f1"} onBlur={e=>e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Trial Plan <span style={{ color:"#ef4444" }}>*</span></label>
-                  <select value={promoForm.trial_plan} onChange={e => setPromoForm(f=>({...f, trial_plan:e.target.value}))}
-                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer", boxSizing:"border-box" }}>
+                  <select value={promoForm.trial_plan} onChange={e => setPromoForm(f=>({...f,trial_plan:e.target.value}))} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer", boxSizing:"border-box" }}>
                     <option value="pro">Pro</option>
                     <option value="proPlus">Pro Plus</option>
                     <option value="free">Free</option>
@@ -983,80 +874,66 @@ const AdminPanel = () => {
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Trial Days <span style={{ color:"#ef4444" }}>*</span></label>
-                  <input type="number" min="1" value={promoForm.trial_days} onChange={e => setPromoForm(f=>({...f, trial_days:e.target.value}))}
-                    placeholder="14"
+                  <input type="number" min="1" value={promoForm.trial_days} onChange={e => setPromoForm(f=>({...f,trial_days:e.target.value}))} placeholder="14"
                     style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:"#fff", fontSize:14, outline:"none", fontFamily:"Sora,sans-serif", boxSizing:"border-box" }}
                     onFocus={e=>e.target.style.border="1px solid #6366f1"} onBlur={e=>e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Max Uses <span style={{ color:"#475569", fontSize:10 }}>(blank = unlimited)</span></label>
-                  <input type="number" min="1" value={promoForm.max_uses} onChange={e => setPromoForm(f=>({...f, max_uses:e.target.value}))}
-                    placeholder="Unlimited"
+                  <input type="number" min="1" value={promoForm.max_uses} onChange={e => setPromoForm(f=>({...f,max_uses:e.target.value}))} placeholder="Unlimited"
                     style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:"#fff", fontSize:14, outline:"none", fontFamily:"Sora,sans-serif", boxSizing:"border-box" }}
                     onFocus={e=>e.target.style.border="1px solid #6366f1"} onBlur={e=>e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Expiry Date <span style={{ color:"#475569", fontSize:10 }}>(optional)</span></label>
-                  <input type="date" value={promoForm.expires_at} onChange={e => setPromoForm(f=>({...f, expires_at:e.target.value}))}
-                    style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:promoForm.expires_at?"#e2e8f0":"#475569", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", boxSizing:"border-box", colorScheme:"dark" }} />
+                  <input type="date" value={promoForm.expires_at} onChange={e => setPromoForm(f=>({...f,expires_at:e.target.value}))} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:promoForm.expires_at?"#e2e8f0":"#475569", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", boxSizing:"border-box", colorScheme:"dark" }} />
                 </div>
                 <div style={{ gridColumn:"1 / -1" }}>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Description <span style={{ color:"#475569", fontSize:10 }}>(internal note)</span></label>
-                  <input value={promoForm.description} onChange={e => setPromoForm(f=>({...f, description:e.target.value}))}
-                    placeholder="e.g. Launch campaign — influencer outreach May 2025"
+                  <input value={promoForm.description} onChange={e => setPromoForm(f=>({...f,description:e.target.value}))} placeholder="e.g. Launch campaign — influencer outreach May 2025"
                     style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:"#fff", fontSize:14, outline:"none", fontFamily:"Sora,sans-serif", boxSizing:"border-box" }}
                     onFocus={e=>e.target.style.border="1px solid #6366f1"} onBlur={e=>e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
                 </div>
               </div>
               {promoFormError && <p style={{ color:"#ef4444", fontSize:13, marginBottom:12 }}>{promoFormError}</p>}
               <button onClick={createPromo} disabled={savingPromo}
-                style={{ padding:"11px 28px", background: savingPromo ? "#3730a3" : "#6366f1", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor: savingPromo ? "not-allowed" : "pointer", fontFamily:"Sora,sans-serif", display:"flex", alignItems:"center", gap:8 }}>
+                style={{ padding:"11px 28px", background:savingPromo?"#3730a3":"#6366f1", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:savingPromo?"not-allowed":"pointer", fontFamily:"Sora,sans-serif", display:"flex", alignItems:"center", gap:8 }}>
                 {savingPromo ? <><Spinner /> Creating…</> : "+ Create Code"}
               </button>
             </div>
 
-            {/* Promo codes table */}
             <div className="glass" style={{ borderRadius:18, overflow:"hidden" }}>
               <div className="promo-table-header" style={{ display:"grid", gridTemplateColumns:"160px 1fr 90px 70px 70px 100px 80px 110px", gap:12, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
                 {["Code","Description","Plan","Days","Uses","Max Uses","Expiry","Actions"].map(h => (
                   <span key={h} style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</span>
                 ))}
               </div>
-              {loadingPromos ? (
-                <div style={{ textAlign:"center", padding:40 }}><Spinner /></div>
-              ) : promos.length === 0 ? (
-                <div style={{ textAlign:"center", padding:60, color:"#334155" }}>No promo codes yet — create one above</div>
-              ) : promos.map((p, i) => (
-                <div key={p.id} className="promo-row" style={{ display:"grid", gridTemplateColumns:"160px 1fr 90px 70px 70px 100px 80px 110px", gap:12, padding:"14px 20px", borderBottom: i < promos.length-1 ? "1px solid rgba(255,255,255,0.04)" : "none", alignItems:"center", opacity: p.is_active ? 1 : 0.45 }}
+              {loadingPromos ? <div style={{ textAlign:"center", padding:40 }}><Spinner /></div>
+              : promos.length === 0 ? <div style={{ textAlign:"center", padding:60, color:"#334155" }}>No promo codes yet — create one above</div>
+              : promos.map((p, i) => (
+                <div key={p.id} className="promo-row" style={{ display:"grid", gridTemplateColumns:"160px 1fr 90px 70px 70px 100px 80px 110px", gap:12, padding:"14px 20px", borderBottom:i<promos.length-1?"1px solid rgba(255,255,255,0.04)":"none", alignItems:"center", opacity:p.is_active?1:0.45 }}
                   onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.02)"}
                   onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                  {/* Code + description row on mobile */}
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:6 }}>
-                    <span style={{ fontFamily:"JetBrains Mono,monospace", fontSize:13, fontWeight:700, color: p.is_active ? "#a5b4fc" : "#64748b", letterSpacing:"0.05em" }}>{p.code}</span>
-                    <span style={{ fontSize:12, padding:"3px 8px", borderRadius:6, background: p.trial_plan==="proPlus" ? "rgba(245,158,11,0.15)" : "rgba(99,102,241,0.15)", color: p.trial_plan==="proPlus" ? "#f59e0b" : "#818cf8", fontWeight:600 }}>
-                      {p.trial_plan==="proPlus" ? "Pro+" : p.trial_plan==="pro" ? "Pro" : "Free"}
+                    <span style={{ fontFamily:"JetBrains Mono,monospace", fontSize:13, fontWeight:700, color:p.is_active?"#a5b4fc":"#64748b", letterSpacing:"0.05em" }}>{p.code}</span>
+                    <span style={{ fontSize:12, padding:"3px 8px", borderRadius:6, background:p.trial_plan==="proPlus"?"rgba(245,158,11,0.15)":"rgba(99,102,241,0.15)", color:p.trial_plan==="proPlus"?"#f59e0b":"#818cf8", fontWeight:600 }}>
+                      {p.trial_plan==="proPlus"?"Pro+":p.trial_plan==="pro"?"Pro":"Free"}
                     </span>
                   </div>
-                  <span style={{ fontSize:12, color:"#64748b", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.description || "—"}</span>
-                  <span style={{ display:"none" }}></span>{/* plan — hidden on mobile (shown above) */}
+                  <span style={{ fontSize:12, color:"#64748b", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.description||"—"}</span>
+                  <span style={{ display:"none" }}></span>
                   <div style={{ display:"flex", gap:16, flexWrap:"wrap" }}>
                     <span style={{ fontSize:12, color:"#94a3b8" }}><span style={{ fontSize:10, color:"#475569" }}>DAYS </span>{p.trial_days}</span>
-                    <span style={{ fontSize:12, color:"#94a3b8" }}><span style={{ fontSize:10, color:"#475569" }}>USES </span>{p.uses_count}{p.max_uses ? `/${p.max_uses}` : ""}</span>
-                    <span style={{ fontSize:12, color: p.expires_at && new Date(p.expires_at) < new Date() ? "#ef4444" : "#64748b" }}>
-                      <span style={{ fontSize:10, color:"#475569" }}>EXPIRY </span>{p.expires_at ? new Date(p.expires_at).toLocaleDateString("en-GB") : "Never"}
-                    </span>
+                    <span style={{ fontSize:12, color:"#94a3b8" }}><span style={{ fontSize:10, color:"#475569" }}>USES </span>{p.uses_count}{p.max_uses?`/${p.max_uses}`:""}</span>
+                    <span style={{ fontSize:12, color:p.expires_at&&new Date(p.expires_at)<new Date()?"#ef4444":"#64748b" }}><span style={{ fontSize:10, color:"#475569" }}>EXPIRY </span>{p.expires_at?new Date(p.expires_at).toLocaleDateString("en-GB"):"Never"}</span>
                   </div>
-                  <span style={{ display:"none" }}></span>{/* uses */}
-                  <span style={{ display:"none" }}></span>{/* max uses */}
-                  <span style={{ display:"none" }}></span>{/* expiry */}
+                  <span style={{ display:"none" }}></span><span style={{ display:"none" }}></span><span style={{ display:"none" }}></span>
                   <div style={{ display:"flex", gap:6 }}>
-                    <button onClick={() => togglePromoActive(p)}
-                      title={p.is_active ? "Deactivate" : "Activate"}
-                      style={{ padding:"5px 10px", background: p.is_active ? "rgba(239,68,68,0.1)" : "rgba(34,197,94,0.1)", border:`1px solid ${p.is_active ? "rgba(239,68,68,0.3)" : "rgba(34,197,94,0.3)"}`, borderRadius:7, color: p.is_active ? "#f87171" : "#22c55e", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
-                      {p.is_active ? "Off" : "On"}
+                    <button onClick={() => togglePromoActive(p)} title={p.is_active?"Deactivate":"Activate"}
+                      style={{ padding:"5px 10px", background:p.is_active?"rgba(239,68,68,0.1)":"rgba(34,197,94,0.1)", border:`1px solid ${p.is_active?"rgba(239,68,68,0.3)":"rgba(34,197,94,0.3)"}`, borderRadius:7, color:p.is_active?"#f87171":"#22c55e", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                      {p.is_active?"Off":"On"}
                     </button>
-                    <button onClick={() => deletePromo(p.id)}
-                      title="Delete permanently"
+                    <button onClick={() => deletePromo(p.id)} title="Delete permanently"
                       style={{ padding:"5px 10px", background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:7, color:"#f87171", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
                       ✕
                     </button>
@@ -1070,80 +947,72 @@ const AdminPanel = () => {
 
       {/* User Info Modal */}
       {viewingUser && (
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
-          onClick={() => setViewingUser(null)}>
-          <div style={{ background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:20, padding:32, maxWidth:560, width:"100%", maxHeight:"88vh", overflowY:"auto" }}
-            onClick={e => e.stopPropagation()}>
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }} onClick={() => setViewingUser(null)}>
+          <div style={{ background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:20, padding:32, maxWidth:560, width:"100%", maxHeight:"88vh", overflowY:"auto" }} onClick={e => e.stopPropagation()}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:24 }}>
               <div>
-                <h2 style={{ fontSize:20, fontWeight:700, color:"#e2e8f0", marginBottom:4 }}>User Info</h2>
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:4 }}>
+                  <h2 style={{ fontSize:20, fontWeight:700, color:"#e2e8f0" }}>User Info</h2>
+                  <StatusBadge status={viewingUser.status} />
+                </div>
                 <p style={{ fontSize:13, color:"#475569", fontFamily:"JetBrains Mono,monospace" }}>ID #{viewingUser.id}</p>
               </div>
-              <button onClick={() => setViewingUser(null)}
-                style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#94a3b8", fontSize:16, width:32, height:32, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"Sora,sans-serif" }}>✕</button>
+              <button onClick={() => setViewingUser(null)} style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#94a3b8", fontSize:16, width:32, height:32, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"Sora,sans-serif" }}>✕</button>
             </div>
+
+            {viewingUser.status === "deactivated" && (
+              <div style={{ padding:"12px 16px", background:"rgba(148,163,184,0.08)", border:"1px solid rgba(148,163,184,0.25)", borderRadius:10, marginBottom:20, display:"flex", alignItems:"center", gap:10 }}>
+                <span style={{ fontSize:18 }}>○</span>
+                <div>
+                  <p style={{ fontSize:13, fontWeight:600, color:"#94a3b8" }}>Account Deactivated</p>
+                  <p style={{ fontSize:12, color:"#64748b" }}>This user deactivated their own account. Use Edit to reactivate.</p>
+                </div>
+              </div>
+            )}
+
             {[
               { title:"Account", icon:"👤", rows:[
                 ["Email", viewingUser.email],
-                ["Plan", viewingUser.plan ? viewingUser.plan.charAt(0).toUpperCase()+viewingUser.plan.slice(1) : "—"],
+                ["Plan", viewingUser.plan?viewingUser.plan.charAt(0).toUpperCase()+viewingUser.plan.slice(1):"—"],
                 ["Status", viewingUser.status],
-                ["Joined", viewingUser.joined ? new Date(viewingUser.joined).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" }) : "—"],
-                ["Last Login", viewingUser.lastLogin ? new Date(viewingUser.lastLogin).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" }) : "Never"],
-                ["Scans Today", viewingUser.searches ?? "—"],
-                ["Lifetime Scans", viewingUser.totalScans ?? "—"],
+                ["Joined", viewingUser.joined?new Date(viewingUser.joined).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}):"—"],
+                ["Last Login", viewingUser.lastLogin?new Date(viewingUser.lastLogin).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}):"Never"],
+                ["Scans Today", viewingUser.searches??"—"],
+                ["Lifetime Scans", viewingUser.totalScans??"—"],
               ]},
-              { title:"Personal", icon:"📋", rows:[
-                ["First Name", viewingUser.firstName || "—"],
-                ["Last Name", viewingUser.lastName || "—"],
-                ["Phone", viewingUser.phone || "—"],
-              ]},
-              { title:"Company", icon:"🏢", rows:[
-                ["Company Name", viewingUser.companyName || "—"],
-                ["Job Role", viewingUser.jobRole || "—"],
-                ["Sector", viewingUser.companySector || "—"],
-              ]},
-              { title:"Marketing & Acquisition", icon:"📣", rows:[
-                ["Heard About Us", viewingUser.referralSource || "—"],
-                ["Marketing Consent", viewingUser.marketingConsent],
-              ]},
-              { title:"Privacy & Consent", icon:"🍪", rows:[
-                ["Cookie Consent", viewingUser.cookieConsent],
-              ]},
+              { title:"Personal", icon:"📋", rows:[["First Name",viewingUser.firstName||"—"],["Last Name",viewingUser.lastName||"—"],["Phone",viewingUser.phone||"—"]]},
+              { title:"Company", icon:"🏢", rows:[["Company Name",viewingUser.companyName||"—"],["Job Role",viewingUser.jobRole||"—"],["Sector",viewingUser.companySector||"—"]]},
+              { title:"Marketing & Acquisition", icon:"📣", rows:[["Heard About Us",viewingUser.referralSource||"—"],["Marketing Consent",viewingUser.marketingConsent]]},
+              { title:"Privacy & Consent", icon:"🍪", rows:[["Cookie Consent",viewingUser.cookieConsent]]},
             ].map(section => (
               <div key={section.title} style={{ marginBottom:20 }}>
                 <p style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>{section.icon} {section.title}</p>
                 <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, overflow:"hidden" }}>
                   {section.rows.map(([label, value], i) => (
-                    <div key={label} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 16px", borderBottom: i < section.rows.length-1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                    <div key={label} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 16px", borderBottom:i<section.rows.length-1?"1px solid rgba(255,255,255,0.05)":"none" }}>
                       <span style={{ fontSize:13, color:"#475569" }}>{label}</span>
                       <span style={{ fontSize:13, fontWeight:500, textAlign:"right", maxWidth:"60%", wordBreak:"break-all",
-                        color: label==="Status" ? (value==="active" ? "#22c55e" : "#94a3b8")
-                             : label==="Marketing Consent" ? (value==="Yes" ? "#22c55e" : "#ef4444")
-                             : label==="Cookie Consent" ? (value==="accepted" ? "#22c55e" : value==="declined" ? "#ef4444" : "#f59e0b")
+                        color: label==="Status" ? (value==="active"?"#22c55e":value==="deactivated"?"#94a3b8":"#ef4444")
+                             : label==="Marketing Consent" ? (value==="Yes"?"#22c55e":"#ef4444")
+                             : label==="Cookie Consent" ? (value==="accepted"?"#22c55e":value==="declined"?"#ef4444":"#f59e0b")
                              : "#e2e8f0" }}>
-                        {label==="Marketing Consent" ? (value==="Yes" ? "✅ Opted in" : "❌ Opted out")
-                          : label==="Cookie Consent" ? (value==="accepted" ? "✅ Accepted" : value==="declined" ? "❌ Declined" : "⏳ Not yet set")
-                          : String(value ?? "—")}
+                        {label==="Marketing Consent" ? (value==="Yes"?"✅ Opted in":"❌ Opted out")
+                          : label==="Cookie Consent" ? (value==="accepted"?"✅ Accepted":value==="declined"?"❌ Declined":"⏳ Not yet set")
+                          : label==="Status" ? (value==="active"?"● Active":value==="deactivated"?"○ Deactivated":"⊘ Suspended")
+                          : String(value??"—")}
                       </span>
                     </div>
                   ))}
                 </div>
               </div>
             ))}
-            {/* Admin Notes */}
+
             <div style={{ marginTop:8 }}>
               <p style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>📝 Admin Notes</p>
-              <textarea
-                value={noteText}
-                onChange={e => setNoteText(e.target.value)}
-                placeholder="Internal notes about this account — visible to admins only..."
-                rows={4}
-                style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, padding:"12px 14px", color:"#e2e8f0", fontSize:13, fontFamily:"JetBrains Mono,monospace", resize:"vertical", outline:"none", boxSizing:"border-box", lineHeight:1.6 }}
-              />
-              <button
-                onClick={() => saveNote(viewingUser.id, noteText)}
-                disabled={noteSaving}
-                style={{ marginTop:10, width:"100%", padding:"10px 0", background: noteSaving ? "rgba(124,58,237,0.3)" : "#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor: noteSaving ? "default" : "pointer", fontFamily:"Sora,sans-serif", transition:"background 0.2s" }}>
+              <textarea value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Internal notes about this account — visible to admins only..." rows={4}
+                style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, padding:"12px 14px", color:"#e2e8f0", fontSize:13, fontFamily:"JetBrains Mono,monospace", resize:"vertical", outline:"none", boxSizing:"border-box", lineHeight:1.6 }} />
+              <button onClick={() => saveNote(viewingUser.id, noteText)} disabled={noteSaving}
+                style={{ marginTop:10, width:"100%", padding:"10px 0", background:noteSaving?"rgba(124,58,237,0.3)":"#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:noteSaving?"default":"pointer", fontFamily:"Sora,sans-serif" }}>
                 {noteSaving ? "Saving..." : "Save Note"}
               </button>
             </div>
@@ -1152,26 +1021,11 @@ const AdminPanel = () => {
       )}
 
       {editing && <EditModal user={editing} onClose={() => setEditing(null)}
-        onSave={(updated) => {
-          updateUser(updated.id, {
-            plan: updated.plan,
-            status: updated.status,
-            tempPlan: updated.tempPlan,
-            tempDays: updated.tempDays,
-            revokeTemp: updated.revokeTemp,
-          });
-          setEditing(null);
-        }} />}
+        onSave={(updated) => { updateUser(updated.id, { plan:updated.plan, status:updated.status, tempPlan:updated.tempPlan, tempDays:updated.tempDays, revokeTemp:updated.revokeTemp }); setEditing(null); }} />}
     </div>
   );
 };
 
-// ─── APP ROOT ─────────────────────────────────────────────────────────────────
 export default function App() {
-  return (
-    <>
-      <GlobalStyles />
-      <AdminPanel />
-    </>
-  );
+  return (<><GlobalStyles /><AdminPanel /></>);
 }
