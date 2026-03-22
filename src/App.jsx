@@ -494,6 +494,7 @@ const AdminPanel = () => {
     setLoadingPromos(true);
     try { const res = await fetch(`${API_URL}/admin/promo-codes`); const data = await res.json(); setPromos(data); }
     catch { showToast("Failed to load promo codes", true); }
+    finally { setLoadingPromos(false); }
   };
 
   const loadPromoSignups = async (promoId) => {
