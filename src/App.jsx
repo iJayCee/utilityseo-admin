@@ -370,6 +370,8 @@ const AdminPanel = () => {
   const [loadingPromos, setLoadingPromos] = useState(false);
   const [promoForm, setPromoForm] = useState({ code:"", description:"", trial_plan:"pro", trial_days:"14", max_uses:"", expires_at:"" });
   const [promoFormError, setPromoFormError] = useState("");
+  const [expandedPromo, setExpandedPromo] = useState(null); // promo id
+  const [promoSignups, setPromoSignups] = useState({}); // { [promoId]: { loading, data } }
   const [savingPromo, setSavingPromo] = useState(false);
   const [filterPlan, setFilterPlan] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -492,7 +494,18 @@ const AdminPanel = () => {
     setLoadingPromos(true);
     try { const res = await fetch(`${API_URL}/admin/promo-codes`); const data = await res.json(); setPromos(data); }
     catch { showToast("Failed to load promo codes", true); }
-    finally { setLoadingPromos(false); }
+  };
+
+  const loadPromoSignups = async (promoId) => {
+    if (expandedPromo === promoId) { setExpandedPromo(null); return; }
+    setExpandedPromo(promoId);
+    if (promoSignups[promoId]?.data) return;
+    setPromoSignups(prev => ({ ...prev, [promoId]: { loading: true } }));
+    try {
+      const res = await fetch(`${API_URL}/admin/promo-codes/${promoId}/signups`);
+      const data = await res.json();
+      setPromoSignups(prev => ({ ...prev, [promoId]: { loading: false, data } }));
+    } catch { setPromoSignups(prev => ({ ...prev, [promoId]: { loading: false, error: true } })); }
   };
 
   const createPromo = async () => {
@@ -911,7 +924,8 @@ const AdminPanel = () => {
               {loadingPromos ? <div style={{ textAlign:"center", padding:40 }}><Spinner /></div>
               : promos.length === 0 ? <div style={{ textAlign:"center", padding:60, color:"#334155" }}>No promo codes yet — create one above</div>
               : promos.map((p, i) => (
-                <div key={p.id} className="promo-row" style={{ display:"grid", gridTemplateColumns:"160px 1fr 90px 70px 70px 100px 80px 110px", gap:12, padding:"14px 20px", borderBottom:i<promos.length-1?"1px solid rgba(255,255,255,0.04)":"none", alignItems:"center", opacity:p.is_active?1:0.45 }}
+                <div key={p.id} style={{ borderBottom:i<promos.length-1?"1px solid rgba(255,255,255,0.04)":"none" }}>
+                <div className="promo-row" style={{ display:"grid", gridTemplateColumns:"160px 1fr 90px 70px 70px 100px 80px 110px", gap:12, padding:"14px 20px", alignItems:"center", opacity:p.is_active?1:0.45 }}
                   onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.02)"}
                   onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:6 }}>
@@ -929,6 +943,10 @@ const AdminPanel = () => {
                   </div>
                   <span style={{ display:"none" }}></span><span style={{ display:"none" }}></span><span style={{ display:"none" }}></span>
                   <div style={{ display:"flex", gap:6 }}>
+                    <button onClick={() => loadPromoSignups(p.id)}
+                      style={{ padding:"5px 10px", background:"rgba(99,102,241,0.1)", border:"1px solid rgba(99,102,241,0.25)", borderRadius:7, color:"#818cf8", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                      {expandedPromo === p.id ? "▲ Hide" : "👥 Signups"}
+                    </button>
                     <button onClick={() => togglePromoActive(p)} title={p.is_active?"Deactivate":"Activate"}
                       style={{ padding:"5px 10px", background:p.is_active?"rgba(239,68,68,0.1)":"rgba(34,197,94,0.1)", border:`1px solid ${p.is_active?"rgba(239,68,68,0.3)":"rgba(34,197,94,0.3)"}`, borderRadius:7, color:p.is_active?"#f87171":"#22c55e", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
                       {p.is_active?"Off":"On"}
@@ -938,6 +956,64 @@ const AdminPanel = () => {
                       ✕
                     </button>
                   </div>
+                </div>
+
+                {/* Signups panel */}
+                {expandedPromo === p.id && (() => {
+                  const ps = promoSignups[p.id];
+                  return (
+                    <div style={{ background:"rgba(99,102,241,0.04)", borderTop:"1px solid rgba(99,102,241,0.15)", padding:"16px 20px", marginTop:4 }}>
+                      {!ps || ps.loading ? (
+                        <div style={{ display:"flex", alignItems:"center", gap:8, color:"#64748b", fontSize:13 }}><Spinner /> Loading signups…</div>
+                      ) : ps.error ? (
+                        <p style={{ color:"#f87171", fontSize:13 }}>Failed to load signups</p>
+                      ) : (
+                        <>
+                          {/* Summary stats */}
+                          <div style={{ display:"flex", gap:16, flexWrap:"wrap", marginBottom:14 }}>
+                            {[
+                              { label:"Total signups", val:ps.data.total, col:"#e2e8f0" },
+                              { label:"Converted to paid", val:`${ps.data.converted} (${ps.data.conversionRate}%)`, col:"#22c55e" },
+                              { label:"Still on trial", val:ps.data.stillTrial, col:"#f59e0b" },
+                              { label:"Trial expired (free)", val:ps.data.expired, col:"#ef4444" },
+                            ].map(s => (
+                              <div key={s.label} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, padding:"10px 16px", minWidth:140 }}>
+                                <p style={{ fontSize:10, color:"#475569", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:4 }}>{s.label}</p>
+                                <p style={{ fontSize:20, fontWeight:800, color:s.col }}>{s.val}</p>
+                              </div>
+                            ))}
+                          </div>
+                          {/* User list */}
+                          {ps.data.total === 0 ? (
+                            <p style={{ fontSize:13, color:"#475569" }}>No users have signed up with this code yet.</p>
+                          ) : (
+                            <div style={{ borderRadius:10, overflow:"hidden", border:"1px solid rgba(255,255,255,0.06)" }}>
+                              <div style={{ display:"grid", gridTemplateColumns:"1fr 120px 120px 140px", gap:10, padding:"8px 14px", background:"rgba(255,255,255,0.03)", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
+                                {["Email","Plan","Status","Signed up"].map(h => (
+                                  <span key={h} style={{ fontSize:10, color:"#475569", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>{h}</span>
+                                ))}
+                              </div>
+                              {ps.data.users.map((u, ui) => {
+                                const isPaid = u.plan === 'pro' || u.plan === 'proPlus';
+                                const isTrialActive = u.temp_plan && u.temp_plan_expires_at && new Date(u.temp_plan_expires_at) > new Date();
+                                return (
+                                  <div key={u.id} style={{ display:"grid", gridTemplateColumns:"1fr 120px 120px 140px", gap:10, padding:"10px 14px", borderBottom:ui<ps.data.users.length-1?"1px solid rgba(255,255,255,0.04)":"none", alignItems:"center" }}>
+                                    <span style={{ fontSize:12, color:"#e2e8f0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontFamily:"JetBrains Mono,monospace" }}>{u.email}</span>
+                                    <span style={{ fontSize:11, padding:"2px 8px", borderRadius:6, background:isPaid?"rgba(34,197,94,0.1)":isTrialActive?"rgba(245,158,11,0.1)":"rgba(255,255,255,0.04)", color:isPaid?"#22c55e":isTrialActive?"#f59e0b":"#64748b", fontWeight:600, width:"fit-content" }}>
+                                      {isPaid ? (u.plan==="proPlus"?"Pro Plus":"Pro") : isTrialActive ? `Trial (${u.temp_plan==="proPlus"?"Pro+":"Pro"})` : "Free"}
+                                    </span>
+                                    <span style={{ fontSize:11, color:u.is_active?"#22c55e":"#94a3b8" }}>{u.is_active?"Active":"Deactivated"}</span>
+                                    <span style={{ fontSize:11, color:"#64748b" }}>{new Date(u.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
                 </div>
               ))}
             </div>
