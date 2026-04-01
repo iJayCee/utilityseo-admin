@@ -93,8 +93,13 @@ export default function LoadTestPanel() {
       s.times.push(ms);
       s.totalMs += ms;
       if (!res.ok) {
-        s.errors++;
-        addLog(`${action.label} → ${res.status} (${ms}ms)`, 'error');
+        if (res.status === 401) {
+          // 401 = auth required, endpoint is healthy — not a real error
+          addLog(`${action.label} → 401 Auth required (${ms}ms)`, 'ok');
+        } else {
+          s.errors++;
+          addLog(`${action.label} → ${res.status} (${ms}ms)`, 'error');
+        }
       } else {
         addLog(`${action.label} → 200 OK (${ms}ms)`, ms > 2000 ? 'warn' : 'ok');
       }
@@ -187,7 +192,7 @@ export default function LoadTestPanel() {
     });
     const errorActions = actions.filter(a => statsRef.current[a.id].errors > 0);
 
-    if (errorRate > 5) insights.push({ type: 'error', msg: `${errorRate}% error rate — backend is struggling at ${rps} req/s. Consider rate limiting or caching.` });
+    if (errorRate > 5) insights.push({ type: 'error', msg: `${errorRate}% error rate (excluding 401s) — backend is returning errors at ${rps} req/s. Check Railway logs for 5xx or unexpected 4xx responses.` });
     if (errorRate === '0.0' || errorRate === 0) insights.push({ type: 'ok', msg: `Zero errors at ${rps} req/s — backend handled this load cleanly.` });
     if (p95 > 2000) insights.push({ type: 'warn', msg: `P95 latency is ${p95}ms — 95% of requests took over 2s. Railway may be cold-starting or DB queries are slow.` });
     if (p95 < 500 && Number(errorRate) < 2) insights.push({ type: 'ok', msg: `P95 under 500ms — excellent response times. Backend is warm and healthy.` });
@@ -206,6 +211,15 @@ export default function LoadTestPanel() {
       : `Estimated safe capacity: ~${Math.round(rps * (1 - Number(errorRate)/100))} req/s (errors detected at current rate)`;
 
     insights.push({ type: 'info', msg: capacityEst });
+
+    // Note if any actions got 401s (expected behaviour, not errors)
+    const authOnlyActions = actions.filter(a => {
+      const s = statsRef.current[a.id];
+      return s.count > 0 && s.errors === 0 && a.auth;
+    });
+    if (authOnlyActions.length > 0) {
+      insights.push({ type: 'info', msg: `Note: auth-required endpoints (${authOnlyActions.map(a=>a.label).join(', ')}) returned 401 — this is correct behaviour. To test these properly, a user JWT token would be needed.` });
+    }
 
     setResults({
       totalReqs, totalErrors, errorRate, actualRps,
