@@ -17,6 +17,7 @@ const ACTIONS = [
   { id: 'analytics',     label: 'GSC: analytics status', endpoint: '/api/gsc/analytics/status',   method: 'GET',  base: BASE_URL, desc: 'GET /gsc/analytics/status — GA4 connection', auth: true },
   { id: 'stripe_status', label: 'Stripe: sub status',   endpoint: '/api/stripe/subscription-status', method: 'GET', base: BASE_URL, desc: 'GET /stripe/subscription-status — billing', auth: true },
   { id: 'auth_login',    label: 'Auth: login (bad creds)', endpoint: '/api/auth/login',            method: 'POST', base: BASE_URL, desc: 'POST /auth/login — tests rate limiter', body: { email: 'loadtest@example.com', password: 'loadtest_invalid' } },
+  { id: 'gsc_keywords',  label: 'GSC: keywords (external)', endpoint: '/api/gsc/keywords?days=28',  method: 'GET',  base: BASE_URL, desc: 'GET /gsc/keywords — hits Google API, expect higher latency', auth: true },
 ];
 
 const FREQ_OPTIONS = [
