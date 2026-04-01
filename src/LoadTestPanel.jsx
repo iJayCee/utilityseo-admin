@@ -7,18 +7,21 @@ const API = import.meta.env.VITE_API_URL || 'https://utilityseo-production.up.ra
 const BASE_URL = 'https://utilityseo-production.up.railway.app';
 const ADMIN_API = import.meta.env.VITE_API_URL || 'https://utilityseo-production.up.railway.app/api';
 
+// testable = no auth token needed, genuinely measurable from browser
+// auth_required = will always return 401 from load tester (no user JWT available)
+//   — included so you can see endpoint is alive and measure round-trip time
 const ACTIONS = [
-  { id: 'health',        label: 'Health check',              endpoint: '/health',                       base: BASE_URL,  method: 'GET',  desc: 'GET /health — server liveness, no auth, no rate limit' },
-  { id: 'can_scan',      label: 'Usage: can scan?',          endpoint: '/usage/can-scan',               base: ADMIN_API, method: 'GET',  desc: 'GET /usage/can-scan — credit check', auth: true },
-  { id: 'scans_list',    label: 'Scans: list',               endpoint: '/scans/list?limit=10',          base: ADMIN_API, method: 'GET',  desc: 'GET /scans/list — fetch scan history', auth: true },
-  { id: 'todos',         label: 'Todos: fetch all',          endpoint: '/todos',                        base: ADMIN_API, method: 'GET',  desc: 'GET /todos — progress todos', auth: true },
-  { id: 'workspaces',    label: 'Workspaces: list',          endpoint: '/workspaces/mine',              base: ADMIN_API, method: 'GET',  desc: 'GET /workspaces/mine — user workspaces', auth: true },
-  { id: 'competitors',   label: 'Competitors: fetch',        endpoint: '/competitors',                  base: ADMIN_API, method: 'GET',  desc: 'GET /competitors — competitor list', auth: true },
-  { id: 'monitoring',    label: 'Monitoring: settings',      endpoint: '/monitoring/settings',          base: ADMIN_API, method: 'GET',  desc: 'GET /monitoring/settings — alert config', auth: true },
-  { id: 'analytics',     label: 'GSC: analytics status',     endpoint: '/gsc/analytics/status',        base: ADMIN_API, method: 'GET',  desc: 'GET /gsc/analytics/status — GA4 connection', auth: true },
-  { id: 'stripe_status', label: 'Stripe: sub status',        endpoint: '/stripe/subscription-status',  base: ADMIN_API, method: 'GET',  desc: 'GET /stripe/subscription-status — billing', auth: true },
-  { id: 'auth_login',    label: 'Auth: login (rate limiter)', endpoint: '/auth/login',                  base: ADMIN_API, method: 'POST', desc: 'POST /auth/login — specifically tests the auth rate limiter (20 req/15min)', body: { email: 'loadtest@example.com', password: 'loadtest_invalid' } },
-  { id: 'gsc_keywords',  label: 'GSC: keywords (external)',  endpoint: '/gsc/keywords?days=28',        base: ADMIN_API, method: 'GET',  desc: 'GET /gsc/keywords — hits Google API, expect higher latency', auth: true },
+  { id: 'health',        label: 'Health check',               endpoint: '/health',            base: BASE_URL,  method: 'GET',  desc: 'No auth — true server liveness. Use this for high-RPS tests.',        testable: true  },
+  { id: 'auth_login',    label: 'Auth: login (rate limiter)',  endpoint: '/auth/login',        base: ADMIN_API, method: 'POST', desc: 'Tests auth rate limiter (5 req/min). Expects 401 or 429.',             testable: true,  body: { email: 'loadtest@example.com', password: 'loadtest_invalid' } },
+  { id: 'pagespeed',     label: 'PageSpeed proxy',            endpoint: '/pagespeed?url=https://utilityseo.com&strategy=mobile', base: ADMIN_API, method: 'GET', desc: 'No auth — tests Google API proxy latency.', testable: true  },
+  { id: 'can_scan',      label: 'Usage: can scan?',           endpoint: '/usage/can-scan',    base: ADMIN_API, method: 'GET',  desc: 'Auth required — measures round-trip, expects 401.',                    testable: false },
+  { id: 'scans_list',    label: 'Scans: list',                endpoint: '/scans/list?limit=10', base: ADMIN_API, method: 'GET', desc: 'Auth required — measures round-trip, expects 401.',                   testable: false },
+  { id: 'todos',         label: 'Todos: fetch all',           endpoint: '/todos',             base: ADMIN_API, method: 'GET',  desc: 'Auth required — measures round-trip, expects 401.',                    testable: false },
+  { id: 'workspaces',    label: 'Workspaces: list',           endpoint: '/workspaces/mine',   base: ADMIN_API, method: 'GET',  desc: 'Auth required — measures round-trip, expects 401.',                    testable: false },
+  { id: 'competitors',   label: 'Competitors: fetch',         endpoint: '/competitors',       base: ADMIN_API, method: 'GET',  desc: 'Auth required — measures round-trip, expects 401.',                    testable: false },
+  { id: 'monitoring',    label: 'Monitoring: settings',       endpoint: '/monitoring/settings', base: ADMIN_API, method: 'GET', desc: 'Auth required — measures round-trip, expects 401.',                   testable: false },
+  { id: 'stripe_status', label: 'Stripe: sub status',         endpoint: '/stripe/subscription-status', base: ADMIN_API, method: 'GET', desc: 'Auth required — measures round-trip, expects 401.',            testable: false },
+  { id: 'gsc_keywords',  label: 'GSC: keywords (external)',   endpoint: '/gsc/keywords?days=28', base: ADMIN_API, method: 'GET', desc: 'Auth required + Google API — measures round-trip, expects 401.',    testable: false },
 ];
 
 const FREQ_OPTIONS = [
@@ -96,10 +99,9 @@ export default function LoadTestPanel() {
       s.totalMs += ms;
       if (!res.ok) {
         if (res.status === 401) {
-          // 401 = auth required — endpoint healthy, just needs a token
-          addLog(`${action.label} → 401 Auth required (${ms}ms)`, 'ok');
+          // 401 on auth-required endpoint = healthy, expected behaviour
+          addLog(`${action.label} → 401 (${ms}ms)`, 'ok');
         } else if (res.status === 429) {
-          // 429 = rate limited — this is the ceiling, track separately
           s.rateLimited++;
           addLog(`${action.label} → 429 Rate limited (${ms}ms)`, 'warn');
         } else {
@@ -111,10 +113,16 @@ export default function LoadTestPanel() {
       }
     } catch (err) {
       const ms = Math.round(performance.now() - start);
-      statsRef.current[action.id].errors++;
-      statsRef.current[action.id].count++;
-      statsRef.current[action.id].times.push(ms);
-      addLog(`${action.label} → FAIL: ${err.message}`, 'error');
+      const s = statsRef.current[action.id];
+      s.count++;
+      s.times.push(ms);
+      if (err.message === 'Failed to fetch' && !action.testable) {
+        // Auth-required routes often fail at network level without a token — not a real error
+        addLog(`${action.label} → no token (${ms}ms)`, 'ok');
+      } else {
+        s.errors++;
+        addLog(`${action.label} → FAIL: ${err.message}`, 'error');
+      }
     }
   };
 
@@ -203,7 +211,7 @@ export default function LoadTestPanel() {
     if (errorRate === '0.0' || errorRate === 0) insights.push({ type: 'ok', msg: `Zero errors at ${rps} req/s — backend handled this load cleanly.` });
     if (totalRateLimited > 0) {
       const rlPct = ((totalRateLimited / totalReqs) * 100).toFixed(0);
-      insights.push({ type: 'warn', msg: `${totalRateLimited} requests (${rlPct}%) were rate limited (429). Your global limiter allows 200 req/15min per IP — at ${rps} req/s you exceed this in ~${Math.floor(200/rps)}s. This is your hard ceiling for single-IP traffic.` });
+      insights.push({ type: 'warn', msg: `${totalRateLimited} requests (${rlPct}%) hit the rate limiter (429). Global limit is 120 req/min per IP — at ${rps} req/s a single IP hits the ceiling in ~${Math.floor(120/rps)}s. Normal users never approach this.` });
     }
     if (p95 > 2000) insights.push({ type: 'warn', msg: `P95 latency is ${p95}ms — 95% of requests took over 2s. Railway may be cold-starting or DB queries are slow.` });
     if (p95 < 500 && Number(errorRate) < 2) insights.push({ type: 'ok', msg: `P95 under 500ms — excellent response times. Backend is warm and healthy.` });
@@ -311,7 +319,14 @@ export default function LoadTestPanel() {
                     {sel && <span style={{ fontSize: 10, color: '#fff', fontWeight: 900 }}>✓</span>}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: sel ? c.text : c.muted }}>{a.label}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: sel ? c.text : c.muted, margin: 0 }}>{a.label}</p>
+                      <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 4,
+                        background: a.testable ? 'rgba(34,197,94,0.12)' : 'rgba(100,116,139,0.15)',
+                        color: a.testable ? c.green : c.dim }}>
+                        {a.testable ? 'TESTABLE' : '401 only'}
+                      </span>
+                    </div>
                     <p style={{ fontSize: 10, color: c.dim }}>{a.desc}</p>
                   </div>
                 </div>
