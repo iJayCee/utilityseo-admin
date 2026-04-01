@@ -3,21 +3,22 @@ import { useState, useRef, useCallback } from 'react';
 const API = import.meta.env.VITE_API_URL || 'https://utilityseo-production.up.railway.app/api';
 
 // All testable actions — each hits a real backend endpoint
-// Base URL for health (no /api prefix) vs API routes
+// Base URL — use env var so works in any environment
 const BASE_URL = 'https://utilityseo-production.up.railway.app';
+const ADMIN_API = import.meta.env.VITE_API_URL || 'https://utilityseo-production.up.railway.app/api';
 
 const ACTIONS = [
-  { id: 'health',        label: 'Health check',          endpoint: '/health',                      method: 'GET',  base: BASE_URL, desc: 'GET /health — server liveness (no auth)' },
-  { id: 'can_scan',      label: 'Usage: can scan?',      endpoint: '/api/usage/can-scan',          method: 'GET',  base: BASE_URL, desc: 'GET /usage/can-scan — credit check', auth: true },
-  { id: 'scans_list',    label: 'Scans: list',           endpoint: '/api/scans/list?limit=10',     method: 'GET',  base: BASE_URL, desc: 'GET /scans/list — fetch scan history', auth: true },
-  { id: 'todos',         label: 'Todos: fetch all',      endpoint: '/api/todos',                   method: 'GET',  base: BASE_URL, desc: 'GET /todos — progress todos', auth: true },
-  { id: 'workspaces',    label: 'Workspaces: list',      endpoint: '/api/workspaces/mine',         method: 'GET',  base: BASE_URL, desc: 'GET /workspaces/mine — user workspaces', auth: true },
-  { id: 'competitors',   label: 'Competitors: fetch',    endpoint: '/api/competitors',             method: 'GET',  base: BASE_URL, desc: 'GET /competitors — competitor list', auth: true },
-  { id: 'monitoring',    label: 'Monitoring: settings',  endpoint: '/api/monitoring/settings',     method: 'GET',  base: BASE_URL, desc: 'GET /monitoring/settings — alert config', auth: true },
-  { id: 'analytics',     label: 'GSC: analytics status', endpoint: '/api/gsc/analytics/status',   method: 'GET',  base: BASE_URL, desc: 'GET /gsc/analytics/status — GA4 connection', auth: true },
-  { id: 'stripe_status', label: 'Stripe: sub status',   endpoint: '/api/stripe/subscription-status', method: 'GET', base: BASE_URL, desc: 'GET /stripe/subscription-status — billing', auth: true },
-  { id: 'auth_login',    label: 'Auth: login (bad creds)', endpoint: '/api/auth/login',            method: 'POST', base: BASE_URL, desc: 'POST /auth/login — tests rate limiter', body: { email: 'loadtest@example.com', password: 'loadtest_invalid' } },
-  { id: 'gsc_keywords',  label: 'GSC: keywords (external)', endpoint: '/api/gsc/keywords?days=28',  method: 'GET',  base: BASE_URL, desc: 'GET /gsc/keywords — hits Google API, expect higher latency', auth: true },
+  { id: 'health',        label: 'Health check',              endpoint: '/health',                       base: BASE_URL,  method: 'GET',  desc: 'GET /health — server liveness, no auth, no rate limit' },
+  { id: 'can_scan',      label: 'Usage: can scan?',          endpoint: '/usage/can-scan',               base: ADMIN_API, method: 'GET',  desc: 'GET /usage/can-scan — credit check', auth: true },
+  { id: 'scans_list',    label: 'Scans: list',               endpoint: '/scans/list?limit=10',          base: ADMIN_API, method: 'GET',  desc: 'GET /scans/list — fetch scan history', auth: true },
+  { id: 'todos',         label: 'Todos: fetch all',          endpoint: '/todos',                        base: ADMIN_API, method: 'GET',  desc: 'GET /todos — progress todos', auth: true },
+  { id: 'workspaces',    label: 'Workspaces: list',          endpoint: '/workspaces/mine',              base: ADMIN_API, method: 'GET',  desc: 'GET /workspaces/mine — user workspaces', auth: true },
+  { id: 'competitors',   label: 'Competitors: fetch',        endpoint: '/competitors',                  base: ADMIN_API, method: 'GET',  desc: 'GET /competitors — competitor list', auth: true },
+  { id: 'monitoring',    label: 'Monitoring: settings',      endpoint: '/monitoring/settings',          base: ADMIN_API, method: 'GET',  desc: 'GET /monitoring/settings — alert config', auth: true },
+  { id: 'analytics',     label: 'GSC: analytics status',     endpoint: '/gsc/analytics/status',        base: ADMIN_API, method: 'GET',  desc: 'GET /gsc/analytics/status — GA4 connection', auth: true },
+  { id: 'stripe_status', label: 'Stripe: sub status',        endpoint: '/stripe/subscription-status',  base: ADMIN_API, method: 'GET',  desc: 'GET /stripe/subscription-status — billing', auth: true },
+  { id: 'auth_login',    label: 'Auth: login (rate limiter)', endpoint: '/auth/login',                  base: ADMIN_API, method: 'POST', desc: 'POST /auth/login — specifically tests the auth rate limiter (20 req/15min)', body: { email: 'loadtest@example.com', password: 'loadtest_invalid' } },
+  { id: 'gsc_keywords',  label: 'GSC: keywords (external)',  endpoint: '/gsc/keywords?days=28',        base: ADMIN_API, method: 'GET',  desc: 'GET /gsc/keywords — hits Google API, expect higher latency', auth: true },
 ];
 
 const FREQ_OPTIONS = [
@@ -95,8 +96,12 @@ export default function LoadTestPanel() {
       s.totalMs += ms;
       if (!res.ok) {
         if (res.status === 401) {
-          // 401 = auth required, endpoint is healthy — not a real error
+          // 401 = auth required — endpoint healthy, just needs a token
           addLog(`${action.label} → 401 Auth required (${ms}ms)`, 'ok');
+        } else if (res.status === 429) {
+          // 429 = rate limited — this is the ceiling, track separately
+          s.rateLimited++;
+          addLog(`${action.label} → 429 Rate limited (${ms}ms)`, 'warn');
         } else {
           s.errors++;
           addLog(`${action.label} → ${res.status} (${ms}ms)`, 'error');
@@ -119,7 +124,7 @@ export default function LoadTestPanel() {
     // Init stats
     const init = {};
     ACTIONS.forEach(a => {
-      init[a.id] = { count: 0, errors: 0, times: [], totalMs: 0 };
+      init[a.id] = { count: 0, errors: 0, rateLimited: 0, times: [], totalMs: 0 };
     });
     statsRef.current = init;
     logRef.current = [];
@@ -178,6 +183,7 @@ export default function LoadTestPanel() {
     const allTimes = actions.flatMap(a => statsRef.current[a.id].times);
     const totalReqs = actions.reduce((s, a) => s + statsRef.current[a.id].count, 0);
     const totalErrors = actions.reduce((s, a) => s + statsRef.current[a.id].errors, 0);
+    const totalRateLimited = actions.reduce((s, a) => s + (statsRef.current[a.id].rateLimited || 0), 0);
     const errorRate = totalReqs > 0 ? ((totalErrors / totalReqs) * 100).toFixed(1) : 0;
     const actualRps = (totalReqs / totalSecs).toFixed(1);
     const avgMs = allTimes.length ? Math.round(allTimes.reduce((s, v) => s + v, 0) / allTimes.length) : 0;
@@ -195,6 +201,10 @@ export default function LoadTestPanel() {
 
     if (errorRate > 5) insights.push({ type: 'error', msg: `${errorRate}% error rate (excluding 401s) — backend is returning errors at ${rps} req/s. Check Railway logs for 5xx or unexpected 4xx responses.` });
     if (errorRate === '0.0' || errorRate === 0) insights.push({ type: 'ok', msg: `Zero errors at ${rps} req/s — backend handled this load cleanly.` });
+    if (totalRateLimited > 0) {
+      const rlPct = ((totalRateLimited / totalReqs) * 100).toFixed(0);
+      insights.push({ type: 'warn', msg: `${totalRateLimited} requests (${rlPct}%) were rate limited (429). Your global limiter allows 200 req/15min per IP — at ${rps} req/s you exceed this in ~${Math.floor(200/rps)}s. This is your hard ceiling for single-IP traffic.` });
+    }
     if (p95 > 2000) insights.push({ type: 'warn', msg: `P95 latency is ${p95}ms — 95% of requests took over 2s. Railway may be cold-starting or DB queries are slow.` });
     if (p95 < 500 && Number(errorRate) < 2) insights.push({ type: 'ok', msg: `P95 under 500ms — excellent response times. Backend is warm and healthy.` });
     slowActions.forEach(a => {
@@ -223,7 +233,7 @@ export default function LoadTestPanel() {
     }
 
     setResults({
-      totalReqs, totalErrors, errorRate, actualRps,
+      totalReqs, totalErrors, totalRateLimited, errorRate, actualRps,
       avgMs, p95, p99, maxMs,
       perAction: actions.map(a => ({
         ...a,
@@ -393,6 +403,7 @@ export default function LoadTestPanel() {
             {[
               { label: 'Total requests', value: results.totalReqs, color: c.purpleLight },
               { label: 'Errors', value: results.totalErrors, color: results.totalErrors > 0 ? c.red : c.green },
+              { label: 'Rate limited', value: results.totalRateLimited || 0, color: results.totalRateLimited > 0 ? c.amber : c.green },
               { label: 'Error rate', value: results.errorRate + '%', color: Number(results.errorRate) > 5 ? c.red : c.green },
               { label: 'Actual RPS', value: results.actualRps, color: c.gold },
               { label: 'Avg latency', value: results.avgMs + 'ms', color: results.avgMs > 1000 ? c.amber : c.green },
@@ -414,7 +425,7 @@ export default function LoadTestPanel() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: `1px solid ${c.border}` }}>
-                    {['Action', 'Requests', 'Errors', 'Avg ms', 'P95 ms', 'Status'].map(h => (
+                    {['Action', 'Requests', 'Errors', 'Rate Ltd', 'Avg ms', 'P95 ms', 'Status'].map(h => (
                       <th key={h} style={{ padding: '6px 10px', textAlign: 'left', color: c.dim, fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
                     ))}
                   </tr>
@@ -428,6 +439,7 @@ export default function LoadTestPanel() {
                         <td style={{ padding: '8px 10px', color: c.text, fontWeight: 600 }}>{a.label}</td>
                         <td style={{ padding: '8px 10px', color: c.muted }}>{a.count}</td>
                         <td style={{ padding: '8px 10px', color: a.errors > 0 ? c.red : c.green }}>{a.errors} {a.errors > 0 ? `(${errPct}%)` : ''}</td>
+                        <td style={{ padding: '8px 10px', color: (a.rateLimited||0) > 0 ? c.amber : c.muted }}>{a.rateLimited||0}</td>
                         <td style={{ padding: '8px 10px', color: a.avgMs > 1500 ? c.amber : c.text }}>{a.avgMs}ms</td>
                         <td style={{ padding: '8px 10px', color: a.p95 > 2000 ? c.red : c.text }}>{a.p95}ms</td>
                         <td style={{ padding: '8px 10px' }}>
