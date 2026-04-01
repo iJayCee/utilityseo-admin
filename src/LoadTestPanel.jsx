@@ -39,7 +39,11 @@ function percentile(arr, p) {
   return sorted[Math.max(0, idx)];
 }
 
-export default function LoadTestPanel({ adminEmail, adminPassword }) {
+export default function LoadTestPanel() {
+  // Read creds from sessionStorage — same place admin app stores them on login
+  const creds = (() => { try { return JSON.parse(sessionStorage.getItem('admin_creds') || 'null'); } catch { return null; } })();
+  const adminEmail = creds?.email || '';
+  const adminPassword = creds?.password || '';
   const [selectedActions, setSelectedActions] = useState(new Set(['health', 'scans_list', 'usage']));
   const [rps, setRps] = useState(5);
   const [duration, setDuration] = useState(30);

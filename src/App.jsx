@@ -869,7 +869,7 @@ const AdminPanel = () => {
 
         {/* ── PROMO CODES TAB ── */}
         {activeTab === "loadtest" && (
-          <LoadTestPanel adminEmail={adminCreds.email} adminPassword={adminCreds.password} />
+          <LoadTestPanel />
         )}
 
         {activeTab === "promos" && (
