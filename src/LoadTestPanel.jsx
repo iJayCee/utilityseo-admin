@@ -151,6 +151,19 @@ export default function LoadTestPanel() {
 
     addLog(`Starting load test — ${rps} req/s for ${duration}s across ${actions.length} action(s)`, 'info');
 
+    // Poll /health every 2s during test to show queue depth live
+    const healthPollRef = setInterval(async () => {
+      try {
+        const r = await fetch(`${BASE_URL}/health`);
+        const d = await r.json();
+        if (d.queue_waiting > 0 || d.queue_active > 30) {
+          addLog(`[Queue] active=${d.queue_active}/${d.queue_capacity} waiting=${d.queue_waiting} pool_idle=${d.pool_idle}/${d.pool_total}`, d.queue_waiting > 20 ? 'warn' : 'info');
+        }
+      } catch {}
+    }, 2000);
+    // Store ref so we can clear it on stop
+    timerRef._healthPoll = healthPollRef;
+
     // Elapsed timer
     timerRef.current = setInterval(() => {
       const el = Math.min(duration, Math.round((Date.now() - startTime) / 1000));
@@ -168,6 +181,7 @@ export default function LoadTestPanel() {
       }
 
       clearInterval(timerRef.current);
+      clearInterval(timerRef._healthPoll);
       runningRef.current = false;
       setStatus('done');
       setProgress(100);
@@ -181,6 +195,7 @@ export default function LoadTestPanel() {
   const stopTest = () => {
     runningRef.current = false;
     clearInterval(timerRef.current);
+    clearInterval(timerRef._healthPoll);
     setStatus('done');
     buildResults(Date.now() - duration * 1000); // approximate
   };
