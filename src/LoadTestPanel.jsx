@@ -3,17 +3,20 @@ import { useState, useRef, useCallback } from 'react';
 const API = import.meta.env.VITE_API_URL || 'https://utilityseo-production.up.railway.app/api';
 
 // All testable actions — each hits a real backend endpoint
+// Base URL for health (no /api prefix) vs API routes
+const BASE_URL = 'https://utilityseo-production.up.railway.app';
+
 const ACTIONS = [
-  { id: 'health',        label: 'Health check',          endpoint: '/health',                     method: 'GET',  weight: 1, desc: 'GET /health — server liveness' },
-  { id: 'auth_login',    label: 'Auth: login attempt',   endpoint: '/auth/login',                 method: 'POST', weight: 2, desc: 'POST /auth/login — credential check', body: { email: 'loadtest@example.com', password: 'loadtest123' } },
-  { id: 'scans_list',    label: 'Scans: list',           endpoint: '/scans/list?limit=10',        method: 'GET',  weight: 3, desc: 'GET /scans/list — fetch scan history', auth: true },
-  { id: 'usage',         label: 'Usage: check credits',  endpoint: '/usage/status',               method: 'GET',  weight: 2, desc: 'GET /usage/status — credit balance', auth: true },
-  { id: 'keywords',      label: 'GSC: keywords fetch',   endpoint: '/gsc/keywords?days=28',       method: 'GET',  weight: 5, desc: 'GET /gsc/keywords — keyword data', auth: true },
-  { id: 'todos',         label: 'Todos: fetch all',      endpoint: '/todos',                      method: 'GET',  weight: 2, desc: 'GET /todos — progress todos', auth: true },
-  { id: 'competitors',   label: 'Competitors: fetch',    endpoint: '/competitors',                method: 'GET',  weight: 3, desc: 'GET /competitors — competitor list', auth: true },
-  { id: 'monitoring',    label: 'Monitoring: status',    endpoint: '/monitoring/status',          method: 'GET',  weight: 2, desc: 'GET /monitoring/status — monitor jobs', auth: true },
-  { id: 'analytics',     label: 'GSC: analytics status', endpoint: '/gsc/analytics/status',      method: 'GET',  weight: 2, desc: 'GET /gsc/analytics/status — GA4 connection', auth: true },
-  { id: 'stripe_status', label: 'Stripe: sub status',   endpoint: '/stripe/subscription-status', method: 'GET',  weight: 3, desc: 'GET /stripe/subscription-status — billing check', auth: true },
+  { id: 'health',        label: 'Health check',          endpoint: '/health',                      method: 'GET',  base: BASE_URL, desc: 'GET /health — server liveness (no auth)' },
+  { id: 'can_scan',      label: 'Usage: can scan?',      endpoint: '/api/usage/can-scan',          method: 'GET',  base: BASE_URL, desc: 'GET /usage/can-scan — credit check', auth: true },
+  { id: 'scans_list',    label: 'Scans: list',           endpoint: '/api/scans/list?limit=10',     method: 'GET',  base: BASE_URL, desc: 'GET /scans/list — fetch scan history', auth: true },
+  { id: 'todos',         label: 'Todos: fetch all',      endpoint: '/api/todos',                   method: 'GET',  base: BASE_URL, desc: 'GET /todos — progress todos', auth: true },
+  { id: 'workspaces',    label: 'Workspaces: list',      endpoint: '/api/workspaces/mine',         method: 'GET',  base: BASE_URL, desc: 'GET /workspaces/mine — user workspaces', auth: true },
+  { id: 'competitors',   label: 'Competitors: fetch',    endpoint: '/api/competitors',             method: 'GET',  base: BASE_URL, desc: 'GET /competitors — competitor list', auth: true },
+  { id: 'monitoring',    label: 'Monitoring: settings',  endpoint: '/api/monitoring/settings',     method: 'GET',  base: BASE_URL, desc: 'GET /monitoring/settings — alert config', auth: true },
+  { id: 'analytics',     label: 'GSC: analytics status', endpoint: '/api/gsc/analytics/status',   method: 'GET',  base: BASE_URL, desc: 'GET /gsc/analytics/status — GA4 connection', auth: true },
+  { id: 'stripe_status', label: 'Stripe: sub status',   endpoint: '/api/stripe/subscription-status', method: 'GET', base: BASE_URL, desc: 'GET /stripe/subscription-status — billing', auth: true },
+  { id: 'auth_login',    label: 'Auth: login (bad creds)', endpoint: '/api/auth/login',            method: 'POST', base: BASE_URL, desc: 'POST /auth/login — tests rate limiter', body: { email: 'loadtest@example.com', password: 'loadtest_invalid' } },
 ];
 
 const FREQ_OPTIONS = [
@@ -82,7 +85,8 @@ export default function LoadTestPanel() {
     if (action.body) opts.body = JSON.stringify(action.body);
 
     try {
-      const res = await fetch(`${API}${action.endpoint}`, opts);
+      const url = action.base ? `${action.base}${action.endpoint}` : `${API}${action.endpoint}`;
+      const res = await fetch(url, opts);
       const ms = Math.round(performance.now() - start);
       const s = statsRef.current[action.id];
       s.count++;
