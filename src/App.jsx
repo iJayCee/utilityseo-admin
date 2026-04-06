@@ -690,7 +690,7 @@ const AdminPanel = () => {
     <div style={{ minHeight:"100vh", background:"#070710", fontFamily:"Sora,sans-serif" }}>
       {toast && <div style={{ position:"fixed", top:20, right:20, zIndex:999, background:toast.isError?"#ef4444":"#22c55e", color:"#fff", padding:"12px 20px", borderRadius:12, fontSize:13, fontWeight:600, boxShadow:"0 8px 32px rgba(0,0,0,0.4)" }}>{toast.isError?"✗":"✓"} {toast.msg}</div>}
 
-      <div className="admin-header" style={{ background:"#0d0d18", borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"16px 48px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+      <div className="admin-header" style={{ background:"#0d0d18", borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"16px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
           <img src={LOGO_BASE64} alt="UtilitySEO" style={{ width:32, height:32, borderRadius:8, objectFit:"cover" }} />
           <span style={{ fontSize:16, fontWeight:700 }}>UtilitySEO</span>
@@ -699,7 +699,7 @@ const AdminPanel = () => {
         <button onClick={() => { setAuthed(false); setEmail(""); setPass(""); localStorage.removeItem('admin_authed'); }} style={{ padding:"8px 16px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, color:"#ef4444", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>Sign Out</button>
       </div>
 
-      <div className="admin-body" style={{ padding:"40px 48px", maxWidth:1400, margin:"0 auto" }}>
+      <div className="admin-body" style={{ padding:"32px" }}>
         {/* Stats */}
         <div className="stats-grid" style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:16, marginBottom:32 }}>
           {stats.map(s => (
@@ -1047,6 +1047,7 @@ const AdminPanel = () => {
         {/* ── PROSPECTFLOW TAB ── */}
         {activeTab === "prospectflow" && (
           <div>
+            <div style={{ maxWidth:1100, width:"100%" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>
               <div>
                 <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>💰 ProspectFlow</h2>
@@ -1202,6 +1203,7 @@ const AdminPanel = () => {
                 </div>
               );
             })()}
+            </div>{/* end max-width wrapper */}
           </div>
         )}
       {/* User Info Modal */}
