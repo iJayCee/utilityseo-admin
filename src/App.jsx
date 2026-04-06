@@ -1151,20 +1151,27 @@ const AdminPanel = () => {
                         {code === "all" ? `All` : code}
                       </button>
                     ))}
-                    {/* Status filter */}
-                    {[
-                      { id:"all", label:"All" },
-                      { id:"paying", label:"Paying only" },
-                      { id:"free", label:"Not paying" },
-                      { id:"eligible", label:"Commission eligible" },
-                    ].map(f => (
-                      <button key={f.id} onClick={() => setPfStatusFilter(f.id)}
-                        style={{ padding:"6px 14px", borderRadius:99, border:"none", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif",
-                          background: pfStatusFilter===f.id ? "#f59e0b" : "rgba(255,255,255,0.05)",
-                          color: pfStatusFilter===f.id ? "#000" : "#64748b" }}>
-                        {f.label}
-                      </button>
-                    ))}
+                    {/* Paying toggle */}
+                    <div style={{ display:"flex", alignItems:"center", gap:0, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, overflow:"hidden" }}>
+                      {[
+                        { id:"all",      label:"All signups" },
+                        { id:"paying",   label:"Paying ✓" },
+                        { id:"free",     label:"Not yet paying" },
+                        { id:"eligible", label:"Commission eligible" },
+                      ].map((f, i) => (
+                        <button key={f.id} onClick={() => setPfStatusFilter(f.id)}
+                          style={{ padding:"8px 14px", border:"none", borderRight: i < 3 ? "1px solid rgba(255,255,255,0.07)" : "none",
+                            fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", whiteSpace:"nowrap",
+                            background: pfStatusFilter===f.id
+                              ? (f.id==="paying"?"rgba(52,211,153,0.25)":f.id==="eligible"?"rgba(245,158,11,0.25)":f.id==="free"?"rgba(248,113,113,0.15)":"rgba(99,102,241,0.25)")
+                              : "transparent",
+                            color: pfStatusFilter===f.id
+                              ? (f.id==="paying"?"#34d399":f.id==="eligible"?"#f59e0b":f.id==="free"?"#f87171":"#a5b4fc")
+                              : "#64748b" }}>
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
                     <span style={{ fontSize:12, color:"#475569", marginLeft:"auto" }}>{filtered.length} results</span>
                   </div>
 
