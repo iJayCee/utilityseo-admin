@@ -554,9 +554,9 @@ const AdminPanel = () => {
     if (pfData) return; // already loaded
     setPfLoading(true); setPfError("");
     try {
-      const res = await fetch(`${API}/admin/prospect-flow`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      if (!adminCreds) { setPfError('Session expired — please log out and back in.'); setPfLoading(false); return; }
+      const params = new URLSearchParams({ adminEmail: adminCreds.email, adminPassword: adminCreds.password });
+      const res = await fetch(`${API_URL}/admin/prospect-flow?${params}`);
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Failed to load");
       setPfData(d);
