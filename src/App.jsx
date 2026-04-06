@@ -1132,13 +1132,23 @@ const AdminPanel = () => {
                   <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
                     <input value={pfSearch} onChange={e => setPfSearch(e.target.value)} placeholder="Search email, name, company..."
                       style={{ flex:1, minWidth:200, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"8px 14px", color:"#e2e8f0", fontSize:13, fontFamily:"Sora,sans-serif", outline:"none" }} />
+                    {/* Code filter — prominent select */}
+                    <select value={pfCodeFilter} onChange={e => setPfCodeFilter(e.target.value)}
+                      style={{ background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.4)", borderRadius:10, padding:"8px 14px", color:"#a5b4fc", fontSize:13, fontWeight:700, fontFamily:"Sora,sans-serif", cursor:"pointer", outline:"none", minWidth:160 }}>
+                      <option value="all" style={{ background:"#13131F", color:"#e2e8f0" }}>All codes ({pfData.users.length})</option>
+                      {codes.filter(c => c !== "all").map(code => (
+                        <option key={code} value={code} style={{ background:"#13131F", color:"#e2e8f0" }}>
+                          {code} ({pfData.users.filter(u => u.promo_code_used === code).length})
+                        </option>
+                      ))}
+                    </select>
                     {/* Code filter pills */}
                     {codes.map(code => (
                       <button key={code} onClick={() => setPfCodeFilter(code)}
                         style={{ padding:"6px 14px", borderRadius:99, border:"none", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif",
                           background: pfCodeFilter===code ? "#6366f1" : "rgba(255,255,255,0.05)",
                           color: pfCodeFilter===code ? "#fff" : "#64748b" }}>
-                        {code === "all" ? `All codes (${pfData.users.length})` : code}
+                        {code === "all" ? `All` : code}
                       </button>
                     ))}
                     {/* Status filter */}
