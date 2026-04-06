@@ -370,7 +370,7 @@ const AdminPanel = () => {
   const [pfLoading, setPfLoading] = useState(false);
   const [pfError, setPfError] = useState("");
   const [pfCodeFilter, setPfCodeFilter] = useState("all");
-  const [pfStatusFilter, setPfStatusFilter] = useState("all"); // all | paying | free | eligible
+  const [pfStatusFilter, setPfStatusFilter] = useState("all");
   const [pfSearch, setPfSearch] = useState("");
   const [promos, setPromos] = useState([]);
   const [loadingPromos, setLoadingPromos] = useState(false);
@@ -551,18 +551,16 @@ const AdminPanel = () => {
   };
 
   const loadProspectFlow = async () => {
-    if (pfData) return; // already loaded
+    if (pfData) return;
     setPfLoading(true); setPfError("");
     try {
-      if (!adminCreds) { setPfError('Session expired — please log out and back in.'); setPfLoading(false); return; }
+      if (!adminCreds) { setPfError("Session expired — please log out and back in."); setPfLoading(false); return; }
       const params = new URLSearchParams({ adminEmail: adminCreds.email, adminPassword: adminCreds.password });
       const res = await fetch(`${API_URL}/admin/prospect-flow?${params}`);
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Failed to load");
       setPfData(d);
-    } catch (err) {
-      setPfError(err.message);
-    }
+    } catch (err) { setPfError(err.message); }
     setPfLoading(false);
   };
 
@@ -1049,8 +1047,7 @@ const AdminPanel = () => {
         {/* ── PROSPECTFLOW TAB ── */}
         {activeTab === "prospectflow" && (
           <div>
-            {/* Header */}
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24, flexWrap:"wrap", gap:12 }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
               <div>
                 <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>💰 ProspectFlow</h2>
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Promo code signups — commission tracking for Josh &amp; Joel</p>
@@ -1062,7 +1059,6 @@ const AdminPanel = () => {
             </div>
 
             {pfError && <div style={{ background:"rgba(248,113,113,0.1)", border:"1px solid rgba(248,113,113,0.3)", borderRadius:10, padding:"12px 16px", marginBottom:16, color:"#f87171", fontSize:13 }}>{pfError}</div>}
-
             {pfLoading && <div style={{ textAlign:"center", padding:"60px 20px", color:"#64748b", fontSize:14 }}>Loading Stripe data — this may take a few seconds...</div>}
 
             {pfData && (() => {
@@ -1075,8 +1071,6 @@ const AdminPanel = () => {
                 if (pfSearch && !`${u.email} ${u.first_name} ${u.last_name} ${u.company_name||""}`.toLowerCase().includes(pfSearch.toLowerCase())) return false;
                 return true;
               });
-
-              // Stats per code
               const byCode = {};
               for (const u of pfData.users) {
                 const code = u.promo_code_used || "none";
@@ -1085,171 +1079,131 @@ const AdminPanel = () => {
                 if (u.first_payment) { byCode[code].paying++; byCode[code].totalRevenue += u.total_paid; byCode[code].commission += u.commission_amount; }
                 if (u.within_commission_window) byCode[code].eligible++;
               }
-
-              const totalSignups = pfData.users.length;
               const totalPaying = pfData.users.filter(u => u.first_payment).length;
               const totalCommission = pfData.users.reduce((s,u) => s + (u.commission_amount||0), 0);
               const totalEligible = pfData.users.filter(u => u.within_commission_window).length;
-
               return (
                 <div>
-                  {/* Summary stats */}
-                  <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:24 }}>
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:20 }}>
                     {[
-                      { label:"Total Signups", val:totalSignups, col:"#818cf8" },
+                      { label:"Total Signups", val:pfData.users.length, col:"#818cf8" },
                       { label:"Now Paying", val:totalPaying, col:"#34d399" },
                       { label:"Commission Eligible", val:totalEligible, col:"#f59e0b" },
                       { label:"Total Commission", val:`£${totalCommission.toFixed(2)}`, col:"#34d399" },
                     ].map(s => (
-                      <div key={s.label} style={{ background:"#13131F", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, padding:"16px 18px" }}>
-                        <div style={{ fontSize:24, fontWeight:800, color:s.col, fontFamily:"JetBrains Mono,monospace" }}>{s.val}</div>
-                        <div style={{ fontSize:11, color:"#64748b", fontWeight:600, marginTop:4, textTransform:"uppercase", letterSpacing:"0.06em" }}>{s.label}</div>
+                      <div key={s.label} style={{ background:"#13131F", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:"14px 18px" }}>
+                        <div style={{ fontSize:22, fontWeight:800, color:s.col, fontFamily:"JetBrains Mono,monospace" }}>{s.val}</div>
+                        <div style={{ fontSize:11, color:"#64748b", fontWeight:600, marginTop:3, textTransform:"uppercase", letterSpacing:"0.06em" }}>{s.label}</div>
                       </div>
                     ))}
                   </div>
-
-                  {/* Per-code breakdown */}
-                  <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:10, marginBottom:24 }}>
+                  <div style={{ display:"flex", gap:10, marginBottom:20, flexWrap:"wrap" }}>
                     {Object.entries(byCode).map(([code, stats]) => (
-                      <div key={code} style={{ background:"#13131F", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:"14px 16px", cursor:"pointer",
-                        borderColor: pfCodeFilter===code ? "#6366f1" : "rgba(255,255,255,0.07)" }}
-                        onClick={() => setPfCodeFilter(pfCodeFilter===code ? "all" : code)}>
+                      <div key={code} onClick={() => setPfCodeFilter(pfCodeFilter===code ? "all" : code)}
+                        style={{ background:"#13131F", border:`1px solid ${pfCodeFilter===code?"#6366f1":"rgba(255,255,255,0.07)"}`, borderRadius:12, padding:"14px 18px", cursor:"pointer", minWidth:180 }}>
                         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
-                          <span style={{ fontSize:13, fontWeight:700, color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace" }}>{code}</span>
-                          <span style={{ fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:99, background:"rgba(99,102,241,0.15)", color:"#a5b4fc" }}>{stats.signups} signups</span>
+                          <span style={{ fontSize:14, fontWeight:800, color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace" }}>{code}</span>
+                          <span style={{ fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:99, background:"rgba(99,102,241,0.15)", color:"#a5b4fc" }}>{stats.signups} signup{stats.signups!==1?"s":""}</span>
                         </div>
-                        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
-                          <div style={{ fontSize:11, color:"#64748b" }}>Paying: <span style={{ color:"#34d399", fontWeight:700 }}>{stats.paying}</span></div>
-                          <div style={{ fontSize:11, color:"#64748b" }}>Eligible: <span style={{ color:"#f59e0b", fontWeight:700 }}>{stats.eligible}</span></div>
-                          <div style={{ fontSize:11, color:"#64748b" }}>Revenue: <span style={{ color:"#e2e8f0", fontWeight:700 }}>£{stats.totalRevenue.toFixed(0)}</span></div>
-                          <div style={{ fontSize:11, color:"#64748b" }}>Commission: <span style={{ color:"#34d399", fontWeight:700 }}>£{stats.commission.toFixed(2)}</span></div>
+                        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"4px 12px" }}>
+                          <div style={{ fontSize:12, color:"#64748b" }}>Paying: <span style={{ color:"#34d399", fontWeight:700 }}>{stats.paying}</span></div>
+                          <div style={{ fontSize:12, color:"#64748b" }}>Eligible: <span style={{ color:"#f59e0b", fontWeight:700 }}>{stats.eligible}</span></div>
+                          <div style={{ fontSize:12, color:"#64748b" }}>Revenue: <span style={{ color:"#e2e8f0", fontWeight:600 }}>£{stats.totalRevenue.toFixed(0)}</span></div>
+                          <div style={{ fontSize:12, color:"#64748b" }}>Commission: <span style={{ color:"#34d399", fontWeight:700 }}>£{stats.commission.toFixed(2)}</span></div>
                         </div>
                       </div>
                     ))}
                   </div>
-
-                  {/* Filters */}
-                  <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap", alignItems:"center" }}>
-                    <input value={pfSearch} onChange={e => setPfSearch(e.target.value)} placeholder="Search email, name, company..."
-                      style={{ flex:1, minWidth:200, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"8px 14px", color:"#e2e8f0", fontSize:13, fontFamily:"Sora,sans-serif", outline:"none" }} />
-                    {/* Code filter — prominent select */}
-                    <select value={pfCodeFilter} onChange={e => setPfCodeFilter(e.target.value)}
-                      style={{ background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.4)", borderRadius:10, padding:"8px 14px", color:"#a5b4fc", fontSize:13, fontWeight:700, fontFamily:"Sora,sans-serif", cursor:"pointer", outline:"none", minWidth:160 }}>
-                      <option value="all" style={{ background:"#13131F", color:"#e2e8f0" }}>All codes ({pfData.users.length})</option>
-                      {codes.filter(c => c !== "all").map(code => (
-                        <option key={code} value={code} style={{ background:"#13131F", color:"#e2e8f0" }}>
-                          {code} ({pfData.users.filter(u => u.promo_code_used === code).length})
-                        </option>
-                      ))}
-                    </select>
-                    {/* Code filter pills */}
-                    {codes.map(code => (
-                      <button key={code} onClick={() => setPfCodeFilter(code)}
-                        style={{ padding:"6px 14px", borderRadius:99, border:"none", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif",
-                          background: pfCodeFilter===code ? "#6366f1" : "rgba(255,255,255,0.05)",
-                          color: pfCodeFilter===code ? "#fff" : "#64748b" }}>
-                        {code === "all" ? `All` : code}
-                      </button>
-                    ))}
-                    {/* Paying toggle */}
-                    <div style={{ display:"flex", alignItems:"center", gap:0, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, overflow:"hidden" }}>
+                  <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:16 }}>
+                    <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+                      <input value={pfSearch} onChange={e => setPfSearch(e.target.value)} placeholder="Search email, name or company..."
+                        style={{ flex:1, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 14px", color:"#e2e8f0", fontSize:13, fontFamily:"Sora,sans-serif", outline:"none" }} />
+                      <select value={pfCodeFilter} onChange={e => setPfCodeFilter(e.target.value)}
+                        style={{ background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.35)", borderRadius:10, padding:"9px 14px", color:"#a5b4fc", fontSize:13, fontWeight:700, fontFamily:"Sora,sans-serif", cursor:"pointer", outline:"none", minWidth:200 }}>
+                        <option value="all" style={{ background:"#13131F", color:"#e2e8f0" }}>All codes ({pfData.users.length})</option>
+                        {codes.filter(cd => cd !== "all").map(code => (
+                          <option key={code} value={code} style={{ background:"#13131F", color:"#e2e8f0" }}>{code} — {byCode[code]?.signups||0} signups</option>
+                        ))}
+                      </select>
+                      <span style={{ fontSize:12, color:"#475569", whiteSpace:"nowrap" }}>{filtered.length} result{filtered.length!==1?"s":""}</span>
+                    </div>
+                    <div style={{ display:"flex", gap:0, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:10, overflow:"hidden", width:"fit-content" }}>
                       {[
-                        { id:"all",      label:"All signups" },
-                        { id:"paying",   label:"Paying ✓" },
-                        { id:"free",     label:"Not yet paying" },
-                        { id:"eligible", label:"Commission eligible" },
-                      ].map((f, i) => (
+                        { id:"all",      label:"All signups",         activeCol:"#818cf8", activeBg:"rgba(99,102,241,0.2)" },
+                        { id:"paying",   label:"✓ Paying",            activeCol:"#34d399", activeBg:"rgba(52,211,153,0.15)" },
+                        { id:"free",     label:"Not yet paying",      activeCol:"#f87171", activeBg:"rgba(248,113,113,0.15)" },
+                        { id:"eligible", label:"Commission eligible", activeCol:"#f59e0b", activeBg:"rgba(245,158,11,0.15)" },
+                      ].map((f, i, arr) => (
                         <button key={f.id} onClick={() => setPfStatusFilter(f.id)}
-                          style={{ padding:"8px 14px", border:"none", borderRight: i < 3 ? "1px solid rgba(255,255,255,0.07)" : "none",
+                          style={{ padding:"8px 16px", border:"none", borderRight:i<arr.length-1?"1px solid rgba(255,255,255,0.07)":"none",
                             fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", whiteSpace:"nowrap",
-                            background: pfStatusFilter===f.id
-                              ? (f.id==="paying"?"rgba(52,211,153,0.25)":f.id==="eligible"?"rgba(245,158,11,0.25)":f.id==="free"?"rgba(248,113,113,0.15)":"rgba(99,102,241,0.25)")
-                              : "transparent",
-                            color: pfStatusFilter===f.id
-                              ? (f.id==="paying"?"#34d399":f.id==="eligible"?"#f59e0b":f.id==="free"?"#f87171":"#a5b4fc")
-                              : "#64748b" }}>
+                            background:pfStatusFilter===f.id?f.activeBg:"transparent",
+                            color:pfStatusFilter===f.id?f.activeCol:"#64748b" }}>
                           {f.label}
                         </button>
                       ))}
                     </div>
-                    <span style={{ fontSize:12, color:"#475569", marginLeft:"auto" }}>{filtered.length} results</span>
                   </div>
-
-                  {/* Table */}
                   <div style={{ background:"#13131F", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, overflow:"hidden" }}>
-                    {/* Header */}
-                    <div style={{ display:"grid", gridTemplateColumns:"2fr 120px 100px 110px 110px 90px 100px", gap:0, padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", background:"rgba(255,255,255,0.02)" }}>
-                      {["User", "Code", "Plan", "Signed Up", "First Payment", "Revenue", "Commission"].map(h => (
+                    <div style={{ display:"grid", gridTemplateColumns:"2.5fr 130px 90px 110px 120px 90px 110px", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", background:"rgba(255,255,255,0.02)" }}>
+                      {["User","Code","Plan","Signed Up","First Payment","Revenue","Commission"].map(h => (
                         <div key={h} style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.06em" }}>{h}</div>
                       ))}
                     </div>
-                    {/* Rows */}
                     {filtered.length === 0 ? (
                       <div style={{ padding:"40px", textAlign:"center", color:"#475569", fontSize:13 }}>No results match your filters</div>
                     ) : filtered.map((u, i) => {
                       const isPaying = !!u.first_payment;
                       const isEligible = u.within_commission_window;
                       return (
-                        <div key={u.id} style={{ display:"grid", gridTemplateColumns:"2fr 120px 100px 110px 110px 90px 100px", gap:0, padding:"11px 16px",
-                          borderBottom: i < filtered.length-1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-                          background: isEligible ? "rgba(245,158,11,0.04)" : "transparent" }}>
-                          {/* User */}
+                        <div key={u.id} style={{ display:"grid", gridTemplateColumns:"2.5fr 130px 90px 110px 120px 90px 110px", padding:"11px 16px",
+                          borderBottom:i<filtered.length-1?"1px solid rgba(255,255,255,0.04)":"none",
+                          background:isEligible?"rgba(245,158,11,0.04)":"transparent" }}>
                           <div>
                             <div style={{ fontSize:13, fontWeight:600, color:"#e2e8f0" }}>{u.email}</div>
-                            <div style={{ fontSize:11, color:"#64748b" }}>{[u.first_name, u.last_name].filter(Boolean).join(" ") || u.company_name || "—"}</div>
+                            <div style={{ fontSize:11, color:"#64748b", marginTop:2 }}>{[u.first_name,u.last_name].filter(Boolean).join(" ")||u.company_name||"—"}</div>
                           </div>
-                          {/* Code */}
                           <div style={{ fontSize:12, fontFamily:"JetBrains Mono,monospace", color:"#818cf8", fontWeight:700, alignSelf:"center" }}>{u.promo_code_used}</div>
-                          {/* Plan */}
                           <div style={{ alignSelf:"center" }}>
                             <span style={{ fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:99,
-                              background: u.plan==="proPlus"?"rgba(245,158,11,0.15)":u.plan==="pro"?"rgba(99,102,241,0.15)":"rgba(255,255,255,0.05)",
-                              color: u.plan==="proPlus"?"#f59e0b":u.plan==="pro"?"#a5b4fc":"#64748b" }}>
+                              background:u.plan==="proPlus"?"rgba(245,158,11,0.15)":u.plan==="pro"?"rgba(99,102,241,0.15)":"rgba(255,255,255,0.06)",
+                              color:u.plan==="proPlus"?"#f59e0b":u.plan==="pro"?"#a5b4fc":"#64748b" }}>
                               {u.plan==="proPlus"?"Pro+":u.plan==="pro"?"Pro":"Free"}
                             </span>
                           </div>
-                          {/* Signed up */}
                           <div style={{ fontSize:12, color:"#64748b", alignSelf:"center" }}>{new Date(u.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"2-digit"})}</div>
-                          {/* First payment */}
                           <div style={{ alignSelf:"center" }}>
                             {u.first_payment_date ? (
                               <div>
                                 <div style={{ fontSize:12, color:"#34d399", fontWeight:600 }}>{new Date(u.first_payment_date).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"2-digit"})}</div>
-                                {u.days_to_first_payment !== null && <div style={{ fontSize:10, color:"#475569" }}>{u.days_to_first_payment}d after signup</div>}
+                                {u.days_to_first_payment!==null && <div style={{ fontSize:10, color:"#475569" }}>{u.days_to_first_payment}d after signup</div>}
                               </div>
-                            ) : <span style={{ fontSize:11, color:"#334155" }}>Not yet</span>}
+                            ) : <span style={{ fontSize:12, color:"#475569" }}>Not yet</span>}
                           </div>
-                          {/* Revenue */}
-                          <div style={{ fontSize:13, color: isPaying?"#e2e8f0":"#334155", fontFamily:"JetBrains Mono,monospace", alignSelf:"center" }}>
-                            {isPaying ? `£${u.total_paid.toFixed(2)}` : "—"}
+                          <div style={{ fontSize:13, color:isPaying?"#e2e8f0":"#334155", fontFamily:"JetBrains Mono,monospace", alignSelf:"center" }}>
+                            {isPaying?`£${u.total_paid.toFixed(2)}`:"—"}
                           </div>
-                          {/* Commission */}
                           <div style={{ alignSelf:"center" }}>
                             {isEligible ? (
                               <div>
                                 <div style={{ fontSize:13, fontWeight:700, color:"#f59e0b", fontFamily:"JetBrains Mono,monospace" }}>£{u.commission_amount.toFixed(2)}</div>
                                 <div style={{ fontSize:10, color:"#92400e" }}>15% of first</div>
                               </div>
-                            ) : isPaying ? (
-                              <span style={{ fontSize:11, color:"#475569" }}>Outside window</span>
-                            ) : <span style={{ fontSize:11, color:"#334155" }}>—</span>}
+                            ) : isPaying ? <span style={{ fontSize:11, color:"#475569" }}>Outside window</span>
+                              : <span style={{ fontSize:11, color:"#334155" }}>—</span>}
                           </div>
                         </div>
                       );
                     })}
                   </div>
-
-                  {/* Legend */}
-                  <div style={{ marginTop:12, padding:"10px 14px", background:"rgba(245,158,11,0.06)", border:"1px solid rgba(245,158,11,0.15)", borderRadius:10, display:"flex", gap:16, flexWrap:"wrap" }}>
-                    <div style={{ fontSize:11, color:"#92400e" }}>🟡 Gold row = commission eligible (first payment within 90 days of signup)</div>
-                    <div style={{ fontSize:11, color:"#64748b" }}>Commission = 15% of first payment only · Outside window = paid but after 90 days</div>
+                  <div style={{ marginTop:10, padding:"8px 14px", background:"rgba(245,158,11,0.05)", border:"1px solid rgba(245,158,11,0.12)", borderRadius:8, fontSize:11, color:"#92400e" }}>
+                    🟡 Amber row = commission eligible (first payment within 90 days) · Commission = 15% of first payment only
                   </div>
                 </div>
               );
             })()}
           </div>
         )}
-
       {/* User Info Modal */}
       {viewingUser && (
         <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }} onClick={() => setViewingUser(null)}>
