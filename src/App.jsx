@@ -690,7 +690,7 @@ const AdminPanel = () => {
     <div style={{ minHeight:"100vh", background:"#070710", fontFamily:"Sora,sans-serif" }}>
       {toast && <div style={{ position:"fixed", top:20, right:20, zIndex:999, background:toast.isError?"#ef4444":"#22c55e", color:"#fff", padding:"12px 20px", borderRadius:12, fontSize:13, fontWeight:600, boxShadow:"0 8px 32px rgba(0,0,0,0.4)" }}>{toast.isError?"✗":"✓"} {toast.msg}</div>}
 
-      <div className="admin-header" style={{ background:"#0d0d18", borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"16px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+      <div className="admin-header" style={{ background:"#0d0d18", borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"16px 48px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
           <img src={LOGO_BASE64} alt="UtilitySEO" style={{ width:32, height:32, borderRadius:8, objectFit:"cover" }} />
           <span style={{ fontSize:16, fontWeight:700 }}>UtilitySEO</span>
@@ -699,7 +699,7 @@ const AdminPanel = () => {
         <button onClick={() => { setAuthed(false); setEmail(""); setPass(""); localStorage.removeItem('admin_authed'); }} style={{ padding:"8px 16px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, color:"#ef4444", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>Sign Out</button>
       </div>
 
-      <div className="admin-body" style={{ padding:"32px" }}>
+      <div className="admin-body" style={{ padding:"40px 48px", maxWidth:1400, margin:"0 auto" }}>
         {/* Stats */}
         <div className="stats-grid" style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:16, marginBottom:32 }}>
           {stats.map(s => (
@@ -1047,7 +1047,7 @@ const AdminPanel = () => {
         {/* ── PROSPECTFLOW TAB ── */}
         {activeTab === "prospectflow" && (
           <div>
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>
               <div>
                 <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>💰 ProspectFlow</h2>
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Promo code signups — commission tracking for Josh &amp; Joel</p>
@@ -1084,7 +1084,7 @@ const AdminPanel = () => {
               const totalEligible = pfData.users.filter(u => u.within_commission_window).length;
               return (
                 <div>
-                  <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:20 }}>
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:28 }}>
                     {[
                       { label:"Total Signups", val:pfData.users.length, col:"#818cf8" },
                       { label:"Now Paying", val:totalPaying, col:"#34d399" },
@@ -1097,7 +1097,7 @@ const AdminPanel = () => {
                       </div>
                     ))}
                   </div>
-                  <div style={{ display:"flex", gap:10, marginBottom:20, flexWrap:"wrap" }}>
+                  <div style={{ display:"flex", gap:14, marginBottom:28, flexWrap:"wrap" }}>
                     {Object.entries(byCode).map(([code, stats]) => (
                       <div key={code} onClick={() => setPfCodeFilter(pfCodeFilter===code ? "all" : code)}
                         style={{ background:"#13131F", border:`1px solid ${pfCodeFilter===code?"#6366f1":"rgba(255,255,255,0.07)"}`, borderRadius:12, padding:"14px 18px", cursor:"pointer", minWidth:180 }}>
@@ -1114,7 +1114,7 @@ const AdminPanel = () => {
                       </div>
                     ))}
                   </div>
-                  <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:16 }}>
+                  <div style={{ display:"flex", flexDirection:"column", gap:12, marginBottom:20 }}>
                     <div style={{ display:"flex", gap:10, alignItems:"center" }}>
                       <input value={pfSearch} onChange={e => setPfSearch(e.target.value)} placeholder="Search email, name or company..."
                         style={{ flex:1, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 14px", color:"#e2e8f0", fontSize:13, fontFamily:"Sora,sans-serif", outline:"none" }} />
@@ -1145,7 +1145,7 @@ const AdminPanel = () => {
                     </div>
                   </div>
                   <div style={{ background:"#13131F", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, overflow:"hidden" }}>
-                    <div style={{ display:"grid", gridTemplateColumns:"2.5fr 130px 90px 110px 120px 90px 110px", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", background:"rgba(255,255,255,0.02)" }}>
+                    <div style={{ display:"grid", gridTemplateColumns:"2.5fr 130px 90px 110px 120px 90px 110px", padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)", background:"rgba(255,255,255,0.02)" }}>
                       {["User","Code","Plan","Signed Up","First Payment","Revenue","Commission"].map(h => (
                         <div key={h} style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.06em" }}>{h}</div>
                       ))}
@@ -1156,7 +1156,7 @@ const AdminPanel = () => {
                       const isPaying = !!u.first_payment;
                       const isEligible = u.within_commission_window;
                       return (
-                        <div key={u.id} style={{ display:"grid", gridTemplateColumns:"2.5fr 130px 90px 110px 120px 90px 110px", padding:"11px 16px",
+                        <div key={u.id} style={{ display:"grid", gridTemplateColumns:"2.5fr 130px 90px 110px 120px 90px 110px", padding:"13px 20px",
                           borderBottom:i<filtered.length-1?"1px solid rgba(255,255,255,0.04)":"none",
                           background:isEligible?"rgba(245,158,11,0.04)":"transparent" }}>
                           <div>
