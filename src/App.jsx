@@ -134,14 +134,22 @@ const EditModal = ({ user, onSave, onClose }) => {
         <div style={{ padding:24, maxHeight:"70vh", overflowY:"auto" }}>
           {/* Plan */}
           <p style={{ fontSize:12, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Permanent Plan</p>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:20 }}>
-            {[["free","Free","#64748b"],["pro","Pro","#6366f1"],["proPlus","Pro Plus","#f59e0b"]].map(([id,label,col]) => (
+          {/* Pro Plus removed from assignment — Pro is now the unlimited tier.
+              Legacy proPlus rows still display with their badge below if present. */}
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:8, marginBottom:6 }}>
+            {[["free","Free","#64748b"],["pro","Pro","#6366f1"]].map(([id,label,col]) => (
               <button key={id} onClick={() => setPlan(id)}
                 style={{ padding:"12px 8px", borderRadius:12, border:`2px solid ${plan===id ? col : "rgba(255,255,255,0.08)"}`, background: plan===id ? `${col}18` : "rgba(255,255,255,0.03)", color: plan===id ? col : "#64748b", fontWeight:600, fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", transition:"all 0.15s" }}>
                 {label}
               </button>
             ))}
           </div>
+          {plan === 'proPlus' && (
+            <div style={{ marginBottom:20, padding:"8px 12px", borderRadius:8, background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.25)", fontSize:11, color:"#f59e0b" }}>
+              This user is on legacy <strong>Pro Plus</strong>. Pro now offers the same unlimited features — switching to Pro is recommended.
+            </div>
+          )}
+          {plan !== 'proPlus' && <div style={{ marginBottom:14 }} />}
 
           {/* Status — now includes Deactivated */}
           <p style={{ fontSize:12, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Account Status</p>
@@ -191,8 +199,8 @@ const EditModal = ({ user, onSave, onClose }) => {
             {tempOn && (
               <div style={{ padding:"0 16px 16px", borderTop:"1px solid rgba(255,255,255,0.06)" }}>
                 <p style={{ fontSize:12, color:"#64748b", marginTop:14, marginBottom:8 }}>Temporary plan</p>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:6, marginBottom:16 }}>
-                  {[["free","Free","#64748b"],["pro","Pro","#6366f1"],["proPlus","Pro Plus","#f59e0b"]].map(([id,label,col]) => (
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:6, marginBottom:16 }}>
+                  {[["free","Free","#64748b"],["pro","Pro","#6366f1"]].map(([id,label,col]) => (
                     <button key={id} onClick={() => setTempPlan(id)}
                       style={{ padding:"8px", borderRadius:10, border:`2px solid ${tempPlan===id ? col : "rgba(255,255,255,0.08)"}`, background: tempPlan===id ? `${col}18` : "rgba(255,255,255,0.03)", color: tempPlan===id ? col : "#64748b", fontWeight:600, fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
                       {label}
@@ -206,7 +214,7 @@ const EditModal = ({ user, onSave, onClose }) => {
                 <input type="range" min={1} max={90} value={tempDays} onChange={e => setTempDays(Number(e.target.value))}
                   style={{ width:"100%", accentColor:"#6366f1" }} />
                 <div style={{ padding:"10px 14px", background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.2)", borderRadius:10, marginTop:12 }}>
-                  <p style={{ fontSize:12, color:"#fbbf24" }}>⚡ Will get <strong>{{"free":"Free","pro":"Pro","proPlus":"Pro Plus"}[tempPlan]}</strong> access for {tempDays} day{tempDays!==1?"s":""}, then revert to {plan}.</p>
+                  <p style={{ fontSize:12, color:"#fbbf24" }}>Will get <strong>{({"free":"Free","pro":"Pro","proPlus":"Pro Plus"})[tempPlan]}</strong> access for {tempDays} day{tempDays!==1?"s":""}, then revert to {plan}.</p>
                 </div>
               </div>
             )}
@@ -807,7 +815,7 @@ const AdminPanel = () => {
                     <option value="all">All plans</option>
                     <option value="free">Free</option>
                     <option value="pro">Pro</option>
-                    <option value="proPlus">Pro Plus</option>
+                    <option value="proPlus">Pro Plus (legacy)</option>
                     <option value="trial">Trial / Temp access</option>
                   </select>
                 </div>
@@ -919,7 +927,6 @@ const AdminPanel = () => {
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Trial Plan <span style={{ color:"#ef4444" }}>*</span></label>
                   <select value={promoForm.trial_plan} onChange={e => setPromoForm(f=>({...f,trial_plan:e.target.value}))} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer", boxSizing:"border-box" }}>
                     <option value="pro">Pro</option>
-                    <option value="proPlus">Pro Plus</option>
                     <option value="free">Free</option>
                   </select>
                 </div>
