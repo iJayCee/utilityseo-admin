@@ -1,6 +1,7 @@
 // Real SEO Analyzer using Google PageSpeed Insights API
-
-const GOOGLE_API_KEY = 'AIzaSyDMTLRPoXfyICZtCIuT_DWysB_edqmVl1U'; // Replace with your actual key
+// Key comes from VITE_GOOGLE_PAGESPEED_API_KEY (in .env.local). Must be
+// HTTP-referrer-restricted in Google Cloud Console.
+const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_PAGESPEED_API_KEY || '';
 
 export async function analyzeWebsite(url) {
   try {

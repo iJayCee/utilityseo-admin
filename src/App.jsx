@@ -374,6 +374,18 @@ const AdminPanel = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [adminCreds, setAdminCreds] = useState(() => { try { return JSON.parse(sessionStorage.getItem('admin_creds') || 'null'); } catch { return null; } });
 
+  // SECURITY: every admin endpoint (other than /login) now requires admin
+  // credentials. This wrapper attaches them as headers on every fetch so we
+  // don't have to thread credentials through 20+ call sites.
+  const adminFetch = (url, opts = {}) => {
+    const headers = { ...(opts.headers || {}) };
+    if (adminCreds?.email && adminCreds?.password) {
+      headers['x-admin-email'] = adminCreds.email;
+      headers['x-admin-password'] = adminCreds.password;
+    }
+    return fetch(url, { ...opts, headers });
+  };
+
   const [activeTab, setActiveTab] = useState("users");
   const [pfData, setPfData] = useState(null);
   const [pfLoading, setPfLoading] = useState(false);
@@ -420,7 +432,7 @@ const AdminPanel = () => {
     e.preventDefault();
     setLoading(true); setErr("");
     try {
-      const response = await fetch(`${API_URL}/admin/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email, password:pass }) });
+      const response = await adminFetch(`${API_URL}/admin/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email, password:pass }) });
       if (!response.ok) { setErr("Access denied. Invalid credentials."); setLoading(false); return; }
       const creds = { email, password:pass };
       setAdminCreds(creds);
@@ -435,7 +447,7 @@ const AdminPanel = () => {
   const loadUsers = async () => {
     setLoadingUsers(true);
     try {
-      const response = await fetch(`${API_URL}/admin/users`);
+      const response = await adminFetch(`${API_URL}/admin/users`);
       const data = await response.json();
       const transformed = data.map(user => ({
         id: user.id.toString(),
@@ -474,7 +486,7 @@ const AdminPanel = () => {
     if (newWin && !isSameTab) {
       newWin.document.write('<html><body style="background:#0a0a0f;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#818cf8;font-size:15px;">Loading account…</body></html>');
     }
-    fetch(`${API_URL}/admin/impersonate/${user.id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ adminEmail:adminCreds.email, adminPassword:adminCreds.password }) })
+    adminFetch(`${API_URL}/admin/impersonate/${user.id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ adminEmail:adminCreds.email, adminPassword:adminCreds.password }) })
       .then(r => r.json().then(data => ({ ok:r.ok, data })))
       .then(({ ok, data }) => {
         if (!ok) throw new Error(data.error || 'Failed');
@@ -487,16 +499,16 @@ const AdminPanel = () => {
 
   const updateUser = async (userId, updates) => {
     try {
-      const response = await fetch(`${API_URL}/admin/users/${userId}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ plan:updates.plan, status:updates.status, cookie_consent:updates.cookieConsent }) });
+      const response = await adminFetch(`${API_URL}/admin/users/${userId}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ plan:updates.plan, status:updates.status, cookie_consent:updates.cookieConsent }) });
       if (!response.ok) throw new Error('Failed to update user');
       const updatedUser = await response.json();
       if (updates.tempPlan && updates.tempDays) {
-        const tempRes = await fetch(`${API_URL}/admin/users/${userId}/temp-plan`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ plan:updates.tempPlan, days:updates.tempDays }) });
+        const tempRes = await adminFetch(`${API_URL}/admin/users/${userId}/temp-plan`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ plan:updates.tempPlan, days:updates.tempDays }) });
         if (!tempRes.ok) throw new Error('Failed to set temp plan');
         const tempData = await tempRes.json();
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan:updatedUser.plan, status:updates.status, tempPlan:tempData.temp_plan, tempPlanExpiresAt:tempData.temp_plan_expires_at } : u));
       } else if (updates.revokeTemp) {
-        const revokeRes = await fetch(`${API_URL}/admin/users/${userId}/temp-plan`, { method:'DELETE' });
+        const revokeRes = await adminFetch(`${API_URL}/admin/users/${userId}/temp-plan`, { method:'DELETE' });
         if (!revokeRes.ok) throw new Error('Failed to revoke temp plan');
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan:updatedUser.plan, status:updates.status, tempPlan:null, tempPlanExpiresAt:null } : u));
       } else {
@@ -508,7 +520,7 @@ const AdminPanel = () => {
 
   const loadPromos = async () => {
     setLoadingPromos(true);
-    try { const res = await fetch(`${API_URL}/admin/promo-codes`); const data = await res.json(); setPromos(data); }
+    try { const res = await adminFetch(`${API_URL}/admin/promo-codes`); const data = await res.json(); setPromos(data); }
     catch { showToast("Failed to load promo codes", true); }
     finally { setLoadingPromos(false); }
   };
@@ -519,7 +531,7 @@ const AdminPanel = () => {
     if (promoSignups[promoId]?.data) return;
     setPromoSignups(prev => ({ ...prev, [promoId]: { loading: true } }));
     try {
-      const res = await fetch(`${API_URL}/admin/promo-codes/${promoId}/signups`);
+      const res = await adminFetch(`${API_URL}/admin/promo-codes/${promoId}/signups`);
       const data = await res.json();
       setPromoSignups(prev => ({ ...prev, [promoId]: { loading: false, data } }));
     } catch { setPromoSignups(prev => ({ ...prev, [promoId]: { loading: false, error: true } })); }
@@ -531,7 +543,7 @@ const AdminPanel = () => {
     if (!promoForm.trial_days || isNaN(promoForm.trial_days) || Number(promoForm.trial_days) < 1) { setPromoFormError("Trial days must be a positive number"); return; }
     setSavingPromo(true);
     try {
-      const res = await fetch(`${API_URL}/admin/promo-codes`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ code:promoForm.code.trim().toUpperCase(), description:promoForm.description.trim()||null, trial_plan:promoForm.trial_plan, trial_days:Number(promoForm.trial_days), max_uses:promoForm.max_uses?Number(promoForm.max_uses):null, expires_at:promoForm.expires_at||null }) });
+      const res = await adminFetch(`${API_URL}/admin/promo-codes`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ code:promoForm.code.trim().toUpperCase(), description:promoForm.description.trim()||null, trial_plan:promoForm.trial_plan, trial_days:Number(promoForm.trial_days), max_uses:promoForm.max_uses?Number(promoForm.max_uses):null, expires_at:promoForm.expires_at||null }) });
       const data = await res.json();
       if (!res.ok) { setPromoFormError(data.error || "Failed"); return; }
       setPromos(prev => [data, ...prev]);
@@ -543,7 +555,7 @@ const AdminPanel = () => {
 
   const togglePromoActive = async (promo) => {
     try {
-      const res = await fetch(`${API_URL}/admin/promo-codes/${promo.id}`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ is_active:!promo.is_active }) });
+      const res = await adminFetch(`${API_URL}/admin/promo-codes/${promo.id}`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ is_active:!promo.is_active }) });
       const data = await res.json();
       if (!res.ok) { showToast("Failed to update", true); return; }
       setPromos(prev => prev.map(p => p.id === promo.id ? data : p));
@@ -553,7 +565,7 @@ const AdminPanel = () => {
   const deletePromo = async (id) => {
     if (!window.confirm("Delete this promo code? This cannot be undone.")) return;
     try {
-      const res = await fetch(`${API_URL}/admin/promo-codes/${id}`, { method:"DELETE" });
+      const res = await adminFetch(`${API_URL}/admin/promo-codes/${id}`, { method:"DELETE" });
       if (!res.ok) { showToast("Failed to delete", true); return; }
       setPromos(prev => prev.filter(p => p.id !== id));
       showToast("Promo code deleted");
@@ -566,7 +578,7 @@ const AdminPanel = () => {
     try {
       if (!adminCreds) { setPfError("Session expired — please log out and back in."); setPfLoading(false); return; }
       const params = new URLSearchParams({ adminEmail: adminCreds.email, adminPassword: adminCreds.password });
-      const res = await fetch(`${API_URL}/admin/prospect-flow?${params}`);
+      const res = await adminFetch(`${API_URL}/admin/prospect-flow?${params}`);
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Failed to load");
       setPfData(d);
@@ -579,7 +591,7 @@ const AdminPanel = () => {
     try {
       if (!adminCreds) return;
       const params = new URLSearchParams({ adminEmail: adminCreds.email, adminPassword: adminCreds.password, code, period });
-      const res = await fetch(`${API_URL}/admin/prospect-flow/code-revenue?${params}`);
+      const res = await adminFetch(`${API_URL}/admin/prospect-flow/code-revenue?${params}`);
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Failed');
       setRevenueModal({ code, period, data: d, loading: false });
@@ -606,7 +618,7 @@ const AdminPanel = () => {
   const saveNote = async (userId, text) => {
     setNoteSaving(true);
     try {
-      const res = await fetch(`${API_URL}/admin/users/${userId}/notes`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ notes:text }) });
+      const res = await adminFetch(`${API_URL}/admin/users/${userId}/notes`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ notes:text }) });
       if (!res.ok) throw new Error('Save failed');
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, adminNotes:text } : u));
       showToast('Note saved');
@@ -617,7 +629,7 @@ const AdminPanel = () => {
   const toggleStar = async (id) => {
     const sid = String(id);
     setStarredIds(prev => { const next = new Set(prev); next.has(sid) ? next.delete(sid) : next.add(sid); return next; });
-    try { await fetch(`${API_URL}/admin/users/${id}/star`, { method:'PATCH', headers:{'Content-Type':'application/json'} }); }
+    try { await adminFetch(`${API_URL}/admin/users/${id}/star`, { method:'PATCH', headers:{'Content-Type':'application/json'} }); }
     catch { setStarredIds(prev => { const next = new Set(prev); next.has(sid) ? next.delete(sid) : next.add(sid); return next; }); }
   };
 
