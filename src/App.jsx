@@ -362,7 +362,20 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
 
 
 const AdminPanel = () => {
-  const [authed, setAuthed] = useState(() => localStorage.getItem('admin_authed') === 'true');
+  // `authed` must be true AND we must have creds in sessionStorage. Without
+  // both, every admin API call silently 401s and the user sees empty tables
+  // with no explanation — because sessionStorage clears on browser restart
+  // while localStorage persists. If the flag is stale but creds are missing,
+  // clear the flag so the login screen renders instead of a blank dashboard.
+  const [authed, setAuthed] = useState(() => {
+    const flag = localStorage.getItem('admin_authed') === 'true';
+    const hasCreds = !!sessionStorage.getItem('admin_creds');
+    if (flag && !hasCreds) {
+      localStorage.removeItem('admin_authed');
+      return false;
+    }
+    return flag;
+  });
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
@@ -377,13 +390,28 @@ const AdminPanel = () => {
   // SECURITY: every admin endpoint (other than /login) now requires admin
   // credentials. This wrapper attaches them as headers on every fetch so we
   // don't have to thread credentials through 20+ call sites.
-  const adminFetch = (url, opts = {}) => {
+  const adminFetch = async (url, opts = {}) => {
     const headers = { ...(opts.headers || {}) };
-    if (adminCreds?.email && adminCreds?.password) {
-      headers['x-admin-email'] = adminCreds.email;
-      headers['x-admin-password'] = adminCreds.password;
+    // Pull latest creds fresh each call (covers the login → immediate-fetch
+    // race where setAdminCreds hasn't reached state yet).
+    let creds = adminCreds;
+    if (!creds?.email || !creds?.password) {
+      try { creds = JSON.parse(sessionStorage.getItem('admin_creds') || 'null'); } catch {}
     }
-    return fetch(url, { ...opts, headers });
+    if (creds?.email && creds?.password) {
+      headers['x-admin-email'] = creds.email;
+      headers['x-admin-password'] = creds.password;
+    }
+    const res = await fetch(url, { ...opts, headers });
+    // Session expired (creds rejected) — clear auth state so the login screen
+    // renders on the next render cycle, surfacing the issue to the user.
+    if (res.status === 401) {
+      sessionStorage.removeItem('admin_creds');
+      localStorage.removeItem('admin_authed');
+      setAdminCreds(null);
+      setAuthed(false);
+    }
+    return res;
   };
 
   const [activeTab, setActiveTab] = useState("users");
@@ -448,6 +476,10 @@ const AdminPanel = () => {
     setLoadingUsers(true);
     try {
       const response = await adminFetch(`${API_URL}/admin/users`);
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || `Users endpoint returned ${response.status}`);
+      }
       const data = await response.json();
       const transformed = data.map(user => ({
         id: user.id.toString(),
@@ -475,7 +507,10 @@ const AdminPanel = () => {
       }));
       setUsers(transformed);
       setStarredIds(new Set(transformed.filter(u => u.isStarred).map(u => String(u.id))));
-    } catch { showToast('Failed to load users', true); }
+    } catch (err) {
+      console.error('[admin] loadUsers failed:', err);
+      showToast(err.message || 'Failed to load users', true);
+    }
     finally { setLoadingUsers(false); }
   };
 
