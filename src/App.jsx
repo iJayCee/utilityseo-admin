@@ -431,6 +431,12 @@ const AdminPanel = () => {
   const [savingPromo, setSavingPromo] = useState(false);
   const [filterPlan, setFilterPlan] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  // Hard-delete confirmation state — null when no modal open, otherwise the
+  // user being deleted. The user must type the email exactly (matched by
+  // both client + server) before the destructive action proceeds.
+  const [hardDeletingUser, setHardDeletingUser] = useState(null);
+  const [hardDeleteConfirm, setHardDeleteConfirm] = useState("");
+  const [hardDeleting, setHardDeleting] = useState(false);
   const [filterSector, setFilterSector] = useState("all");
   const [filterReferral, setFilterReferral] = useState("all");
   const [filterMarketing, setFilterMarketing] = useState("all");
@@ -551,6 +557,38 @@ const AdminPanel = () => {
       }
       showToast(`${updatedUser.email} updated successfully`);
     } catch { showToast('Failed to update user', true); }
+  };
+
+  // ── Hard delete user ──────────────────────────────────────────────────
+  // Backend requires confirmEmail in the body to match user.email exactly.
+  // We mirror the same check client-side as a safety net so the request
+  // can't even fire unless the typed value matches.
+  const performHardDelete = async () => {
+    if (!hardDeletingUser) return;
+    if (hardDeleteConfirm.trim().toLowerCase() !== hardDeletingUser.email.toLowerCase()) {
+      showToast('Typed email does not match', true);
+      return;
+    }
+    setHardDeleting(true);
+    try {
+      const res = await adminFetch(`${API_URL}/admin/users/${hardDeletingUser.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmEmail: hardDeleteConfirm.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      // Drop the user from local state + close any modals
+      setUsers(prev => prev.filter(u => u.id !== hardDeletingUser.id));
+      if (viewingUser?.id === hardDeletingUser.id) setViewingUser(null);
+      showToast(`${hardDeletingUser.email} permanently deleted`);
+      setHardDeletingUser(null);
+      setHardDeleteConfirm('');
+    } catch (err) {
+      showToast(err.message || 'Delete failed', true);
+    } finally {
+      setHardDeleting(false);
+    }
   };
 
   const loadPromos = async () => {
@@ -1457,6 +1495,54 @@ const AdminPanel = () => {
               <button onClick={() => saveNote(viewingUser.id, noteText)} disabled={noteSaving}
                 style={{ marginTop:10, width:"100%", padding:"10px 0", background:noteSaving?"rgba(124,58,237,0.3)":"#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:noteSaving?"default":"pointer", fontFamily:"Sora,sans-serif" }}>
                 {noteSaving ? "Saving..." : "Save Note"}
+              </button>
+            </div>
+
+            {/* Danger zone — hard delete trigger */}
+            <div style={{ marginTop:24, paddingTop:18, borderTop:"1px solid rgba(239,68,68,0.15)" }}>
+              <p style={{ fontSize:11, fontWeight:700, color:"#f87171", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>⚠ Danger zone</p>
+              <p style={{ fontSize:12, color:"#94a3b8", lineHeight:1.55, marginBottom:10 }}>
+                Permanently delete this user and all their data — projects, scans, keywords, brand tracking history, blog plans, integration tokens. This cannot be undone. Prefer "deactivate" unless you genuinely need the email freed up.
+              </p>
+              <button onClick={() => { setHardDeletingUser(viewingUser); setHardDeleteConfirm(""); }}
+                style={{ padding:"9px 16px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.4)", borderRadius:10, color:"#f87171", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                Delete account permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hard-delete confirmation modal */}
+      {hardDeletingUser && (
+        <div onClick={(e) => { if (e.target === e.currentTarget) { setHardDeletingUser(null); setHardDeleteConfirm(''); } }}
+          style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", zIndex:1100, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+          <div style={{ width:"100%", maxWidth:480, background:"#13131F", border:"1px solid rgba(239,68,68,0.4)", borderRadius:16, padding:"24px 26px", boxShadow:"0 24px 60px rgba(239,68,68,0.15)" }}>
+            <p style={{ fontSize:11, fontWeight:700, color:"#f87171", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>⚠ Permanent deletion</p>
+            <p style={{ fontSize:16, fontWeight:800, color:"#fff", marginBottom:8 }}>Delete {hardDeletingUser.email}?</p>
+            <p style={{ fontSize:13, color:"#94a3b8", lineHeight:1.6, marginBottom:14 }}>
+              Removes the user row, every project they own, and all associated scans, keywords, brand tracking, blog plans, and integration tokens. <strong style={{ color:"#fca5a5" }}>This cannot be undone.</strong>
+            </p>
+            <p style={{ fontSize:12, fontWeight:600, color:"#cbd5e1", marginBottom:6 }}>Type the email to confirm:</p>
+            <input value={hardDeleteConfirm} onChange={e => setHardDeleteConfirm(e.target.value)} autoFocus
+              placeholder={hardDeletingUser.email}
+              style={{ width:"100%", padding:"10px 12px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:10, color:"#fff", fontSize:13, fontFamily:"JetBrains Mono,monospace", outline:"none", boxSizing:"border-box", marginBottom:14 }}
+            />
+            <div style={{ display:"flex", gap:8, justifyContent:"flex-end" }}>
+              <button onClick={() => { setHardDeletingUser(null); setHardDeleteConfirm(''); }}
+                style={{ padding:"9px 16px", background:"transparent", border:"1px solid rgba(255,255,255,0.12)", borderRadius:10, color:"#94a3b8", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                Cancel
+              </button>
+              <button onClick={performHardDelete}
+                disabled={hardDeleting || hardDeleteConfirm.trim().toLowerCase() !== hardDeletingUser.email.toLowerCase()}
+                style={{
+                  padding:"9px 18px",
+                  background: hardDeleteConfirm.trim().toLowerCase() === hardDeletingUser.email.toLowerCase() ? "#dc2626" : "rgba(220,38,38,0.3)",
+                  border:"none", borderRadius:10, color:"#fff", fontSize:12, fontWeight:700,
+                  cursor: hardDeleting || hardDeleteConfirm.trim().toLowerCase() !== hardDeletingUser.email.toLowerCase() ? "not-allowed" : "pointer",
+                  fontFamily:"Sora,sans-serif",
+                }}>
+                {hardDeleting ? "Deleting..." : "Delete forever"}
               </button>
             </div>
           </div>
