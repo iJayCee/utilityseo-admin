@@ -82,7 +82,7 @@ const Badge = ({ plan }) => {
   return <span style={{ color:col[0], background:col[1], border:`1px solid ${col[0]}33`, padding:"2px 10px", borderRadius:99, fontSize:11, fontWeight:600, letterSpacing:"0.03em" }}>{text}</span>;
 };
 
-// ── Status badge — distinct colours per state ─────────────────────────────────
+// ── Status badge - distinct colours per state ─────────────────────────────────
 const StatusBadge = ({ status }) => {
   const cfg = {
     active:      { color:"#22c55e", bg:"rgba(34,197,94,0.1)",   border:"rgba(34,197,94,0.3)",   icon:"●", label:"Active" },
@@ -134,7 +134,7 @@ const EditModal = ({ user, onSave, onClose }) => {
         <div style={{ padding:24, maxHeight:"70vh", overflowY:"auto" }}>
           {/* Plan */}
           <p style={{ fontSize:12, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Permanent Plan</p>
-          {/* Pro Plus removed from assignment — Pro is now the unlimited tier.
+          {/* Pro Plus removed from assignment - Pro is now the unlimited tier.
               Legacy proPlus rows still display with their badge below if present. */}
           <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:8, marginBottom:6 }}>
             {[["free","Free","#64748b"],["pro","Pro","#6366f1"]].map(([id,label,col]) => (
@@ -146,12 +146,12 @@ const EditModal = ({ user, onSave, onClose }) => {
           </div>
           {plan === 'proPlus' && (
             <div style={{ marginBottom:20, padding:"8px 12px", borderRadius:8, background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.25)", fontSize:11, color:"#f59e0b" }}>
-              This user is on legacy <strong>Pro Plus</strong>. Pro now offers the same unlimited features — switching to Pro is recommended.
+              This user is on legacy <strong>Pro Plus</strong>. Pro now offers the same unlimited features - switching to Pro is recommended.
             </div>
           )}
           {plan !== 'proPlus' && <div style={{ marginBottom:14 }} />}
 
-          {/* Status — now includes Deactivated */}
+          {/* Status - now includes Deactivated */}
           <p style={{ fontSize:12, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Account Status</p>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:20 }}>
             {[
@@ -274,7 +274,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
           {u.cookieConsent === "accepted" ? "✅" : u.cookieConsent === "declined" ? "❌" : "⏳"}
         </span>
         <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' })}</span>
-        <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '—'}</span>
+        <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '-'}</span>
         <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
           <button onClick={onToggleStar}
             title={starred ? "Unstar" : "Star user"}
@@ -331,7 +331,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
             </div>
             <div style={{ display:"flex", justifyContent:"space-between" }}>
               <span style={{ fontSize:11, color:"#475569" }}>LAST SEEN</span>
-              <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '—'}</span>
+              <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '-'}</span>
             </div>
             <div style={{ display:"flex", gap:8 }}>
               <button onClick={onToggleStar}
@@ -364,7 +364,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
 const AdminPanel = () => {
   // `authed` must be true AND we must have creds in sessionStorage. Without
   // both, every admin API call silently 401s and the user sees empty tables
-  // with no explanation — because sessionStorage clears on browser restart
+  // with no explanation - because sessionStorage clears on browser restart
   // while localStorage persists. If the flag is stale but creds are missing,
   // clear the flag so the login screen renders instead of a blank dashboard.
   const [authed, setAuthed] = useState(() => {
@@ -403,7 +403,7 @@ const AdminPanel = () => {
       headers['x-admin-password'] = creds.password;
     }
     const res = await fetch(url, { ...opts, headers });
-    // Session expired (creds rejected) — clear auth state so the login screen
+    // Session expired (creds rejected) - clear auth state so the login screen
     // renders on the next render cycle, surfacing the issue to the user.
     if (res.status === 401) {
       sessionStorage.removeItem('admin_creds');
@@ -418,6 +418,9 @@ const AdminPanel = () => {
   const [pfData, setPfData] = useState(null);
   const [pfLoading, setPfLoading] = useState(false);
   const [pfError, setPfError] = useState("");
+  const [monData, setMonData] = useState(null);
+  const [monLoading, setMonLoading] = useState(false);
+  const [monError, setMonError] = useState("");
   const [pfCodeFilter, setPfCodeFilter] = useState("all");
   const [pfStatusFilter, setPfStatusFilter] = useState("all");
   const [pfSearch, setPfSearch] = useState("");
@@ -431,7 +434,7 @@ const AdminPanel = () => {
   const [savingPromo, setSavingPromo] = useState(false);
   const [filterPlan, setFilterPlan] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  // Hard-delete confirmation state — null when no modal open, otherwise the
+  // Hard-delete confirmation state - null when no modal open, otherwise the
   // user being deleted. The user must type the email exactly (matched by
   // both client + server) before the destructive action proceeds.
   const [hardDeletingUser, setHardDeletingUser] = useState(null);
@@ -522,7 +525,7 @@ const AdminPanel = () => {
   };
 
   const accessAccount = (user) => {
-    if (!adminCreds) { showToast('Session expired — please log out and log in again', true); return; }
+    if (!adminCreds) { showToast('Session expired - please log out and log in again', true); return; }
     const newWin = window.open('', '_blank') || window;
     const isSameTab = newWin === window;
     if (newWin && !isSameTab) {
@@ -650,7 +653,7 @@ const AdminPanel = () => {
     if (pfData) return;
     setPfLoading(true); setPfError("");
     try {
-      if (!adminCreds) { setPfError("Session expired — please log out and back in."); setPfLoading(false); return; }
+      if (!adminCreds) { setPfError("Session expired - please log out and back in."); setPfLoading(false); return; }
       const params = new URLSearchParams({ adminEmail: adminCreds.email, adminPassword: adminCreds.password });
       const res = await adminFetch(`${API_URL}/admin/prospect-flow?${params}`);
       const d = await res.json();
@@ -674,10 +677,22 @@ const AdminPanel = () => {
     }
   };
 
+  const loadMonitoring = async () => {
+    setMonLoading(true); setMonError("");
+    try {
+      const res = await adminFetch(`${API_URL}/admin/monitoring`);
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Failed to load");
+      setMonData(d);
+    } catch (err) { setMonError(err.message); }
+    setMonLoading(false);
+  };
+
   const handleTabSwitch = (tab) => {
     setActiveTab(tab);
     if (tab === "prospectflow") loadProspectFlow();
     if (tab === "promos" && promos.length === 0) loadPromos();
+    if (tab === "monitoring") loadMonitoring();
   };
 
   const allSectors = [...new Set(users.map(u => u.companySector).filter(Boolean))].sort();
@@ -855,7 +870,7 @@ const AdminPanel = () => {
 
           <div className="glass" style={{ borderRadius:16, padding:20, gridColumn:"1 / -1" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
-              <span style={{ fontSize:13, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em" }}>Monthly Signups — Last 12 Months</span>
+              <span style={{ fontSize:13, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em" }}>Monthly Signups - Last 12 Months</span>
               <span style={{ fontSize:11, color:"#334155" }}>Current month highlighted</span>
             </div>
             <MonthlyChart users={users} />
@@ -864,7 +879,7 @@ const AdminPanel = () => {
 
         {/* Tab Bar */}
         <div className="tab-bar" style={{ display:"flex", gap:8, marginBottom:28, borderBottom:"1px solid rgba(255,255,255,0.07)", paddingBottom:0 }}>
-          {[{id:"users",label:"👥 Users"},{id:"promos",label:"🎟 Promo Codes"},{id:"prospectflow",label:"💰 ProspectFlow"},{id:"loadtest",label:"⚡ Load Test"}].map(tab => (
+          {[{id:"users",label:"👥 Users"},{id:"promos",label:"🎟 Promo Codes"},{id:"prospectflow",label:"💰 ProspectFlow"},{id:"loadtest",label:"⚡ Load Test"},{id:"monitoring",label:"🩺 Monitoring"}].map(tab => (
             <button key={tab.id} className="tab-btn" onClick={() => handleTabSwitch(tab.id)}
               style={{ padding:"10px 22px", background:activeTab===tab.id?"rgba(99,102,241,0.2)":"transparent", border:"none", borderBottom:activeTab===tab.id?"2px solid #6366f1":"2px solid transparent", color:activeTab===tab.id?"#a5b4fc":"#64748b", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", borderRadius:"8px 8px 0 0", marginBottom:-1, transition:"all 0.15s" }}>
               {tab.label}
@@ -1034,7 +1049,7 @@ const AdminPanel = () => {
                 </div>
                 <div style={{ gridColumn:"1 / -1" }}>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Description <span style={{ color:"#475569", fontSize:10 }}>(internal note)</span></label>
-                  <input value={promoForm.description} onChange={e => setPromoForm(f=>({...f,description:e.target.value}))} placeholder="e.g. Launch campaign — influencer outreach May 2025"
+                  <input value={promoForm.description} onChange={e => setPromoForm(f=>({...f,description:e.target.value}))} placeholder="e.g. Launch campaign - influencer outreach May 2025"
                     style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:"#fff", fontSize:14, outline:"none", fontFamily:"Sora,sans-serif", boxSizing:"border-box" }}
                     onFocus={e=>e.target.style.border="1px solid #6366f1"} onBlur={e=>e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
                 </div>
@@ -1053,7 +1068,7 @@ const AdminPanel = () => {
                 ))}
               </div>
               {loadingPromos ? <div style={{ textAlign:"center", padding:40 }}><Spinner /></div>
-              : promos.length === 0 ? <div style={{ textAlign:"center", padding:60, color:"#334155" }}>No promo codes yet — create one above</div>
+              : promos.length === 0 ? <div style={{ textAlign:"center", padding:60, color:"#334155" }}>No promo codes yet - create one above</div>
               : promos.map((p, i) => (
                 <div key={p.id} style={{ borderBottom:i<promos.length-1?"1px solid rgba(255,255,255,0.04)":"none" }}>
                 <div className="promo-row" style={{ display:"grid", gridTemplateColumns:"160px 1fr 90px 70px 70px 100px 80px 110px", gap:12, padding:"14px 20px", alignItems:"center", opacity:p.is_active?1:0.45 }}
@@ -1065,7 +1080,7 @@ const AdminPanel = () => {
                       {p.trial_plan==="proPlus"?"Pro+":p.trial_plan==="pro"?"Pro":"Free"}
                     </span>
                   </div>
-                  <span style={{ fontSize:12, color:"#64748b", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.description||"—"}</span>
+                  <span style={{ fontSize:12, color:"#64748b", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.description||"-"}</span>
                   <span style={{ display:"none" }}></span>
                   <div style={{ display:"flex", gap:16, flexWrap:"wrap" }}>
                     <span style={{ fontSize:12, color:"#94a3b8" }}><span style={{ fontSize:10, color:"#475569" }}>DAYS </span>{p.trial_days}</span>
@@ -1158,13 +1173,131 @@ const AdminPanel = () => {
           <LoadTestPanel />
         )}
 
+        {activeTab === "monitoring" && (
+          <div style={{ maxWidth:1100, width:"100%", margin:"0 auto" }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
+              <div>
+                <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>🩺 Monitoring</h2>
+                <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>System health, business stats and captured backend errors</p>
+              </div>
+              <button onClick={loadMonitoring}
+                style={{ padding:"9px 20px", background:"#6366f1", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                ↻ Refresh
+              </button>
+            </div>
+
+            {monError && <div style={{ background:"rgba(248,113,113,0.1)", border:"1px solid rgba(248,113,113,0.3)", borderRadius:10, padding:"12px 16px", marginBottom:16, color:"#f87171", fontSize:13 }}>{monError}</div>}
+            {monLoading && <div style={{ textAlign:"center", padding:"60px 20px", color:"#64748b", fontSize:14 }}>Loading monitoring data…</div>}
+
+            {monData && !monLoading && (() => {
+              const h = monData.health || {};
+              const s = monData.stats;
+              const fmtUptime = (sec) => { if (sec == null) return "—"; const d=Math.floor(sec/86400), hr=Math.floor((sec%86400)/3600), m=Math.floor((sec%3600)/60); return d>0?`${d}d ${hr}h`:hr>0?`${hr}h ${m}m`:`${m}m`; };
+              const card = (label, value, accent) => (
+                <div className="glass" style={{ borderRadius:14, padding:"16px 18px", flex:"1 1 150px", minWidth:150 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:6 }}>{label}</div>
+                  <div style={{ fontSize:22, fontWeight:800, color:accent||"#e2e8f0", fontFamily:"JetBrains Mono,monospace" }}>{value}</div>
+                </div>
+              );
+              const dbOk = h.db === "connected";
+              const lvlColor = (lvl) => lvl === "error" ? "#f87171" : lvl === "warn" ? "#fbbf24" : "#94a3b8";
+              return (
+                <>
+                  {/* Health */}
+                  <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:16 }}>
+                    {card("Database", dbOk ? "● Connected" : "● Down", dbOk ? "#34d399" : "#f87171")}
+                    {card("Uptime", fmtUptime(h.uptime_s))}
+                    {card("Memory", h.memory_mb ? `${h.memory_mb.heap_used} / ${h.memory_mb.heap_total} MB` : "—")}
+                    {card("DB Pool", h.pool ? `${h.pool.idle}/${h.pool.total} idle` : "—", h.pool && h.pool.waiting > 0 ? "#fbbf24" : "#e2e8f0")}
+                    {card("Build", h.commit || "—")}
+                  </div>
+
+                  {/* Business stats */}
+                  {s && (
+                    <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:16 }}>
+                      {card("Users", s.users_total)}
+                      {card("Active", s.users_active)}
+                      {card("Signups 7d", s.signups_7d, "#a5b4fc")}
+                      {card("Errors 1h", s.errors_1h, s.errors_1h > 0 ? "#f87171" : "#34d399")}
+                      {card("Errors 24h", s.errors_24h, s.errors_24h > 0 ? "#fbbf24" : "#34d399")}
+                    </div>
+                  )}
+
+                  {/* Plan breakdown */}
+                  {s && s.plans && s.plans.length > 0 && (
+                    <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:24 }}>
+                      {s.plans.map(p => (
+                        <span key={p.plan} style={{ background:"rgba(99,102,241,0.12)", border:"1px solid rgba(99,102,241,0.25)", borderRadius:99, padding:"5px 12px", fontSize:12, color:"#a5b4fc", fontFamily:"JetBrains Mono,monospace" }}>
+                          {p.plan}: <strong style={{ color:"#e2e8f0" }}>{p.count}</strong>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Recent errors */}
+                  <div className="glass" style={{ borderRadius:16, padding:20, marginBottom:20 }}>
+                    <div style={{ fontSize:13, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:12 }}>Recent Errors ({monData.errors.length})</div>
+                    {monData.errors.length === 0 ? (
+                      <div style={{ color:"#34d399", fontSize:13, padding:"8px 0" }}>✓ No errors logged. All clear.</div>
+                    ) : (
+                      <div style={{ overflowX:"auto" }}>
+                        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12, fontFamily:"JetBrains Mono,monospace" }}>
+                          <thead>
+                            <tr style={{ color:"#475569", textAlign:"left" }}>
+                              <th style={{ padding:"6px 10px", fontWeight:600 }}>Time</th>
+                              <th style={{ padding:"6px 10px", fontWeight:600 }}>Level</th>
+                              <th style={{ padding:"6px 10px", fontWeight:600 }}>Source</th>
+                              <th style={{ padding:"6px 10px", fontWeight:600 }}>Message</th>
+                              <th style={{ padding:"6px 10px", fontWeight:600 }}>Path</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {monData.errors.map(e => (
+                              <tr key={e.id} style={{ borderTop:"1px solid rgba(255,255,255,0.05)", color:"#94a3b8" }}>
+                                <td style={{ padding:"6px 10px", whiteSpace:"nowrap" }}>{new Date(e.created_at).toLocaleString()}</td>
+                                <td style={{ padding:"6px 10px", color:lvlColor(e.level), fontWeight:700 }}>{e.level}</td>
+                                <td style={{ padding:"6px 10px" }}>{e.source || "—"}</td>
+                                <td style={{ padding:"6px 10px", color:"#cbd5e1", maxWidth:360, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }} title={e.message}>{e.message}</td>
+                                <td style={{ padding:"6px 10px" }}>{e.method ? `${e.method} ${e.path || ""}` : "—"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recent alerts */}
+                  <div className="glass" style={{ borderRadius:16, padding:20 }}>
+                    <div style={{ fontSize:13, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:12 }}>Recent User Alerts ({monData.alerts.length})</div>
+                    {monData.alerts.length === 0 ? (
+                      <div style={{ color:"#64748b", fontSize:13, padding:"8px 0" }}>No alerts triggered.</div>
+                    ) : (
+                      <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                        {monData.alerts.map(a => (
+                          <div key={a.id} style={{ display:"flex", gap:12, fontSize:12, color:"#94a3b8", fontFamily:"JetBrains Mono,monospace", borderTop:"1px solid rgba(255,255,255,0.05)", paddingTop:8 }}>
+                            <span style={{ whiteSpace:"nowrap", color:"#64748b" }}>{a.triggered_at ? new Date(a.triggered_at).toLocaleDateString() : ""}</span>
+                            <span style={{ color:"#fbbf24", fontWeight:700 }}>{a.alert_type}</span>
+                            <span style={{ color:"#cbd5e1" }}>{a.site}</span>
+                            <span style={{ flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }} title={a.detail}>{a.keyword ? `[${a.keyword}] ` : ""}{a.detail}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        )}
+
         {activeTab === "prospectflow" && (
           <div>
             <div style={{ maxWidth:1100, width:"100%", margin:"0 auto" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>
               <div>
                 <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>💰 ProspectFlow</h2>
-                <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Promo code signups — commission tracking for Josh &amp; Joel</p>
+                <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Promo code signups - commission tracking for Josh &amp; Joel</p>
               </div>
               <button onClick={() => { setPfData(null); loadProspectFlow(); }}
                 style={{ padding:"9px 20px", background:"#6366f1", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
@@ -1173,7 +1306,7 @@ const AdminPanel = () => {
             </div>
 
             {pfError && <div style={{ background:"rgba(248,113,113,0.1)", border:"1px solid rgba(248,113,113,0.3)", borderRadius:10, padding:"12px 16px", marginBottom:16, color:"#f87171", fontSize:13 }}>{pfError}</div>}
-            {pfLoading && <div style={{ textAlign:"center", padding:"60px 20px", color:"#64748b", fontSize:14 }}>Loading Stripe data — this may take a few seconds...</div>}
+            {pfLoading && <div style={{ textAlign:"center", padding:"60px 20px", color:"#64748b", fontSize:14 }}>Loading Stripe data - this may take a few seconds...</div>}
 
             {pfData && (() => {
               const codes = ["all", ...new Set(pfData.users.map(u => u.promo_code_used).filter(Boolean))];
@@ -1240,7 +1373,7 @@ const AdminPanel = () => {
                         style={{ background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.35)", borderRadius:10, padding:"9px 14px", color:"#a5b4fc", fontSize:13, fontWeight:700, fontFamily:"Sora,sans-serif", cursor:"pointer", outline:"none", minWidth:200 }}>
                         <option value="all" style={{ background:"#13131F", color:"#e2e8f0" }}>All codes ({pfData.users.length})</option>
                         {codes.filter(cd => cd !== "all").map(code => (
-                          <option key={code} value={code} style={{ background:"#13131F", color:"#e2e8f0" }}>{code} — {byCode[code]?.signups||0} signups</option>
+                          <option key={code} value={code} style={{ background:"#13131F", color:"#e2e8f0" }}>{code} - {byCode[code]?.signups||0} signups</option>
                         ))}
                       </select>
                       <span style={{ fontSize:12, color:"#475569", whiteSpace:"nowrap" }}>{filtered.length} result{filtered.length!==1?"s":""}</span>
@@ -1279,7 +1412,7 @@ const AdminPanel = () => {
                           background:isEligible?"rgba(245,158,11,0.04)":"transparent" }}>
                           <div>
                             <div style={{ fontSize:13, fontWeight:600, color:"#e2e8f0" }}>{u.email}</div>
-                            <div style={{ fontSize:11, color:"#64748b", marginTop:2 }}>{[u.first_name,u.last_name].filter(Boolean).join(" ")||u.company_name||"—"}</div>
+                            <div style={{ fontSize:11, color:"#64748b", marginTop:2 }}>{[u.first_name,u.last_name].filter(Boolean).join(" ")||u.company_name||"-"}</div>
                           </div>
                           <div style={{ fontSize:12, fontFamily:"JetBrains Mono,monospace", color:"#818cf8", fontWeight:700, alignSelf:"center" }}>{u.promo_code_used}</div>
                           <div style={{ alignSelf:"center" }}>
@@ -1299,7 +1432,7 @@ const AdminPanel = () => {
                             ) : <span style={{ fontSize:12, color:"#475569" }}>Not yet</span>}
                           </div>
                           <div style={{ fontSize:13, color:isPaying?"#e2e8f0":"#334155", fontFamily:"JetBrains Mono,monospace", alignSelf:"center" }}>
-                            {isPaying?`£${u.total_paid.toFixed(2)}`:"—"}
+                            {isPaying?`£${u.total_paid.toFixed(2)}`:"-"}
                           </div>
                           <div style={{ alignSelf:"center" }}>
                             {isEligible ? (
@@ -1308,7 +1441,7 @@ const AdminPanel = () => {
                                 <div style={{ fontSize:10, color:"#92400e" }}>15% of first</div>
                               </div>
                             ) : isPaying ? <span style={{ fontSize:11, color:"#475569" }}>Outside window</span>
-                              : <span style={{ fontSize:11, color:"#334155" }}>—</span>}
+                              : <span style={{ fontSize:11, color:"#334155" }}>-</span>}
                           </div>
                         </div>
                       );
@@ -1455,17 +1588,17 @@ const AdminPanel = () => {
             {[
               { title:"Account", icon:"👤", rows:[
                 ["Email", viewingUser.email],
-                ["Plan", viewingUser.plan?viewingUser.plan.charAt(0).toUpperCase()+viewingUser.plan.slice(1):"—"],
+                ["Plan", viewingUser.plan?viewingUser.plan.charAt(0).toUpperCase()+viewingUser.plan.slice(1):"-"],
                 ["Status", viewingUser.status],
-                ["Joined", viewingUser.joined?new Date(viewingUser.joined).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}):"—"],
+                ["Joined", viewingUser.joined?new Date(viewingUser.joined).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}):"-"],
                 ["Last Login", viewingUser.lastLogin?new Date(viewingUser.lastLogin).toLocaleString("en-GB",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"Europe/London"}):"Never"],
                 ["Last Scan", viewingUser.lastScanAt?new Date(viewingUser.lastScanAt).toLocaleString("en-GB",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"Europe/London"}):"Never"],
-                ["Scans Today", viewingUser.searches??"—"],
-                ["Lifetime Scans", viewingUser.totalScans??"—"],
+                ["Scans Today", viewingUser.searches??"-"],
+                ["Lifetime Scans", viewingUser.totalScans??"-"],
               ]},
-              { title:"Personal", icon:"📋", rows:[["First Name",viewingUser.firstName||"—"],["Last Name",viewingUser.lastName||"—"],["Phone",viewingUser.phone||"—"]]},
-              { title:"Company", icon:"🏢", rows:[["Company Name",viewingUser.companyName||"—"],["Job Role",viewingUser.jobRole||"—"],["Sector",viewingUser.companySector||"—"]]},
-              { title:"Marketing & Acquisition", icon:"📣", rows:[["Heard About Us",viewingUser.referralSource||"—"],["Marketing Consent",viewingUser.marketingConsent]]},
+              { title:"Personal", icon:"📋", rows:[["First Name",viewingUser.firstName||"-"],["Last Name",viewingUser.lastName||"-"],["Phone",viewingUser.phone||"-"]]},
+              { title:"Company", icon:"🏢", rows:[["Company Name",viewingUser.companyName||"-"],["Job Role",viewingUser.jobRole||"-"],["Sector",viewingUser.companySector||"-"]]},
+              { title:"Marketing & Acquisition", icon:"📣", rows:[["Heard About Us",viewingUser.referralSource||"-"],["Marketing Consent",viewingUser.marketingConsent]]},
               { title:"Privacy & Consent", icon:"🍪", rows:[["Cookie Consent",viewingUser.cookieConsent]]},
             ].map(section => (
               <div key={section.title} style={{ marginBottom:20 }}>
@@ -1482,7 +1615,7 @@ const AdminPanel = () => {
                         {label==="Marketing Consent" ? (value==="Yes"?"✅ Opted in":"❌ Opted out")
                           : label==="Cookie Consent" ? (value==="accepted"?"✅ Accepted":value==="declined"?"❌ Declined":"⏳ Not yet set")
                           : label==="Status" ? (value==="active"?"● Active":value==="deactivated"?"○ Deactivated":"⊘ Suspended")
-                          : String(value??"—")}
+                          : String(value??"-")}
                       </span>
                     </div>
                   ))}
@@ -1492,7 +1625,7 @@ const AdminPanel = () => {
 
             <div style={{ marginTop:8 }}>
               <p style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>📝 Admin Notes</p>
-              <textarea value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Internal notes about this account — visible to admins only..." rows={4}
+              <textarea value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Internal notes about this account - visible to admins only..." rows={4}
                 style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, padding:"12px 14px", color:"#e2e8f0", fontSize:13, fontFamily:"JetBrains Mono,monospace", resize:"vertical", outline:"none", boxSizing:"border-box", lineHeight:1.6 }} />
               <button onClick={() => saveNote(viewingUser.id, noteText)} disabled={noteSaving}
                 style={{ marginTop:10, width:"100%", padding:"10px 0", background:noteSaving?"rgba(124,58,237,0.3)":"#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:noteSaving?"default":"pointer", fontFamily:"Sora,sans-serif" }}>
@@ -1500,11 +1633,11 @@ const AdminPanel = () => {
               </button>
             </div>
 
-            {/* Danger zone — hard delete trigger */}
+            {/* Danger zone - hard delete trigger */}
             <div style={{ marginTop:24, paddingTop:18, borderTop:"1px solid rgba(239,68,68,0.15)" }}>
               <p style={{ fontSize:11, fontWeight:700, color:"#f87171", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>⚠ Danger zone</p>
               <p style={{ fontSize:12, color:"#94a3b8", lineHeight:1.55, marginBottom:10 }}>
-                Permanently delete this user and all their data — projects, scans, keywords, brand tracking history, blog plans, integration tokens. This cannot be undone. Prefer "deactivate" unless you genuinely need the email freed up.
+                Permanently delete this user and all their data - projects, scans, keywords, brand tracking history, blog plans, integration tokens. This cannot be undone. Prefer "deactivate" unless you genuinely need the email freed up.
               </p>
               <button onClick={() => { setHardDeletingUser(viewingUser); setHardDeleteConfirm(""); }}
                 style={{ padding:"9px 16px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.4)", borderRadius:10, color:"#f87171", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
