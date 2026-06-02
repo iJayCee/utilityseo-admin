@@ -75,11 +75,24 @@ const MonthlyChart = ({ users }) => {
   );
 };
 
+// Single source of truth for plan vocabulary in the admin app. Current tiers
+// are Entrepreneur / Enterprise; pro / proPlus are legacy aliases kept so old
+// rows still render with a sensible label and colour.
+const PLAN_META = {
+  free:         { label:"Free",          short:"Free",  color:"#64748b", bg:"rgba(255,255,255,0.06)" },
+  entrepreneur: { label:"Entrepreneur",  short:"Entr.", color:"#818cf8", bg:"rgba(99,102,241,0.15)" },
+  enterprise:   { label:"Enterprise",    short:"Ent.",  color:"#f59e0b", bg:"rgba(245,158,11,0.15)" },
+  pro:          { label:"Pro (legacy)",  short:"Pro",   color:"#a5b4fc", bg:"rgba(99,102,241,0.12)" },
+  proPlus:      { label:"Pro+ (legacy)", short:"Pro+",  color:"#fbbf24", bg:"rgba(245,158,11,0.12)" },
+};
+const planMeta  = (p) => PLAN_META[p] || PLAN_META.free;
+const planLabel = (p) => planMeta(p).label;
+const planShort = (p) => planMeta(p).short;
+const isLegacyPlan = (p) => p === "pro" || p === "proPlus";
+
 const Badge = ({ plan }) => {
-  const cfg = { free:["#64748b","#1e293b"], pro:["#818cf8","#1e1b4b"], proPlus:["#f59e0b","#1c1407"] };
-  const col = cfg[plan] || cfg.free;
-  const text = { free:"Free", pro:"Pro", proPlus:"Pro Plus" }[plan] || plan;
-  return <span style={{ color:col[0], background:col[1], border:`1px solid ${col[0]}33`, padding:"2px 10px", borderRadius:99, fontSize:11, fontWeight:600, letterSpacing:"0.03em" }}>{text}</span>;
+  const m = planMeta(plan);
+  return <span style={{ color:m.color, background:m.bg, border:`1px solid ${m.color}33`, padding:"2px 10px", borderRadius:99, fontSize:11, fontWeight:600, letterSpacing:"0.03em" }}>{m.label}</span>;
 };
 
 // ── Status badge - distinct colours per state ─────────────────────────────────
@@ -117,7 +130,7 @@ const EditModal = ({ user, onSave, onClose }) => {
   const [status, setStatus] = useState(user.status);
   const [cookieConsent, setCookieConsent] = useState(user.cookieConsent || null);
   const [tempOn, setTempOn] = useState(!!user.tempPlan);
-  const [tempPlan, setTempPlan] = useState(user.tempPlan || "pro");
+  const [tempPlan, setTempPlan] = useState(user.tempPlan || "enterprise");
   const [tempDays, setTempDays] = useState(7);
 
   return (
@@ -134,22 +147,22 @@ const EditModal = ({ user, onSave, onClose }) => {
         <div style={{ padding:24, maxHeight:"70vh", overflowY:"auto" }}>
           {/* Plan */}
           <p style={{ fontSize:12, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Permanent Plan</p>
-          {/* Pro Plus removed from assignment - Pro is now the unlimited tier.
-              Legacy proPlus rows still display with their badge below if present. */}
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:8, marginBottom:6 }}>
-            {[["free","Free","#64748b"],["pro","Pro","#6366f1"]].map(([id,label,col]) => (
+          {/* Current tiers are Entrepreneur (1 seat, 1 project) and Enterprise
+              (unlimited). Legacy pro/proPlus rows show a note below if present. */}
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:6 }}>
+            {[["free","Free","#64748b"],["entrepreneur","Entrepreneur","#818cf8"],["enterprise","Enterprise","#f59e0b"]].map(([id,label,col]) => (
               <button key={id} onClick={() => setPlan(id)}
                 style={{ padding:"12px 8px", borderRadius:12, border:`2px solid ${plan===id ? col : "rgba(255,255,255,0.08)"}`, background: plan===id ? `${col}18` : "rgba(255,255,255,0.03)", color: plan===id ? col : "#64748b", fontWeight:600, fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", transition:"all 0.15s" }}>
                 {label}
               </button>
             ))}
           </div>
-          {plan === 'proPlus' && (
+          {isLegacyPlan(plan) && (
             <div style={{ marginBottom:20, padding:"8px 12px", borderRadius:8, background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.25)", fontSize:11, color:"#f59e0b" }}>
-              This user is on legacy <strong>Pro Plus</strong>. Pro now offers the same unlimited features - switching to Pro is recommended.
+              This user is on the legacy <strong>{planLabel(plan)}</strong> plan ({plan === "proPlus" ? "maps to Enterprise" : "maps to Entrepreneur"}). Switching to a current tier is recommended.
             </div>
           )}
-          {plan !== 'proPlus' && <div style={{ marginBottom:14 }} />}
+          {!isLegacyPlan(plan) && <div style={{ marginBottom:14 }} />}
 
           {/* Status - now includes Deactivated */}
           <p style={{ fontSize:12, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Account Status</p>
@@ -199,8 +212,8 @@ const EditModal = ({ user, onSave, onClose }) => {
             {tempOn && (
               <div style={{ padding:"0 16px 16px", borderTop:"1px solid rgba(255,255,255,0.06)" }}>
                 <p style={{ fontSize:12, color:"#64748b", marginTop:14, marginBottom:8 }}>Temporary plan</p>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:6, marginBottom:16 }}>
-                  {[["free","Free","#64748b"],["pro","Pro","#6366f1"]].map(([id,label,col]) => (
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:6, marginBottom:16 }}>
+                  {[["free","Free","#64748b"],["entrepreneur","Entrepreneur","#818cf8"],["enterprise","Enterprise","#f59e0b"]].map(([id,label,col]) => (
                     <button key={id} onClick={() => setTempPlan(id)}
                       style={{ padding:"8px", borderRadius:10, border:`2px solid ${tempPlan===id ? col : "rgba(255,255,255,0.08)"}`, background: tempPlan===id ? `${col}18` : "rgba(255,255,255,0.03)", color: tempPlan===id ? col : "#64748b", fontWeight:600, fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
                       {label}
@@ -214,7 +227,7 @@ const EditModal = ({ user, onSave, onClose }) => {
                 <input type="range" min={1} max={90} value={tempDays} onChange={e => setTempDays(Number(e.target.value))}
                   style={{ width:"100%", accentColor:"#6366f1" }} />
                 <div style={{ padding:"10px 14px", background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.2)", borderRadius:10, marginTop:12 }}>
-                  <p style={{ fontSize:12, color:"#fbbf24" }}>Will get <strong>{({"free":"Free","pro":"Pro","proPlus":"Pro Plus"})[tempPlan]}</strong> access for {tempDays} day{tempDays!==1?"s":""}, then revert to {plan}.</p>
+                  <p style={{ fontSize:12, color:"#fbbf24" }}>Will get <strong>{planLabel(tempPlan)}</strong> access for {tempDays} day{tempDays!==1?"s":""}, then revert to {planLabel(plan)}.</p>
                 </div>
               </div>
             )}
@@ -238,8 +251,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
   const [expanded, setExpanded] = useState(false);
   const tempInfo = u.tempPlan && u.tempPlanExpiresAt ? (() => {
     const daysLeft = Math.ceil((new Date(u.tempPlanExpiresAt) - new Date()) / (1000 * 60 * 60 * 24));
-    const planLabel = { free:"Free", pro:"Pro", proPlus:"Pro Plus" }[u.tempPlan] || u.tempPlan;
-    return `⏱ Temp ${planLabel} · ${daysLeft > 0 ? `${daysLeft}d left` : "Expired"}`;
+    return `⏱ Temp ${planLabel(u.tempPlan)} · ${daysLeft > 0 ? `${daysLeft}d left` : "Expired"}`;
   })() : null;
 
   const isDeactivated = u.status === "deactivated";
@@ -427,7 +439,7 @@ const AdminPanel = () => {
   const [revenueModal, setRevenueModal] = useState(null); // { code, period, data, loading }
   const [promos, setPromos] = useState([]);
   const [loadingPromos, setLoadingPromos] = useState(false);
-  const [promoForm, setPromoForm] = useState({ code:"", description:"", trial_plan:"pro", trial_days:"14", max_uses:"", expires_at:"" });
+  const [promoForm, setPromoForm] = useState({ code:"", description:"", trial_plan:"enterprise", trial_days:"14", max_uses:"", expires_at:"" });
   const [promoFormError, setPromoFormError] = useState("");
   const [expandedPromo, setExpandedPromo] = useState(null); // promo id
   const [promoSignups, setPromoSignups] = useState({}); // { [promoId]: { loading, data } }
@@ -769,10 +781,11 @@ const AdminPanel = () => {
   };
 
   const newSignups = users.filter(u => { if (!u.joined) return false; const c=new Date(); c.setDate(c.getDate()-statsWindow); return new Date(u.joined)>=c; }).length;
-  const countFree    = users.filter(u => u.plan==="free").length;
-  const countPro     = users.filter(u => u.plan==="pro").length;
-  const countProPlus = users.filter(u => u.plan==="proPlus").length;
-  const countPaid    = countPro + countProPlus;
+  const countFree         = users.filter(u => u.plan==="free").length;
+  // Current tiers (legacy pro -> entrepreneur, proPlus -> enterprise).
+  const countEntrepreneur = users.filter(u => u.plan==="entrepreneur" || u.plan==="pro").length;
+  const countEnterprise   = users.filter(u => u.plan==="enterprise" || u.plan==="proPlus").length;
+  const countPaid         = countEntrepreneur + countEnterprise;
   const countDeactivated = users.filter(u => u.status==="deactivated").length;
 
   const stats = [
@@ -847,8 +860,8 @@ const AdminPanel = () => {
             <div style={{ fontSize:13, color:"#475569", marginBottom:12 }}>Paid</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
               <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:"#64748b" }}>{countFree}</div><div style={{ fontSize:10, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Free</div></div>
-              <div style={{ textAlign:"center", borderLeft:"1px solid rgba(255,255,255,0.07)", borderRight:"1px solid rgba(255,255,255,0.07)" }}><div style={{ fontSize:20, fontWeight:800, color:"#818cf8" }}>{countPro}</div><div style={{ fontSize:10, fontWeight:700, color:"#6366f1", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Pro</div></div>
-              <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:"#f59e0b" }}>{countProPlus}</div><div style={{ fontSize:10, fontWeight:700, color:"#d97706", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Pro+</div></div>
+              <div style={{ textAlign:"center", borderLeft:"1px solid rgba(255,255,255,0.07)", borderRight:"1px solid rgba(255,255,255,0.07)" }}><div style={{ fontSize:20, fontWeight:800, color:"#818cf8" }}>{countEntrepreneur}</div><div style={{ fontSize:10, fontWeight:700, color:"#6366f1", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Entrepreneur</div></div>
+              <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:"#f59e0b" }}>{countEnterprise}</div><div style={{ fontSize:10, fontWeight:700, color:"#d97706", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Enterprise</div></div>
             </div>
           </div>
 
@@ -915,8 +928,10 @@ const AdminPanel = () => {
                   <select value={filterPlan} onChange={e=>setFilterPlan(e.target.value)} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
                     <option value="all">All plans</option>
                     <option value="free">Free</option>
-                    <option value="pro">Pro</option>
-                    <option value="proPlus">Pro Plus (legacy)</option>
+                    <option value="entrepreneur">Entrepreneur</option>
+                    <option value="enterprise">Enterprise</option>
+                    <option value="pro">Pro (legacy)</option>
+                    <option value="proPlus">Pro+ (legacy)</option>
                     <option value="trial">Trial / Temp access</option>
                   </select>
                 </div>
@@ -1027,8 +1042,8 @@ const AdminPanel = () => {
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Trial Plan <span style={{ color:"#ef4444" }}>*</span></label>
                   <select value={promoForm.trial_plan} onChange={e => setPromoForm(f=>({...f,trial_plan:e.target.value}))} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer", boxSizing:"border-box" }}>
-                    <option value="pro">Pro</option>
-                    <option value="free">Free</option>
+                    <option value="enterprise">Enterprise</option>
+                    <option value="entrepreneur">Entrepreneur</option>
                   </select>
                 </div>
                 <div>
@@ -1076,8 +1091,8 @@ const AdminPanel = () => {
                   onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:6 }}>
                     <span style={{ fontFamily:"JetBrains Mono,monospace", fontSize:13, fontWeight:700, color:p.is_active?"#a5b4fc":"#64748b", letterSpacing:"0.05em" }}>{p.code}</span>
-                    <span style={{ fontSize:12, padding:"3px 8px", borderRadius:6, background:p.trial_plan==="proPlus"?"rgba(245,158,11,0.15)":"rgba(99,102,241,0.15)", color:p.trial_plan==="proPlus"?"#f59e0b":"#818cf8", fontWeight:600 }}>
-                      {p.trial_plan==="proPlus"?"Pro+":p.trial_plan==="pro"?"Pro":"Free"}
+                    <span style={{ fontSize:12, padding:"3px 8px", borderRadius:6, background:planMeta(p.trial_plan).bg, color:planMeta(p.trial_plan).color, fontWeight:600 }}>
+                      {planShort(p.trial_plan)}
                     </span>
                   </div>
                   <span style={{ fontSize:12, color:"#64748b", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.description||"-"}</span>
@@ -1140,13 +1155,13 @@ const AdminPanel = () => {
                                 ))}
                               </div>
                               {ps.data.users.map((u, ui) => {
-                                const isPaid = u.plan === 'pro' || u.plan === 'proPlus';
+                                const isPaid = u.plan && u.plan !== 'free';
                                 const isTrialActive = u.temp_plan && u.temp_plan_expires_at && new Date(u.temp_plan_expires_at) > new Date();
                                 return (
                                   <div key={u.id} style={{ display:"grid", gridTemplateColumns:"1fr 120px 120px 140px", gap:10, padding:"10px 14px", borderBottom:ui<ps.data.users.length-1?"1px solid rgba(255,255,255,0.04)":"none", alignItems:"center" }}>
                                     <span style={{ fontSize:12, color:"#e2e8f0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontFamily:"JetBrains Mono,monospace" }}>{u.email}</span>
                                     <span style={{ fontSize:11, padding:"2px 8px", borderRadius:6, background:isPaid?"rgba(34,197,94,0.1)":isTrialActive?"rgba(245,158,11,0.1)":"rgba(255,255,255,0.04)", color:isPaid?"#22c55e":isTrialActive?"#f59e0b":"#64748b", fontWeight:600, width:"fit-content" }}>
-                                      {isPaid ? (u.plan==="proPlus"?"Pro Plus":"Pro") : isTrialActive ? `Trial (${u.temp_plan==="proPlus"?"Pro+":"Pro"})` : "Free"}
+                                      {isPaid ? planLabel(u.plan) : isTrialActive ? `Trial (${planShort(u.temp_plan)})` : "Free"}
                                     </span>
                                     <span style={{ fontSize:11, color:u.is_active?"#22c55e":"#94a3b8" }}>{u.is_active?"Active":"Deactivated"}</span>
                                     <span style={{ fontSize:11, color:"#64748b" }}>{new Date(u.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"})}</span>
@@ -1416,11 +1431,7 @@ const AdminPanel = () => {
                           </div>
                           <div style={{ fontSize:12, fontFamily:"JetBrains Mono,monospace", color:"#818cf8", fontWeight:700, alignSelf:"center" }}>{u.promo_code_used}</div>
                           <div style={{ alignSelf:"center" }}>
-                            <span style={{ fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:99,
-                              background:u.plan==="proPlus"?"rgba(245,158,11,0.15)":u.plan==="pro"?"rgba(99,102,241,0.15)":"rgba(255,255,255,0.06)",
-                              color:u.plan==="proPlus"?"#f59e0b":u.plan==="pro"?"#a5b4fc":"#64748b" }}>
-                              {u.plan==="proPlus"?"Pro+":u.plan==="pro"?"Pro":"Free"}
-                            </span>
+                            <Badge plan={u.plan} />
                           </div>
                           <div style={{ fontSize:12, color:"#64748b", alignSelf:"center" }}>{new Date(u.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"2-digit"})}</div>
                           <div style={{ alignSelf:"center" }}>
@@ -1543,11 +1554,7 @@ const AdminPanel = () => {
                                 <div style={{ fontSize:10, color:"#475569" }}>commission</div>
                               </div>
                               <div style={{ textAlign:"right" }}>
-                                <span style={{ fontSize:11, fontWeight:700, padding:"2px 8px", borderRadius:99,
-                                  background:u.plan==="proPlus"?"rgba(245,158,11,0.15)":u.plan==="pro"?"rgba(99,102,241,0.15)":"rgba(255,255,255,0.06)",
-                                  color:u.plan==="proPlus"?"#f59e0b":u.plan==="pro"?"#a5b4fc":"#64748b" }}>
-                                  {u.plan==="proPlus"?"Pro+":u.plan==="pro"?"Pro":"Free"}
-                                </span>
+                                <Badge plan={u.plan} />
                               </div>
                             </div>
                           ))}
