@@ -672,8 +672,8 @@ const AdminPanel = () => {
     setPfLoading(true); setPfError("");
     try {
       if (!adminCreds) { setPfError("Session expired - please log out and back in."); setPfLoading(false); return; }
-      const params = new URLSearchParams({ adminEmail: adminCreds.email, adminPassword: adminCreds.password });
-      const res = await adminFetch(`${API_URL}/admin/prospect-flow?${params}`);
+      // Creds go via adminFetch headers - never in the query string (which logs).
+      const res = await adminFetch(`${API_URL}/admin/prospect-flow`);
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Failed to load");
       setPfData(d);
@@ -685,7 +685,8 @@ const AdminPanel = () => {
     setRevenueModal({ code, period, data: null, loading: true });
     try {
       if (!adminCreds) return;
-      const params = new URLSearchParams({ adminEmail: adminCreds.email, adminPassword: adminCreds.password, code, period });
+      // Creds go via adminFetch headers - only non-secret params in the URL.
+      const params = new URLSearchParams({ code, period });
       const res = await adminFetch(`${API_URL}/admin/prospect-flow/code-revenue?${params}`);
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || 'Failed');
