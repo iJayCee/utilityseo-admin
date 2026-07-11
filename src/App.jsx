@@ -1268,8 +1268,17 @@ const AdminPanel = () => {
                     {card("Uptime", fmtUptime(h.uptime_s))}
                     {card("Memory", h.memory_mb ? `${h.memory_mb.heap_used} / ${h.memory_mb.heap_total} MB` : "—")}
                     {card("DB Pool", h.pool ? `${h.pool.idle}/${h.pool.total} idle` : "—", h.pool && h.pool.waiting > 0 ? "#fbbf24" : "#e2e8f0")}
-                    {card("Build", h.commit || "—")}
+                    {/* Build = the commit actually RUNNING. Amber once it's a week
+                        old: if you've pushed since and this hasn't changed, deploys
+                        are failing silently (this exact failure went unnoticed for
+                        5 days in Jul 2026 - npm ci broke on every Railway build). */}
+                    {card("Build", h.commit ? `${h.commit} · ${fmtUptime(h.uptime_s)} old` : "—", (h.uptime_s || 0) > 7 * 86400 ? "#fbbf24" : "#e2e8f0")}
                   </div>
+                  {(h.uptime_s || 0) > 7 * 86400 && (
+                    <p style={{ fontSize:12, color:"#fbbf24", margin:"0 0 16px" }}>
+                      The running build is over a week old. If you have pushed backend changes since, check Railway - deploys may be failing silently.
+                    </p>
+                  )}
 
                   {/* Business stats */}
                   {s && (
