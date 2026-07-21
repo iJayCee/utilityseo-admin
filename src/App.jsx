@@ -751,6 +751,8 @@ const AdminPanel = () => {
         ...d.defaults,
         serpCost: d.model.serp.unitCost,
         backlinkCost: d.model.backlinks.unitCost,
+        brandCost: d.model.brand.unitCost,
+        blogCost: d.model.blog.unitCost,
         llmCost: d.model.llm.unitCost,
       });
     } catch (err) { setCostError(err.message); }
@@ -1610,8 +1612,12 @@ const AdminPanel = () => {
                 const searches = num(ci.keywordsPerUser, 0) * cadence * (num(ci.pctUsersRankTracking, 0) / 100);
                 const serp = searches * num(ci.serpCost, 0);
                 const backlinks = num(ci.backlinkRefreshesPerUserMonth, 0) * num(ci.backlinkCost, 0);
+                const brandChecks = num(ci.brandChecksPerUserMonth, 0) * (num(ci.pctUsersBrandTracking, 0) / 100);
+                const brand = brandChecks * num(ci.brandCost, 0);
+                const blog = num(ci.blogPostsPerUserMonth, 0) * num(ci.blogCost, 0);
                 const llm = num(ci.aiActionsPerUserMonth, 0) * num(ci.llmCost, 0);
-                return { serp, backlinks, llm, total: serp + backlinks + llm, searches };
+                const ai = brand + blog + llm; // all LLM-backed lines
+                return { serp, backlinks, brand, blog, llm, ai, total: serp + backlinks + ai, searches, brandChecks };
               };
               const pu = perUser();
               const toGbp = (usd) => usd * gbp;
@@ -1650,15 +1656,29 @@ const AdminPanel = () => {
                       </label>
                       <Field label="% on rank tracking" k="pctUsersRankTracking" suffix="%" width={70} />
                       <Field label="Backlink refreshes/mo" k="backlinkRefreshesPerUserMonth" width={70} />
-                      <Field label="AI actions/mo" k="aiActionsPerUserMonth" width={70} />
                       <Field label="Avg subscription" k="avgSubscriptionGBP" suffix="£/mo" width={70} />
+                    </div>
+                    <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", margin:"16px 0 10px" }}>AI-backed features</div>
+                    <div style={{ display:"flex", gap:18, flexWrap:"wrap", alignItems:"flex-end" }}>
+                      <Field label="% tracking a brand" k="pctUsersBrandTracking" suffix="%" width={70} />
+                      <label style={{ display:"flex", flexDirection:"column", gap:4, fontSize:11.5, color:"#94a3b8", fontWeight:600 }}>
+                        <span title="8 prompts x up to 4 AI platforms x weekly = ~140. Automatic cron.">Brand checks/mo <span style={{ color:"#f59e0b" }}>ⓘ</span></span>
+                        <span style={{ display:"flex", alignItems:"center", gap:6 }}>
+                          <input type="number" value={ci.brandChecksPerUserMonth} onChange={set("brandChecksPerUserMonth")}
+                            style={{ width:80, background:"#0f172a", border:"1px solid #334155", borderRadius:8, color:"#e2e8f0", fontSize:13, padding:"7px 9px", fontFamily:"JetBrains Mono,monospace" }} />
+                        </span>
+                      </label>
+                      <Field label="Blog posts/mo" k="blogPostsPerUserMonth" width={70} />
+                      <Field label="Other AI actions/mo" k="aiActionsPerUserMonth" width={70} />
                     </div>
                     <details style={{ marginTop:14 }}>
                       <summary style={{ fontSize:12, color:"#64748b", cursor:"pointer" }}>Advanced: unit costs (USD)</summary>
                       <div style={{ display:"flex", gap:18, flexWrap:"wrap", marginTop:12, alignItems:"flex-end" }}>
                         <Field label="SERP / search" k="serpCost" width={90} />
                         <Field label="Backlink / refresh" k="backlinkCost" width={90} />
-                        <Field label="AI / action" k="llmCost" width={90} />
+                        <Field label="Brand / check" k="brandCost" width={90} />
+                        <Field label="Blog / post" k="blogCost" width={90} />
+                        <Field label="Other AI / action" k="llmCost" width={90} />
                         <Field label="USD→GBP" k="usdToGbp" width={90} />
                       </div>
                     </details>
@@ -1684,7 +1704,9 @@ const AdminPanel = () => {
                     {[
                       ["Rank tracking (SERP)", pu.serp, `${Math.round(pu.searches).toLocaleString()} searches`],
                       ["Backlinks", pu.backlinks, `${num(ci.backlinkRefreshesPerUserMonth,0)} refreshes`],
-                      ["AI features", pu.llm, `${num(ci.aiActionsPerUserMonth,0)} actions`],
+                      ["Brand tracking (AI, auto weekly)", pu.brand, `${Math.round(pu.brandChecks).toLocaleString()} checks`],
+                      ["Blog writing (AI)", pu.blog, `${num(ci.blogPostsPerUserMonth,0)} posts`],
+                      ["Other AI", pu.llm, `${num(ci.aiActionsPerUserMonth,0)} actions`],
                     ].map(([label, usd, sub2]) => {
                       const pct = pu.total > 0 ? (usd / pu.total) * 100 : 0;
                       return (
@@ -1710,7 +1732,7 @@ const AdminPanel = () => {
                           <th style={{ textAlign:"left", padding:"6px 8px" }}>Users</th>
                           <th style={{ padding:"6px 8px" }}>Rank tracking</th>
                           <th style={{ padding:"6px 8px" }}>Backlinks</th>
-                          <th style={{ padding:"6px 8px" }}>AI</th>
+                          <th style={{ padding:"6px 8px" }} title="Brand tracking + blog + other AI">AI (all)</th>
                           <th style={{ padding:"6px 8px", color:"#94a3b8" }}>Total / mo</th>
                           <th style={{ padding:"6px 8px" }}>vs revenue</th>
                         </tr>
@@ -1725,7 +1747,7 @@ const AdminPanel = () => {
                               <td style={{ textAlign:"left", padding:"8px", color:"#e2e8f0", fontWeight:700 }}>{n.toLocaleString()}{isCurrent && <span style={{ fontSize:10, color:"#a5b4fc", marginLeft:6 }}>now</span>}</td>
                               <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.serp) * n)}</td>
                               <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.backlinks) * n)}</td>
-                              <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.llm) * n)}</td>
+                              <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.ai) * n)}</td>
                               <td style={{ padding:"8px", color:"#f59e0b", fontWeight:800 }}>{money(total)}</td>
                               <td style={{ padding:"8px", color: rev > 0 && total / rev < 0.2 ? "#34d399" : "#94a3b8" }}>{rev > 0 ? Math.round((total / rev) * 100) + "% of rev" : "—"}</td>
                             </tr>
@@ -1736,7 +1758,7 @@ const AdminPanel = () => {
                   </div>
 
                   <p style={{ fontSize:11, color:"#475569", marginTop:16, lineHeight:1.5 }}>
-                    AI features already run on your existing keys; they are shown so cost/user is honest. Unit costs are approximate (early 2026) - re-check with the vendor. "vs revenue" is total API cost as a share of subscription revenue at that user count.
+                    Brand tracking runs automatically on a weekly cron across ~4 AI platforms (Perplexity is itself paid), so it costs whether or not users log in - the easiest line to forget. AI features already run on your existing keys and there is no live token metering yet, so all figures are estimates from the code, not measured spend. Unit costs approximate (early 2026) - re-check with vendors. "vs revenue" is total API cost as a share of subscription revenue.
                   </p>
                 </>
               );
