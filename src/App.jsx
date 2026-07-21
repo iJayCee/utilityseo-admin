@@ -439,6 +439,10 @@ const AdminPanel = () => {
   const [upgData, setUpgData] = useState(null);
   const [upgLoading, setUpgLoading] = useState(false);
   const [upgError, setUpgError] = useState("");
+  const [costData, setCostData] = useState(null);
+  const [costLoading, setCostLoading] = useState(false);
+  const [costError, setCostError] = useState("");
+  const [costInputs, setCostInputs] = useState(null); // editable assumptions
   const [bkData, setBkData] = useState(null);
   const [bkLoading, setBkLoading] = useState(false);
   const [bkError, setBkError] = useState("");
@@ -735,6 +739,24 @@ const AdminPanel = () => {
     setUpgLoading(false);
   };
 
+  const loadCostForecast = async () => {
+    setCostLoading(true); setCostError("");
+    try {
+      const res = await adminFetch(`${API_URL}/admin/cost-forecast`);
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Failed to load");
+      setCostData(d);
+      // Seed the editable inputs from the model defaults + unit costs (first load only).
+      setCostInputs(prev => prev || {
+        ...d.defaults,
+        serpCost: d.model.serp.unitCost,
+        backlinkCost: d.model.backlinks.unitCost,
+        llmCost: d.model.llm.unitCost,
+      });
+    } catch (err) { setCostError(err.message); }
+    setCostLoading(false);
+  };
+
   const loadBackups = async () => {
     setBkLoading(true); setBkError(""); setBkMsg("");
     try {
@@ -778,6 +800,7 @@ const AdminPanel = () => {
     if (tab === "monitoring") loadMonitoring();
     if (tab === "capacity") loadCapacity();
     if (tab === "upgrades") loadUpgrades();
+    if (tab === "costs") loadCostForecast();
     if (tab === "backups") loadBackups();
   };
 
@@ -966,7 +989,7 @@ const AdminPanel = () => {
 
         {/* Tab Bar */}
         <div className="tab-bar" style={{ display:"flex", gap:8, marginBottom:28, borderBottom:"1px solid rgba(255,255,255,0.07)", paddingBottom:0 }}>
-          {[{id:"users",label:"👥 Users"},{id:"promos",label:"🎟 Promo Codes"},{id:"prospectflow",label:"💰 ProspectFlow"},{id:"loadtest",label:"⚡ Load Test"},{id:"monitoring",label:"🩺 Monitoring"},{id:"capacity",label:"📊 Capacity"},{id:"upgrades",label:"🛒 Upgrades"},{id:"backups",label:"💾 Backups"}].map(tab => (
+          {[{id:"users",label:"👥 Users"},{id:"promos",label:"🎟 Promo Codes"},{id:"prospectflow",label:"💰 ProspectFlow"},{id:"loadtest",label:"⚡ Load Test"},{id:"monitoring",label:"🩺 Monitoring"},{id:"capacity",label:"📊 Capacity"},{id:"upgrades",label:"🛒 Upgrades"},{id:"costs",label:"💷 Cost forecast"},{id:"backups",label:"💾 Backups"}].map(tab => (
             <button key={tab.id} className="tab-btn" onClick={() => handleTabSwitch(tab.id)}
               style={{ padding:"10px 22px", background:activeTab===tab.id?"rgba(99,102,241,0.2)":"transparent", border:"none", borderBottom:activeTab===tab.id?"2px solid #6366f1":"2px solid transparent", color:activeTab===tab.id?"#a5b4fc":"#64748b", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", borderRadius:"8px 8px 0 0", marginBottom:-1, transition:"all 0.15s" }}>
               {tab.label}
@@ -1553,6 +1576,167 @@ const AdminPanel = () => {
                   </div>
                   <p style={{ fontSize:11, color:"#475569", marginTop:18, lineHeight:1.5 }}>
                     Pricing is approximate (early 2026) and should be re-checked before buying - vendors change plans often. Generated {new Date(upgData.generatedAt).toLocaleString("en-GB")}
+                  </p>
+                </>
+              );
+            })()}
+          </div>
+        )}
+
+        {activeTab === "costs" && (
+          <div style={{ maxWidth:1000, width:"100%", margin:"0 auto" }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
+              <div>
+                <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>💷 Cost forecast</h2>
+                <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>What the pay-as-you-go APIs cost at different user counts. Adjust the assumptions to match reality.</p>
+              </div>
+              <button onClick={loadCostForecast}
+                style={{ padding:"9px 20px", background:"#6366f1", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                ↻ Reset
+              </button>
+            </div>
+
+            {costError && <div style={{ background:"rgba(248,113,113,0.1)", border:"1px solid rgba(248,113,113,0.3)", borderRadius:10, padding:"12px 16px", marginBottom:16, color:"#f87171", fontSize:13 }}>{costError}</div>}
+            {costLoading && <div style={{ textAlign:"center", padding:"60px 20px", color:"#64748b", fontSize:14 }}>Loading cost model…</div>}
+
+            {costData && costInputs && !costLoading && (() => {
+              const ci = costInputs;
+              const num = (v, d) => { const n = parseFloat(v); return isFinite(n) && n >= 0 ? n : d; };
+              const set = (k) => (e) => setCostInputs(p => ({ ...p, [k]: e.target.value }));
+              const gbp = num(ci.usdToGbp, 0.79);
+              const cadence = { daily: 30, every3days: 10, weekly: 4.3 }[ci.rankRefreshCadence] || 4.3;
+              // Cost per ACTIVE user per month, in USD.
+              const perUser = () => {
+                const searches = num(ci.keywordsPerUser, 0) * cadence * (num(ci.pctUsersRankTracking, 0) / 100);
+                const serp = searches * num(ci.serpCost, 0);
+                const backlinks = num(ci.backlinkRefreshesPerUserMonth, 0) * num(ci.backlinkCost, 0);
+                const llm = num(ci.aiActionsPerUserMonth, 0) * num(ci.llmCost, 0);
+                return { serp, backlinks, llm, total: serp + backlinks + llm, searches };
+              };
+              const pu = perUser();
+              const toGbp = (usd) => usd * gbp;
+              const money = (n) => "£" + (n < 10 ? n.toFixed(2) : Math.round(n).toLocaleString());
+              const sub = num(ci.avgSubscriptionGBP, 0);
+              const perUserGbp = toGbp(pu.total);
+              const marginPct = sub > 0 ? Math.round(((sub - perUserGbp) / sub) * 100) : null;
+              const tiers = [...new Set([costData.signals.users || 1, 5, 10, 25, 50, 100, 250, 500])].filter(n => n > 0).sort((a, b) => a - b);
+
+              const Field = ({ label, k, suffix, width = 90 }) => (
+                <label style={{ display:"flex", flexDirection:"column", gap:4, fontSize:11.5, color:"#94a3b8", fontWeight:600 }}>
+                  {label}
+                  <span style={{ display:"flex", alignItems:"center", gap:6 }}>
+                    <input type="number" value={ci[k]} onChange={set(k)}
+                      style={{ width, background:"#0f172a", border:"1px solid #334155", borderRadius:8, color:"#e2e8f0", fontSize:13, padding:"7px 9px", fontFamily:"JetBrains Mono,monospace" }} />
+                    {suffix && <span style={{ fontSize:11, color:"#64748b" }}>{suffix}</span>}
+                  </span>
+                </label>
+              );
+
+              return (
+                <>
+                  {/* Assumptions */}
+                  <div className="glass" style={{ borderRadius:14, padding:"18px 20px", marginBottom:18 }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:14 }}>Assumptions (per active user)</div>
+                    <div style={{ display:"flex", gap:18, flexWrap:"wrap", alignItems:"flex-end" }}>
+                      <Field label="Keywords tracked" k="keywordsPerUser" />
+                      <label style={{ display:"flex", flexDirection:"column", gap:4, fontSize:11.5, color:"#94a3b8", fontWeight:600 }}>
+                        Rank refresh
+                        <select value={ci.rankRefreshCadence} onChange={set("rankRefreshCadence")}
+                          style={{ background:"#0f172a", border:"1px solid #334155", borderRadius:8, color:"#e2e8f0", fontSize:13, padding:"7px 9px" }}>
+                          <option value="daily">Daily</option>
+                          <option value="every3days">Every 3 days</option>
+                          <option value="weekly">Weekly</option>
+                        </select>
+                      </label>
+                      <Field label="% on rank tracking" k="pctUsersRankTracking" suffix="%" width={70} />
+                      <Field label="Backlink refreshes/mo" k="backlinkRefreshesPerUserMonth" width={70} />
+                      <Field label="AI actions/mo" k="aiActionsPerUserMonth" width={70} />
+                      <Field label="Avg subscription" k="avgSubscriptionGBP" suffix="£/mo" width={70} />
+                    </div>
+                    <details style={{ marginTop:14 }}>
+                      <summary style={{ fontSize:12, color:"#64748b", cursor:"pointer" }}>Advanced: unit costs (USD)</summary>
+                      <div style={{ display:"flex", gap:18, flexWrap:"wrap", marginTop:12, alignItems:"flex-end" }}>
+                        <Field label="SERP / search" k="serpCost" width={90} />
+                        <Field label="Backlink / refresh" k="backlinkCost" width={90} />
+                        <Field label="AI / action" k="llmCost" width={90} />
+                        <Field label="USD→GBP" k="usdToGbp" width={90} />
+                      </div>
+                    </details>
+                  </div>
+
+                  {/* Per-user result */}
+                  <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:18 }}>
+                    {[
+                      ["Cost / user / month", money(perUserGbp), "#f59e0b"],
+                      ["Subscription / user", money(sub), "#e2e8f0"],
+                      ["Gross margin", marginPct == null ? "—" : marginPct + "%", marginPct >= 80 ? "#34d399" : marginPct >= 50 ? "#fbbf24" : "#f87171"],
+                    ].map(([l, v, c]) => (
+                      <div key={l} className="glass" style={{ borderRadius:14, padding:"16px 18px", flex:"1 1 160px", minWidth:160 }}>
+                        <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:6 }}>{l}</div>
+                        <div style={{ fontSize:24, fontWeight:800, color:c, fontFamily:"JetBrains Mono,monospace" }}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Per-user breakdown by API */}
+                  <div className="glass" style={{ borderRadius:14, padding:"16px 18px", marginBottom:18 }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:12 }}>Per-user monthly cost by API</div>
+                    {[
+                      ["Rank tracking (SERP)", pu.serp, `${Math.round(pu.searches).toLocaleString()} searches`],
+                      ["Backlinks", pu.backlinks, `${num(ci.backlinkRefreshesPerUserMonth,0)} refreshes`],
+                      ["AI features", pu.llm, `${num(ci.aiActionsPerUserMonth,0)} actions`],
+                    ].map(([label, usd, sub2]) => {
+                      const pct = pu.total > 0 ? (usd / pu.total) * 100 : 0;
+                      return (
+                        <div key={label} style={{ marginBottom:10 }}>
+                          <div style={{ display:"flex", justifyContent:"space-between", fontSize:12.5, marginBottom:4 }}>
+                            <span style={{ color:"#cbd5e1" }}>{label} <span style={{ color:"#475569" }}>· {sub2}</span></span>
+                            <span style={{ color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace", fontWeight:700 }}>{money(toGbp(usd))}</span>
+                          </div>
+                          <div style={{ height:5, background:"rgba(255,255,255,0.06)", borderRadius:3, overflow:"hidden" }}>
+                            <div style={{ height:"100%", width:`${Math.max(1, pct)}%`, background:"#818cf8", borderRadius:3 }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Projection table across user tiers */}
+                  <div className="glass" style={{ borderRadius:14, padding:"16px 18px", overflowX:"auto" }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:12 }}>Total monthly cost by user count</div>
+                    <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13, minWidth:520 }}>
+                      <thead>
+                        <tr style={{ color:"#64748b", textAlign:"right", fontSize:11, textTransform:"uppercase" }}>
+                          <th style={{ textAlign:"left", padding:"6px 8px" }}>Users</th>
+                          <th style={{ padding:"6px 8px" }}>Rank tracking</th>
+                          <th style={{ padding:"6px 8px" }}>Backlinks</th>
+                          <th style={{ padding:"6px 8px" }}>AI</th>
+                          <th style={{ padding:"6px 8px", color:"#94a3b8" }}>Total / mo</th>
+                          <th style={{ padding:"6px 8px" }}>vs revenue</th>
+                        </tr>
+                      </thead>
+                      <tbody style={{ fontFamily:"JetBrains Mono,monospace" }}>
+                        {tiers.map(n => {
+                          const rev = sub * n;
+                          const total = toGbp(pu.total) * n;
+                          const isCurrent = n === (costData.signals.users || 1);
+                          return (
+                            <tr key={n} style={{ textAlign:"right", borderTop:"1px solid rgba(255,255,255,0.05)", background:isCurrent ? "rgba(99,102,241,0.08)" : "transparent" }}>
+                              <td style={{ textAlign:"left", padding:"8px", color:"#e2e8f0", fontWeight:700 }}>{n.toLocaleString()}{isCurrent && <span style={{ fontSize:10, color:"#a5b4fc", marginLeft:6 }}>now</span>}</td>
+                              <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.serp) * n)}</td>
+                              <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.backlinks) * n)}</td>
+                              <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.llm) * n)}</td>
+                              <td style={{ padding:"8px", color:"#f59e0b", fontWeight:800 }}>{money(total)}</td>
+                              <td style={{ padding:"8px", color: rev > 0 && total / rev < 0.2 ? "#34d399" : "#94a3b8" }}>{rev > 0 ? Math.round((total / rev) * 100) + "% of rev" : "—"}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <p style={{ fontSize:11, color:"#475569", marginTop:16, lineHeight:1.5 }}>
+                    AI features already run on your existing keys; they are shown so cost/user is honest. Unit costs are approximate (early 2026) - re-check with the vendor. "vs revenue" is total API cost as a share of subscription revenue at that user count.
                   </p>
                 </>
               );
