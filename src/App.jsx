@@ -742,10 +742,16 @@ const AdminPanel = () => {
   const loadCostForecast = async () => {
     setCostLoading(true); setCostError("");
     try {
-      const res = await adminFetch(`${API_URL}/admin/cost-forecast`);
+      const [res, usageRes] = await Promise.all([
+        adminFetch(`${API_URL}/admin/cost-forecast`),
+        adminFetch(`${API_URL}/admin/usage?days=30`).catch(() => null),
+      ]);
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Failed to load");
-      setCostData(d);
+      // Measured spend (may be unavailable on older backends).
+      let usage = null;
+      try { if (usageRes && usageRes.ok) usage = await usageRes.json(); } catch {}
+      setCostData({ ...d, usage });
       // Seed the editable inputs from the model defaults + unit costs (first load only).
       setCostInputs(prev => prev || {
         ...d.defaults,
@@ -1638,8 +1644,59 @@ const AdminPanel = () => {
                 </label>
               );
 
+              // Measured spend from the llm_usage table (real, not estimated).
+              const usage = costData.usage;
+              const usdM = (n) => "£" + ((n || 0) * gbp < 10 ? ((n || 0) * gbp).toFixed(2) : Math.round((n || 0) * gbp).toLocaleString());
+              const FEATURE_LABEL = { "brand-tracking": "Brand tracking", "blog": "Blog writing", "multi-model-audit": "Multi-model audit", "fix-issue": "Fix with AI", "page-suggestions": "Page suggestions", "conversion-suggestions": "Conversion suggestions", "meta-generator": "Meta generator", "traffic-drop-diagnostic": "Traffic-drop diagnostic", "keyword-opportunities": "Keyword opportunities", "keyword-explorer": "Keyword explorer", "competitor-suggestions": "Competitor suggestions", "benchmark-comparison": "Benchmark comparison", "content-score": "Content score", "ai-generate": "AI generate" };
+
               return (
                 <>
+                  {/* MEASURED spend - real token usage from llm_usage */}
+                  {usage && usage.available && (
+                    <div className="glass" style={{ borderRadius:14, padding:"18px 20px", marginBottom:18, borderLeft:"3px solid #34d399" }}>
+                      <div style={{ display:"flex", alignItems:"baseline", justifyContent:"space-between", flexWrap:"wrap", gap:8, marginBottom:14 }}>
+                        <div style={{ fontSize:11, fontWeight:700, color:"#34d399", textTransform:"uppercase", letterSpacing:"0.05em" }}>Measured AI spend · last {usage.days} days</div>
+                        <div style={{ fontSize:11, color:"#475569" }}>{(usage.total?.calls || 0).toLocaleString()} calls logged</div>
+                      </div>
+                      {(usage.total?.calls || 0) === 0 ? (
+                        <p style={{ fontSize:13, color:"#64748b", margin:0 }}>No AI calls logged yet in this window. Metering starts recording from the deploy that added it - run any AI feature (or wait for the weekly brand-tracking cron) and real numbers will appear here.</p>
+                      ) : (
+                        <>
+                          <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:14 }}>
+                            {[
+                              ["Last 30 days", usdM(usage.total?.cost), "#34d399"],
+                              ["Month to date", usdM(usage.monthToDate?.cost), "#e2e8f0"],
+                              ["Per paying customer", usage.payingCustomers > 0 ? usdM((usage.total?.cost || 0) / usage.payingCustomers) : "—", "#e2e8f0"],
+                              ["Tokens (in/out)", `${Math.round((usage.total?.in_tok || 0) / 1000)}k / ${Math.round((usage.total?.out_tok || 0) / 1000)}k`, "#94a3b8"],
+                            ].map(([l, v, c]) => (
+                              <div key={l} style={{ background:"rgba(255,255,255,0.03)", borderRadius:10, padding:"12px 14px", flex:"1 1 130px", minWidth:130 }}>
+                                <div style={{ fontSize:10.5, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:5 }}>{l}</div>
+                                <div style={{ fontSize:20, fontWeight:800, color:c, fontFamily:"JetBrains Mono,monospace" }}>{v}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>By feature</div>
+                          {(usage.byFeature || []).slice(0, 8).map(f => {
+                            const pct = usage.total?.cost > 0 ? (f.cost / usage.total.cost) * 100 : 0;
+                            return (
+                              <div key={f.feature} style={{ marginBottom:8 }}>
+                                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12.5, marginBottom:3 }}>
+                                  <span style={{ color:"#cbd5e1" }}>{FEATURE_LABEL[f.feature] || f.feature} <span style={{ color:"#475569" }}>· {f.calls.toLocaleString()} calls</span></span>
+                                  <span style={{ color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace", fontWeight:700 }}>{usdM(f.cost)}</span>
+                                </div>
+                                <div style={{ height:5, background:"rgba(255,255,255,0.06)", borderRadius:3, overflow:"hidden" }}>
+                                  <div style={{ height:"100%", width:`${Math.max(1, pct)}%`, background:"#34d399", borderRadius:3 }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", margin:"4px 0 10px" }}>Projection (estimate) — adjust the assumptions below</div>
+
                   {/* Assumptions */}
                   <div className="glass" style={{ borderRadius:14, padding:"18px 20px", marginBottom:18 }}>
                     <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:14 }}>Assumptions (per active user)</div>
