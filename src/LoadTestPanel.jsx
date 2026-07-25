@@ -2,26 +2,26 @@ import { useState, useRef, useCallback } from 'react';
 
 const API = import.meta.env.VITE_API_URL || 'https://utilityseo-production.up.railway.app/api';
 
-// All testable actions — each hits a real backend endpoint
-// Base URL — use env var so works in any environment
+// All testable actions - each hits a real backend endpoint
+// Base URL - use env var so works in any environment
 const BASE_URL = 'https://utilityseo-production.up.railway.app';
 const ADMIN_API = import.meta.env.VITE_API_URL || 'https://utilityseo-production.up.railway.app/api';
 
 // testable = no auth token needed, genuinely measurable from browser
 // auth_required = will always return 401 from load tester (no user JWT available)
-//   — included so you can see endpoint is alive and measure round-trip time
+//   - included so you can see endpoint is alive and measure round-trip time
 const ACTIONS = [
-  { id: 'health',        label: 'Health check',               endpoint: '/health',            base: BASE_URL,  method: 'GET',  desc: 'No auth — true server liveness. Use this for high-RPS tests.',        testable: true  },
+  { id: 'health',        label: 'Health check',               endpoint: '/health',            base: BASE_URL,  method: 'GET',  desc: 'No auth - true server liveness. Use this for high-RPS tests.',        testable: true  },
   { id: 'auth_login',    label: 'Auth: login (rate limiter)',  endpoint: '/auth/login',        base: ADMIN_API, method: 'POST', desc: 'Tests auth rate limiter (5 req/min). Expects 401 or 429.',             testable: true,  body: { email: 'loadtest@example.com', password: 'loadtest_invalid' } },
-  { id: 'pagespeed',     label: 'PageSpeed proxy',            endpoint: '/pagespeed?url=https://utilityseo.com&strategy=mobile', base: ADMIN_API, method: 'GET', desc: 'No auth — tests Google API proxy latency.', testable: true  },
-  { id: 'can_scan',      label: 'Usage: can scan?',           endpoint: '/usage/can-scan',    base: ADMIN_API, method: 'GET',  desc: 'Auth required — measures round-trip, expects 401.',                    testable: false },
-  { id: 'scans_list',    label: 'Scans: list',                endpoint: '/scans/list?limit=10', base: ADMIN_API, method: 'GET', desc: 'Auth required — measures round-trip, expects 401.',                   testable: false },
-  { id: 'todos',         label: 'Todos: fetch all',           endpoint: '/todos',             base: ADMIN_API, method: 'GET',  desc: 'Auth required — measures round-trip, expects 401.',                    testable: false },
-  { id: 'workspaces',    label: 'Workspaces: list',           endpoint: '/workspaces/mine',   base: ADMIN_API, method: 'GET',  desc: 'Auth required — measures round-trip, expects 401.',                    testable: false },
-  { id: 'competitors',   label: 'Competitors: fetch',         endpoint: '/competitors',       base: ADMIN_API, method: 'GET',  desc: 'Auth required — measures round-trip, expects 401.',                    testable: false },
-  { id: 'monitoring',    label: 'Monitoring: settings',       endpoint: '/monitoring/settings', base: ADMIN_API, method: 'GET', desc: 'Auth required — measures round-trip, expects 401.',                   testable: false },
-  { id: 'stripe_status', label: 'Stripe: sub status',         endpoint: '/stripe/subscription-status', base: ADMIN_API, method: 'GET', desc: 'Auth required — measures round-trip, expects 401.',            testable: false },
-  { id: 'gsc_keywords',  label: 'GSC: keywords (external)',   endpoint: '/gsc/keywords?days=28', base: ADMIN_API, method: 'GET', desc: 'Auth required + Google API — measures round-trip, expects 401.',    testable: false },
+  { id: 'pagespeed',     label: 'PageSpeed proxy',            endpoint: '/pagespeed?url=https://utilityseo.com&strategy=mobile', base: ADMIN_API, method: 'GET', desc: 'No auth - tests Google API proxy latency.', testable: true  },
+  { id: 'can_scan',      label: 'Usage: can scan?',           endpoint: '/usage/can-scan',    base: ADMIN_API, method: 'GET',  desc: 'Auth required - measures round-trip, expects 401.',                    testable: false },
+  { id: 'scans_list',    label: 'Scans: list',                endpoint: '/scans/list?limit=10', base: ADMIN_API, method: 'GET', desc: 'Auth required - measures round-trip, expects 401.',                   testable: false },
+  { id: 'todos',         label: 'Todos: fetch all',           endpoint: '/todos',             base: ADMIN_API, method: 'GET',  desc: 'Auth required - measures round-trip, expects 401.',                    testable: false },
+  { id: 'workspaces',    label: 'Workspaces: list',           endpoint: '/workspaces/mine',   base: ADMIN_API, method: 'GET',  desc: 'Auth required - measures round-trip, expects 401.',                    testable: false },
+  { id: 'competitors',   label: 'Competitors: fetch',         endpoint: '/competitors',       base: ADMIN_API, method: 'GET',  desc: 'Auth required - measures round-trip, expects 401.',                    testable: false },
+  { id: 'monitoring',    label: 'Monitoring: settings',       endpoint: '/monitoring/settings', base: ADMIN_API, method: 'GET', desc: 'Auth required - measures round-trip, expects 401.',                   testable: false },
+  { id: 'stripe_status', label: 'Stripe: sub status',         endpoint: '/stripe/subscription-status', base: ADMIN_API, method: 'GET', desc: 'Auth required - measures round-trip, expects 401.',            testable: false },
+  { id: 'gsc_keywords',  label: 'GSC: keywords (external)',   endpoint: '/gsc/keywords?days=28', base: ADMIN_API, method: 'GET', desc: 'Auth required + Google API - measures round-trip, expects 401.',    testable: false },
 ];
 
 const FREQ_OPTIONS = [
@@ -48,7 +48,7 @@ function percentile(arr, p) {
 }
 
 export default function LoadTestPanel() {
-  // Read creds from sessionStorage — same place admin app stores them on login
+  // Read creds from sessionStorage - same place admin app stores them on login
   const creds = (() => { try { return JSON.parse(sessionStorage.getItem('admin_creds') || 'null'); } catch { return null; } })();
   const adminEmail = creds?.email || '';
   const adminPassword = creds?.password || '';
@@ -117,7 +117,7 @@ export default function LoadTestPanel() {
       s.count++;
       s.times.push(ms);
       if (err.message === 'Failed to fetch' && !action.testable) {
-        // Auth-required routes often fail at network level without a token — not a real error
+        // Auth-required routes often fail at network level without a token - not a real error
         addLog(`${action.label} → no token (${ms}ms)`, 'ok');
       } else {
         s.errors++;
@@ -149,7 +149,7 @@ export default function LoadTestPanel() {
     let actionIdx = 0;
     const startTime = Date.now();
 
-    addLog(`Starting load test — ${rps} req/s for ${duration}s across ${actions.length} action(s)`, 'info');
+    addLog(`Starting load test - ${rps} req/s for ${duration}s across ${actions.length} action(s)`, 'info');
 
     // Poll /health every 2s during test to show queue depth live
     const healthPollRef = setInterval(async () => {
@@ -176,7 +176,7 @@ export default function LoadTestPanel() {
       while (runningRef.current && Date.now() < endTime) {
         const action = actions[actionIdx % actions.length];
         actionIdx++;
-        runRequest(action); // fire and forget — don't await, keep rate
+        runRequest(action); // fire and forget - don't await, keep rate
         await new Promise(r => setTimeout(r, intervalMs));
       }
 
@@ -222,26 +222,26 @@ export default function LoadTestPanel() {
     });
     const errorActions = actions.filter(a => statsRef.current[a.id].errors > 0);
 
-    if (errorRate > 5) insights.push({ type: 'error', msg: `${errorRate}% error rate (excluding 401s) — backend is returning errors at ${rps} req/s. Check Railway logs for 5xx or unexpected 4xx responses.` });
-    if (errorRate === '0.0' || errorRate === 0) insights.push({ type: 'ok', msg: `Zero errors at ${rps} req/s — backend handled this load cleanly.` });
+    if (errorRate > 5) insights.push({ type: 'error', msg: `${errorRate}% error rate (excluding 401s) - backend is returning errors at ${rps} req/s. Check Railway logs for 5xx or unexpected 4xx responses.` });
+    if (errorRate === '0.0' || errorRate === 0) insights.push({ type: 'ok', msg: `Zero errors at ${rps} req/s - backend handled this load cleanly.` });
     if (totalRateLimited > 0) {
       const rlPct = ((totalRateLimited / totalReqs) * 100).toFixed(0);
-      insights.push({ type: 'warn', msg: `${totalRateLimited} requests (${rlPct}%) hit the rate limiter (429). Global limit is 120 req/min per IP — at ${rps} req/s a single IP hits the ceiling in ~${Math.floor(120/rps)}s. Normal users never approach this.` });
+      insights.push({ type: 'warn', msg: `${totalRateLimited} requests (${rlPct}%) hit the rate limiter (429). Global limit is 120 req/min per IP - at ${rps} req/s a single IP hits the ceiling in ~${Math.floor(120/rps)}s. Normal users never approach this.` });
     }
-    if (p95 > 2000) insights.push({ type: 'warn', msg: `P95 latency is ${p95}ms — 95% of requests took over 2s. Railway may be cold-starting or DB queries are slow.` });
-    if (p95 < 500 && Number(errorRate) < 2) insights.push({ type: 'ok', msg: `P95 under 500ms — excellent response times. Backend is warm and healthy.` });
+    if (p95 > 2000) insights.push({ type: 'warn', msg: `P95 latency is ${p95}ms - 95% of requests took over 2s. Railway may be cold-starting or DB queries are slow.` });
+    if (p95 < 500 && Number(errorRate) < 2) insights.push({ type: 'ok', msg: `P95 under 500ms - excellent response times. Backend is warm and healthy.` });
     slowActions.forEach(a => {
       const avg = Math.round(statsRef.current[a.id].times.reduce((s,v)=>s+v,0)/statsRef.current[a.id].times.length);
-      insights.push({ type: 'warn', msg: `"${a.label}" averaged ${avg}ms — consider adding a cache layer or optimising the DB query.` });
+      insights.push({ type: 'warn', msg: `"${a.label}" averaged ${avg}ms - consider adding a cache layer or optimising the DB query.` });
     });
     errorActions.forEach(a => {
       const s = statsRef.current[a.id];
-      insights.push({ type: 'error', msg: `"${a.label}" had ${s.errors}/${s.count} errors (${((s.errors/s.count)*100).toFixed(0)}%) — check this endpoint specifically.` });
+      insights.push({ type: 'error', msg: `"${a.label}" had ${s.errors}/${s.count} errors (${((s.errors/s.count)*100).toFixed(0)}%) - check this endpoint specifically.` });
     });
 
     // Capacity estimate: extrapolate at what RPS errors would start (rough)
     const capacityEst = Number(errorRate) < 2
-      ? `Estimated safe capacity: >${rps * 3} req/s (no errors at ${rps} req/s — headroom appears good)`
+      ? `Estimated safe capacity: >${rps * 3} req/s (no errors at ${rps} req/s - headroom appears good)`
       : `Estimated safe capacity: ~${Math.round(rps * (1 - Number(errorRate)/100))} req/s (errors detected at current rate)`;
 
     insights.push({ type: 'info', msg: capacityEst });
@@ -252,7 +252,7 @@ export default function LoadTestPanel() {
       return s.count > 0 && s.errors === 0 && a.auth;
     });
     if (authOnlyActions.length > 0) {
-      insights.push({ type: 'info', msg: `Note: auth-required endpoints (${authOnlyActions.map(a=>a.label).join(', ')}) returned 401 — this is correct behaviour. To test these properly, a user JWT token would be needed.` });
+      insights.push({ type: 'info', msg: `Note: auth-required endpoints (${authOnlyActions.map(a=>a.label).join(', ')}) returned 401 - this is correct behaviour. To test these properly, a user JWT token would be needed.` });
     }
 
     setResults({
@@ -387,7 +387,7 @@ export default function LoadTestPanel() {
             {status === 'running' && (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontSize: 12, color: c.green, fontWeight: 700 }}>● Running — {elapsed}s / {duration}s</span>
+                  <span style={{ fontSize: 12, color: c.green, fontWeight: 700 }}>● Running - {elapsed}s / {duration}s</span>
                   <span style={{ fontSize: 12, color: c.muted }}>{progress}%</span>
                 </div>
                 <div style={{ height: 6, background: c.border, borderRadius: 99, overflow: 'hidden', marginBottom: 12 }}>

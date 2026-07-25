@@ -1741,7 +1741,7 @@ const AdminPanel = () => {
                     </div>
                   )}
 
-                  <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", margin:"4px 0 10px" }}>Projection (estimate) — adjust the assumptions below</div>
+                  <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", margin:"4px 0 10px" }}>Projection (estimate) - adjust the assumptions below</div>
 
                   {/* Assumptions */}
                   <div className="glass" style={{ borderRadius:14, padding:"18px 20px", marginBottom:18 }}>
@@ -2033,7 +2033,7 @@ const AdminPanel = () => {
                         <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 16px", borderBottom:i < bkData.recent.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", fontSize:13 }}>
                           <span style={{ color:"#e2e8f0" }}>
                             <span style={{ color: r.status === "success" ? "#4ade80" : "#f87171", marginRight:8 }}>{r.status === "success" ? "✓" : "✕"}</span>
-                            {r.kind}{r.error ? <span style={{ color:"#f87171" }}> — {r.error}</span> : ""}
+                            {r.kind}{r.error ? <span style={{ color:"#f87171" }}> - {r.error}</span> : ""}
                           </span>
                           <span style={{ color:"#64748b", fontFamily:"JetBrains Mono,monospace" }}>{new Date(r.created_at).toLocaleString("en-GB")}</span>
                         </div>
