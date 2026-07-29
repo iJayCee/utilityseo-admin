@@ -402,10 +402,10 @@ const AdminPanel = () => {
   // SECURITY: every admin endpoint (other than /login) now requires admin
   // credentials. This wrapper attaches them as headers on every fetch so we
   // don't have to thread credentials through 20+ call sites.
-  const loadProjects = async (q = "") => {
+  const loadProjects = async (userId) => {
     setProjects(null);
     try {
-      const r = await adminFetch(`${API_URL}/admin/projects?q=${encodeURIComponent(q)}`);
+      const r = await adminFetch(`${API_URL}/admin/users/${userId}/projects`);
       const d = await r.json();
       setProjects(d.projects || []);
     } catch { setProjects([]); }
@@ -453,11 +453,11 @@ const AdminPanel = () => {
   };
 
   const [activeTab, setActiveTab] = useState("users");
-  // Projects tab: raise a single project's crawl ceiling past the self-serve
-  // dropdown (which stops at 1000) without a code change or lifting the limit
-  // for every customer.
+  // Projects belonging to the user currently open in the info modal - both the
+  // ones they own and the ones shared with them. Support always arrives from
+  // "this customer has a problem", so projects are a detail of the user rather
+  // than a browser of their own.
   const [projects, setProjects] = useState(null);
-  const [projectQuery, setProjectQuery] = useState("");
   const [capDraft, setCapDraft] = useState({});
   const [capSaving, setCapSaving] = useState(null);
   const [capMsg, setCapMsg] = useState("");
@@ -512,7 +512,15 @@ const AdminPanel = () => {
   const [filterMarketing, setFilterMarketing] = useState("all");
   const [filterStarred, setFilterStarred] = useState(false);
   const [starredIds, setStarredIds] = useState(new Set());
-  const [viewingUser, setViewingUser] = useState(null);
+  const [viewingUser, _setViewingUser] = useState(null);
+  // Wrapping the setter keeps the project list in step with the modal without
+  // an effect: opening a user loads their projects, closing clears them so the
+  // next user never flashes the previous one's list.
+  const setViewingUser = (u) => {
+    _setViewingUser(u);
+    setCapDraft({}); setCapMsg("");
+    if (u?.id) loadProjects(u.id); else setProjects(null);
+  };
   const [noteText, setNoteText] = useState('');
   const [noteSaving, setNoteSaving] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
@@ -882,7 +890,6 @@ const AdminPanel = () => {
 
   const handleTabSwitch = (tab) => {
     setActiveTab(tab);
-    if (tab === "projects" && projects === null) loadProjects();
     if (tab === "prospectflow") loadProspectFlow();
     if (tab === "promos" && promos.length === 0) loadPromos();
     if (tab === "monitoring") loadMonitoring();
@@ -1078,7 +1085,7 @@ const AdminPanel = () => {
 
         {/* Tab Bar */}
         <div className="tab-bar" style={{ display:"flex", gap:8, marginBottom:28, borderBottom:"1px solid rgba(255,255,255,0.07)", paddingBottom:0 }}>
-          {[{id:"users",label:"👥 Users"},{id:"promos",label:"🎟 Promo Codes"},{id:"prospectflow",label:"💰 ProspectFlow"},{id:"loadtest",label:"⚡ Load Test"},{id:"monitoring",label:"🩺 Monitoring"},{id:"capacity",label:"📊 Capacity"},{id:"upgrades",label:"🛒 Upgrades"},{id:"costs",label:"💷 Cost forecast"},{id:"announce",label:"📢 Announcements"},{id:"backups",label:"💾 Backups"},{id:"projects",label:"🗂 Projects"}].map(tab => (
+          {[{id:"users",label:"👥 Users"},{id:"promos",label:"🎟 Promo Codes"},{id:"prospectflow",label:"💰 ProspectFlow"},{id:"loadtest",label:"⚡ Load Test"},{id:"monitoring",label:"🩺 Monitoring"},{id:"capacity",label:"📊 Capacity"},{id:"upgrades",label:"🛒 Upgrades"},{id:"costs",label:"💷 Cost forecast"},{id:"announce",label:"📢 Announcements"},{id:"backups",label:"💾 Backups"}].map(tab => (
             <button key={tab.id} className="tab-btn" onClick={() => handleTabSwitch(tab.id)}
               style={{ padding:"10px 22px", background:activeTab===tab.id?"rgba(99,102,241,0.2)":"transparent", border:"none", borderBottom:activeTab===tab.id?"2px solid #6366f1":"2px solid transparent", color:activeTab===tab.id?"#a5b4fc":"#64748b", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", borderRadius:"8px 8px 0 0", marginBottom:-1, transition:"all 0.15s" }}>
               {tab.label}
@@ -1214,72 +1221,6 @@ const AdminPanel = () => {
         </>)}
 
         {/* ── PROMO CODES TAB ── */}
-        {/* ── PROJECTS TAB ── */}
-        {activeTab === "projects" && (
-          <div>
-            <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:18, flexWrap:"wrap" }}>
-              <input value={projectQuery} onChange={e => setProjectQuery(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") loadProjects(projectQuery); }}
-                placeholder="Search by project name, URL or owner email…"
-                style={{ flex:"1 1 320px", padding:"10px 14px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, color:"#e2e8f0", fontSize:14, fontFamily:"Sora,sans-serif", outline:"none" }} />
-              <button onClick={() => loadProjects(projectQuery)}
-                style={{ padding:"10px 20px", background:"#6366f1", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
-                Search
-              </button>
-            </div>
-            <p style={{ fontSize:12, color:"#64748b", marginBottom:14, lineHeight:1.6, maxWidth:640 }}>
-              Crawl ceiling per project. The customer-facing dropdown stops at 1000 pages; set a
-              number here to raise a single project past that, up to 10000. Leave blank and save to
-              go back to the normal limits. A bigger ceiling never forces a bigger crawl - it only
-              allows one, and the customer still picks the size they want.
-            </p>
-            {capMsg && <p style={{ fontSize:13, color:"#a5b4fc", marginBottom:12 }}>{capMsg}</p>}
-            {projects === null ? <p style={{ color:"#64748b" }}>Loading…</p>
-            : projects.length === 0 ? <p style={{ color:"#64748b" }}>No projects match that search.</p>
-            : (
-              <div style={{ overflowX:"auto" }}>
-                <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
-                  <thead>
-                    <tr style={{ color:"#64748b", fontSize:11, textTransform:"uppercase", letterSpacing:"0.05em" }}>
-                      <th style={{ textAlign:"left", padding:"8px 10px" }}>Project</th>
-                      <th style={{ textAlign:"left", padding:"8px 10px" }}>Owner</th>
-                      <th style={{ textAlign:"right", padding:"8px 10px" }}>Scans</th>
-                      <th style={{ textAlign:"left", padding:"8px 10px" }}>Crawl ceiling</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {projects.map(p => (
-                      <tr key={p.id} style={{ borderTop:"1px solid rgba(255,255,255,0.06)" }}>
-                        <td style={{ padding:"10px" }}>
-                          <div style={{ color:"#e2e8f0", fontWeight:600 }}>{p.name}</div>
-                          <div style={{ color:"#475569", fontSize:11, fontFamily:"JetBrains Mono,monospace" }}>{p.url}</div>
-                        </td>
-                        <td style={{ padding:"10px", color:"#94a3b8" }}>
-                          {p.email}<div style={{ color:"#475569", fontSize:11 }}>{p.plan}</div>
-                        </td>
-                        <td style={{ padding:"10px", textAlign:"right", color:"#94a3b8", fontFamily:"JetBrains Mono,monospace" }}>{p.scans}</td>
-                        <td style={{ padding:"10px" }}>
-                          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                            <input type="number" min="1" max="10000"
-                              value={capDraft[p.id] !== undefined ? capDraft[p.id] : (p.max_scan_pages ?? "")}
-                              onChange={e => setCapDraft(d => ({ ...d, [p.id]: e.target.value }))}
-                              placeholder="default"
-                              style={{ width:110, padding:"7px 10px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#e2e8f0", fontSize:13, fontFamily:"JetBrains Mono,monospace", outline:"none" }} />
-                            <button onClick={() => saveScanCap(p.id)} disabled={capSaving === p.id}
-                              style={{ padding:"7px 14px", background:"rgba(99,102,241,0.2)", border:"1px solid rgba(99,102,241,0.4)", borderRadius:8, color:"#a5b4fc", fontSize:12, fontWeight:700, cursor: capSaving === p.id ? "not-allowed" : "pointer", fontFamily:"Sora,sans-serif", opacity: capSaving === p.id ? 0.5 : 1 }}>
-                              {capSaving === p.id ? "…" : "Save"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
         {activeTab === "promos" && (
           <div>
             <div className="glass" style={{ borderRadius:18, padding:28, marginBottom:28 }}>
@@ -2421,6 +2362,56 @@ const AdminPanel = () => {
                 <p style={{ fontSize:13, color:"#475569", fontFamily:"JetBrains Mono,monospace" }}>ID #{viewingUser.id}</p>
               </div>
               <button onClick={() => setViewingUser(null)} style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#94a3b8", fontSize:16, width:32, height:32, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"Sora,sans-serif" }}>✕</button>
+            </div>
+
+            {/* Projects this user owns or can see, with the crawl ceiling for each. */}
+            <div style={{ marginBottom:24, padding:"16px 18px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12 }}>
+              <p style={{ fontSize:13, fontWeight:700, color:"#e2e8f0", marginBottom:4 }}>Projects</p>
+              <p style={{ fontSize:11, color:"#64748b", lineHeight:1.6, marginBottom:12 }}>
+                Owned and shared. The crawl ceiling raises one project past the customer-facing
+                1000-page limit (up to 10000); leave blank and save to restore the normal limits.
+                It permits a bigger crawl, it never forces one.
+              </p>
+              {capMsg && <p style={{ fontSize:12, color:"#a5b4fc", marginBottom:10 }}>{capMsg}</p>}
+              {projects === null ? <p style={{ fontSize:12, color:"#64748b" }}>Loading…</p>
+              : projects.length === 0 ? <p style={{ fontSize:12, color:"#64748b" }}>This user has no projects.</p>
+              : projects.map(pr => (
+                <div key={`${pr.access}-${pr.id}`} style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap", padding:"9px 0", borderTop:"1px solid rgba(255,255,255,0.06)" }}>
+                  <div style={{ flex:"1 1 200px", minWidth:0 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+                      <span style={{ color:"#e2e8f0", fontSize:13, fontWeight:600 }}>{pr.name}</span>
+                      <span style={{ fontSize:10, fontWeight:700, padding:"1px 7px", borderRadius:99,
+                        background: pr.access === "owner" ? "rgba(99,102,241,0.18)" : "rgba(148,163,184,0.14)",
+                        color: pr.access === "owner" ? "#a5b4fc" : "#94a3b8" }}>
+                        {pr.access === "owner" ? "owner" : `shared · ${pr.role || "member"}`}
+                      </span>
+                    </div>
+                    <div style={{ color:"#475569", fontSize:11, fontFamily:"JetBrains Mono,monospace", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                      {pr.url} · {pr.scans} scan{pr.scans === 1 ? "" : "s"}
+                    </div>
+                  </div>
+                  {pr.access === "owner" ? (
+                    <div style={{ display:"flex", gap:6, alignItems:"center", flexShrink:0 }}>
+                      <input type="number" min="1" max="10000"
+                        value={capDraft[pr.id] !== undefined ? capDraft[pr.id] : (pr.max_scan_pages ?? "")}
+                        onChange={e => setCapDraft(d => ({ ...d, [pr.id]: e.target.value }))}
+                        placeholder="default"
+                        style={{ width:96, padding:"6px 9px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#e2e8f0", fontSize:12, fontFamily:"JetBrains Mono,monospace", outline:"none" }} />
+                      <button onClick={() => saveScanCap(pr.id)} disabled={capSaving === pr.id}
+                        style={{ padding:"6px 12px", background:"rgba(99,102,241,0.2)", border:"1px solid rgba(99,102,241,0.4)", borderRadius:8, color:"#a5b4fc", fontSize:11, fontWeight:700, cursor: capSaving === pr.id ? "not-allowed" : "pointer", fontFamily:"Sora,sans-serif", opacity: capSaving === pr.id ? 0.5 : 1 }}>
+                        {capSaving === pr.id ? "…" : "Save"}
+                      </button>
+                    </div>
+                  ) : (
+                    // The ceiling belongs to the project, so it is only editable
+                    // from the account that owns it - editing here would silently
+                    // change another customer's limit.
+                    <span style={{ fontSize:11, color:"#475569", flexShrink:0 }}>
+                      ceiling set by owner{pr.max_scan_pages ? ` (${pr.max_scan_pages})` : ""}
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
 
             {viewingUser.status === "deactivated" && (
