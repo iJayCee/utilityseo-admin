@@ -402,6 +402,13 @@ const AdminPanel = () => {
   // SECURITY: every admin endpoint (other than /login) now requires admin
   // credentials. This wrapper attaches them as headers on every fetch so we
   // don't have to thread credentials through 20+ call sites.
+  const loadOverview = async () => {
+    try {
+      const r = await adminFetch(`${API_URL}/admin/overview`);
+      setOverview(await r.json());
+    } catch { setOverview({ error: true }); }
+  };
+
   const loadProjects = async (userId) => {
     setProjects(null);
     try {
@@ -452,7 +459,10 @@ const AdminPanel = () => {
     return res;
   };
 
-  const [activeTab, setActiveTab] = useState("users");
+  // Overview is the landing tab: the founder's daily check should be zero
+  // clicks, and every other tab is a drill-down from it.
+  const [activeTab, setActiveTab] = useState("overview");
+  const [overview, setOverview] = useState(null);
   // Projects belonging to the user currently open in the info modal - both the
   // ones they own and the ones shared with them. Support always arrives from
   // "this customer has a problem", so projects are a detail of the user rather
@@ -533,7 +543,7 @@ const AdminPanel = () => {
   const MAIN_APP_URL = import.meta.env.VITE_MAIN_APP_URL || 'https://app.utilityseo.com';
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
-  useEffect(() => { if (authed) loadUsers(); }, []);
+  useEffect(() => { if (authed) { loadUsers(); loadOverview(); } }, []);
 
   const showToast = (msg, isError = false) => {
     setToast({ msg, isError });
@@ -552,6 +562,7 @@ const AdminPanel = () => {
       setAuthed(true);
       localStorage.setItem('admin_authed', 'true');
       loadUsers();
+      loadOverview();   // Overview is the landing tab; it must not open empty
     } catch { setErr("Connection error. Please try again."); }
     finally { setLoading(false); }
   };
@@ -890,6 +901,7 @@ const AdminPanel = () => {
 
   const handleTabSwitch = (tab) => {
     setActiveTab(tab);
+    if (tab === "overview") loadOverview();
     if (tab === "prospectflow") loadProspectFlow();
     if (tab === "promos" && promos.length === 0) loadPromos();
     if (tab === "monitoring") loadMonitoring();
@@ -1085,7 +1097,7 @@ const AdminPanel = () => {
 
         {/* Tab Bar */}
         <div className="tab-bar" style={{ display:"flex", gap:8, marginBottom:28, borderBottom:"1px solid rgba(255,255,255,0.07)", paddingBottom:0 }}>
-          {[{id:"users",label:"👥 Users"},{id:"promos",label:"🎟 Promo Codes"},{id:"prospectflow",label:"💰 ProspectFlow"},{id:"loadtest",label:"⚡ Load Test"},{id:"monitoring",label:"🩺 Monitoring"},{id:"capacity",label:"📊 Capacity"},{id:"upgrades",label:"🛒 Upgrades"},{id:"costs",label:"💷 Cost forecast"},{id:"announce",label:"📢 Announcements"},{id:"backups",label:"💾 Backups"}].map(tab => (
+          {[{id:"overview",label:"◈ Overview"},{id:"users",label:"👥 Users"},{id:"promos",label:"🎟 Promo Codes"},{id:"prospectflow",label:"💰 ProspectFlow"},{id:"loadtest",label:"⚡ Load Test"},{id:"monitoring",label:"🩺 Monitoring"},{id:"capacity",label:"📊 Capacity"},{id:"upgrades",label:"🛒 Upgrades"},{id:"costs",label:"💷 Cost forecast"},{id:"announce",label:"📢 Announcements"},{id:"backups",label:"💾 Backups"}].map(tab => (
             <button key={tab.id} className="tab-btn" onClick={() => handleTabSwitch(tab.id)}
               style={{ padding:"10px 22px", background:activeTab===tab.id?"rgba(99,102,241,0.2)":"transparent", border:"none", borderBottom:activeTab===tab.id?"2px solid #6366f1":"2px solid transparent", color:activeTab===tab.id?"#a5b4fc":"#64748b", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", borderRadius:"8px 8px 0 0", marginBottom:-1, transition:"all 0.15s" }}>
               {tab.label}
@@ -1094,6 +1106,66 @@ const AdminPanel = () => {
         </div>
 
         {/* ── USERS TAB ── */}
+        {/* ── OVERVIEW TAB ── */}
+        {activeTab === "overview" && (
+          <div>
+            {overview === null && <p style={{ color:"#64748b" }}>Loading…</p>}
+            {overview?.error && <p style={{ color:"#f87171" }}>Could not load the overview.</p>}
+            {overview && !overview.error && (
+              <>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))", gap:12, marginBottom:20 }}>
+                  {[
+                    ["Users", overview.users.total, `${overview.users.paid || 0} paid · ${overview.users.new_7d || 0} new this week`, "#a5b4fc"],
+                    ["Projects", overview.projects.total, null, "#a5b4fc"],
+                    ["Site scans", overview.scans.total, `${overview.scans.last_7d || 0} this week`, "#7dd3fc"],
+                    ["Errors (24h)", overview.errors.last_24h, overview.errors.last_24h > 0 ? "check Monitoring" : "all quiet", overview.errors.last_24h > 0 ? "#f87171" : "#4ade80"],
+                    ["AI spend (30d)", `$${(overview.llm.cost_30d || 0).toFixed(2)}`, `${overview.llm.calls_30d || 0} calls`, "#fbbf24"],
+                    ["Database", overview.dbSize || "-", null, "#94a3b8"],
+                  ].map(([label, val, sub, col]) => (
+                    <div key={label} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, padding:"16px 18px" }}>
+                      <p style={{ fontSize:11, color:"#64748b", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", margin:0 }}>{label}</p>
+                      <p style={{ fontSize:26, fontWeight:800, color:col, margin:"6px 0 0", fontFamily:"JetBrains Mono,monospace" }}>{val ?? "-"}</p>
+                      {sub && <p style={{ fontSize:11, color:"#475569", margin:"4px 0 0" }}>{sub}</p>}
+                    </div>
+                  ))}
+                </div>
+
+                {/* The data flywheel: the asset that grows with usage and cannot be
+                    bought or backfilled later. Shown with growth, because a flat
+                    count says nothing about whether the flywheel is turning. */}
+                <div style={{ background:"rgba(124,58,237,0.06)", border:"1px solid rgba(124,58,237,0.25)", borderRadius:14, padding:"18px 20px" }}>
+                  <p style={{ fontSize:14, fontWeight:700, color:"#e2e8f0", margin:"0 0 4px" }}>Data flywheel</p>
+                  <p style={{ fontSize:12, color:"#64748b", lineHeight:1.6, margin:"0 0 14px", maxWidth:640 }}>
+                    Datasets that accumulate with every customer and every month. This is the asset
+                    keyword-data vendors sell - ours grows for free with usage, and history cannot be
+                    backfilled later.
+                  </p>
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))", gap:12 }}>
+                    {[
+                      ["Keyword metrics", overview.dataAssets.keywordMetrics.total,
+                        `${overview.dataAssets.keywordMetrics.new_7d || 0} new this week · ${overview.dataAssets.keywordMetrics.markets || 0} market${(overview.dataAssets.keywordMetrics.markets || 0) === 1 ? "" : "s"}`,
+                        "volumes, competition and bid prices per keyword+market, from Keyword Planner"],
+                      ["Rank snapshots", overview.dataAssets.keywordSnapshots.total,
+                        `${overview.dataAssets.keywordSnapshots.days || 0} daily snapshots`,
+                        "tracked-keyword positions, one row per keyword per day"],
+                      ["AI answer records", overview.dataAssets.brandTrackingResults.total,
+                        `across ${overview.dataAssets.brandTrackingResults.days || 0} run days`,
+                        "which brands the AI platforms name, question by question"],
+                    ].map(([label, val, sub, desc]) => (
+                      <div key={label} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:"14px 16px" }}>
+                        <p style={{ fontSize:11, color:"#a5b4fc", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", margin:0 }}>{label}</p>
+                        <p style={{ fontSize:24, fontWeight:800, color:"#e2e8f0", margin:"6px 0 0", fontFamily:"JetBrains Mono,monospace" }}>{(val ?? 0).toLocaleString()}</p>
+                        <p style={{ fontSize:11, color:"#64748b", margin:"4px 0 0" }}>{sub}</p>
+                        <p style={{ fontSize:10, color:"#475569", margin:"6px 0 0", lineHeight:1.5 }}>{desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {activeTab === "users" && (<>
         <div style={{ marginBottom:16 }}>
           <div style={{ display:"flex", gap:10, marginBottom:10, flexWrap:"wrap" }}>
