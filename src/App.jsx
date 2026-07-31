@@ -1096,12 +1096,28 @@ const AdminPanel = () => {
         </div>
 
         {/* Tab Bar */}
-        <div className="tab-bar" style={{ display:"flex", gap:8, marginBottom:28, borderBottom:"1px solid rgba(255,255,255,0.07)", paddingBottom:0 }}>
-          {[{id:"overview",label:"◈ Overview"},{id:"users",label:"👥 Users"},{id:"promos",label:"🎟 Promo Codes"},{id:"prospectflow",label:"💰 ProspectFlow"},{id:"loadtest",label:"⚡ Load Test"},{id:"monitoring",label:"🩺 Monitoring"},{id:"capacity",label:"📊 Capacity"},{id:"upgrades",label:"🛒 Upgrades"},{id:"costs",label:"💷 Cost forecast"},{id:"announce",label:"📢 Announcements"},{id:"backups",label:"💾 Backups"}].map(tab => (
-            <button key={tab.id} className="tab-btn" onClick={() => handleTabSwitch(tab.id)}
-              style={{ padding:"10px 22px", background:activeTab===tab.id?"rgba(99,102,241,0.2)":"transparent", border:"none", borderBottom:activeTab===tab.id?"2px solid #6366f1":"2px solid transparent", color:activeTab===tab.id?"#a5b4fc":"#64748b", fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", borderRadius:"8px 8px 0 0", marginBottom:-1, transition:"all 0.15s" }}>
-              {tab.label}
-            </button>
+        {/* Navigation grouped by the job you came to do, not a flat strip of
+            eleven tabs. Overview stands alone as the landing view; everything
+            else is a drill-down inside one of four groups. */}
+        <div className="tab-bar" style={{ display:"flex", gap:22, marginBottom:28, borderBottom:"1px solid rgba(255,255,255,0.07)", paddingBottom:10, flexWrap:"wrap", alignItems:"flex-end" }}>
+          {[
+            { name:null, tabs:[{id:"overview",label:"◈ Overview"}] },
+            { name:"People", tabs:[{id:"users",label:"Users"},{id:"upgrades",label:"Upgrades"}] },
+            { name:"Revenue", tabs:[{id:"promos",label:"Promo codes"},{id:"prospectflow",label:"ProspectFlow"},{id:"costs",label:"Cost forecast"}] },
+            { name:"Operations", tabs:[{id:"monitoring",label:"Monitoring"},{id:"capacity",label:"Capacity"},{id:"backups",label:"Backups"},{id:"loadtest",label:"Load test"}] },
+            { name:"Comms", tabs:[{id:"announce",label:"Announcements"}] },
+          ].map(group => (
+            <div key={group.name || "overview"}>
+              {group.name && <p style={{ fontSize:10, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.08em", margin:"0 0 5px 4px" }}>{group.name}</p>}
+              <div style={{ display:"flex", gap:4 }}>
+                {group.tabs.map(tab => (
+                  <button key={tab.id} className="tab-btn" onClick={() => handleTabSwitch(tab.id)}
+                    style={{ padding:"8px 16px", background:activeTab===tab.id?"rgba(99,102,241,0.2)":"rgba(255,255,255,0.03)", border:`1px solid ${activeTab===tab.id?"rgba(99,102,241,0.5)":"rgba(255,255,255,0.06)"}`, color:activeTab===tab.id?"#a5b4fc":"#64748b", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", borderRadius:9, transition:"all 0.15s" }}>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
 
@@ -1122,7 +1138,10 @@ const AdminPanel = () => {
                     ["AI spend (30d)", `$${(overview.llm.cost_30d || 0).toFixed(2)}`, `${overview.llm.calls_30d || 0} calls`, "#fbbf24"],
                     ["Database", overview.dbSize || "-", null, "#94a3b8"],
                   ].map(([label, val, sub, col]) => (
-                    <div key={label} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, padding:"16px 18px" }}>
+                    <div key={label}
+                      onClick={() => { const go = { "Users":"users", "Errors (24h)":"monitoring", "AI spend (30d)":"costs", "Site scans":"capacity", "Database":"backups" }[label]; if (go) handleTabSwitch(go); }}
+                      title="Open the detailed view"
+                      style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, padding:"16px 18px", cursor:"pointer" }}>
                       <p style={{ fontSize:11, color:"#64748b", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", margin:0 }}>{label}</p>
                       <p style={{ fontSize:26, fontWeight:800, color:col, margin:"6px 0 0", fontFamily:"JetBrains Mono,monospace" }}>{val ?? "-"}</p>
                       {sub && <p style={{ fontSize:11, color:"#475569", margin:"4px 0 0" }}>{sub}</p>}
