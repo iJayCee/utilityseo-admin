@@ -1,7 +1,7 @@
 // AnnounceSection - extracted verbatim from App.jsx (admin split). Behaviour is
 // byte-identical to the inline version; props carry the App-level state and
 // handlers it used in place. Restyle happens as a separate pass.
-const AnnounceSection = ({ annBusy, annData, annError, annForm, annLoading, deleteAnnouncement, loadAnnouncements, now, sendAnnouncement, setAnnForm, toggleAnnouncement, users }) => {
+const AnnounceSection = ({ annBusy, annData, annError, annForm, annLoading, deleteAnnouncement, loadAnnouncements, sendAnnouncement, setAnnForm, toggleAnnouncement, users }) => {
           const TYPES = {
             outage:      { label: "Outage",      icon: "🔴", col: "#f87171", desc: "Something is down right now" },
             maintenance: { label: "Maintenance", icon: "🛠", col: "#fbbf24", desc: "Planned or ongoing work" },

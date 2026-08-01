@@ -1,7 +1,7 @@
 // ProspectFlowSection - extracted verbatim from App.jsx (admin split). Behaviour is
 // byte-identical to the inline version; props carry the App-level state and
 // handlers it used in place. Restyle happens as a separate pass.
-const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, max, pfCodeFilter, pfData, pfError, pfLoading, pfSearch, pfStatusFilter, plan, setPfCodeFilter, setPfData, setPfSearch, setPfStatusFilter, stats, users }) => (
+const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, pfCodeFilter, pfData, pfError, pfLoading, pfSearch, pfStatusFilter, setPfCodeFilter, setPfData, setPfSearch, setPfStatusFilter, stats, users }) => (
           <div>
             <div style={{ maxWidth:1100, width:"100%", margin:"0 auto" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>

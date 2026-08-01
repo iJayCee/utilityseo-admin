@@ -1339,7 +1339,7 @@ const AdminPanel = () => {
 
         {/* ── PROMO CODES TAB ── */}
         {activeTab === "promos" && (
-          <PromosSection createPromo={createPromo} deletePromo={deletePromo} email={email} expandedPromo={expandedPromo} loadPromoSignups={loadPromoSignups} loading={loading} loadingPromos={loadingPromos} plan={plan} promoForm={promoForm} promoFormError={promoFormError} promoSignups={promoSignups} promos={promos} savingPromo={savingPromo} setPromoForm={setPromoForm} stats={stats} togglePromoActive={togglePromoActive} users={users} />
+          <PromosSection createPromo={createPromo} deletePromo={deletePromo} email={email} expandedPromo={expandedPromo} loadPromoSignups={loadPromoSignups} loading={loading} loadingPromos={loadingPromos} promoForm={promoForm} promoFormError={promoFormError} promoSignups={promoSignups} promos={promos} savingPromo={savingPromo} setPromoForm={setPromoForm} stats={stats} togglePromoActive={togglePromoActive} users={users} />
         )}
       </div>
 
@@ -1350,23 +1350,23 @@ const AdminPanel = () => {
         )}
 
         {activeTab === "monitoring" && (
-          <MonitoringSection loadMonitoring={loadMonitoring} m={m} monData={monData} monError={monError} monLoading={monLoading} plan={plan} stats={stats} />
+          <MonitoringSection loadMonitoring={loadMonitoring} monData={monData} monError={monError} monLoading={monLoading} stats={stats} />
         )}
 
         {activeTab === "capacity" && (
-          <CapacitySection capData={capData} capError={capError} capLoading={capLoading} loadCapacity={loadCapacity} max={max} now={now} status={status} />
+          <CapacitySection capData={capData} capError={capError} capLoading={capLoading} loadCapacity={loadCapacity} />
         )}
 
         {activeTab === "upgrades" && (
-          <UpgradesSection loadUpgrades={loadUpgrades} now={now} upgData={upgData} upgError={upgError} upgLoading={upgLoading} users={users} />
+          <UpgradesSection loadUpgrades={loadUpgrades} upgData={upgData} upgError={upgError} upgLoading={upgLoading} users={users} />
         )}
 
         {activeTab === "costs" && (
-          <CostsSection c={c} costData={costData} costError={costError} costInputs={costInputs} costLoading={costLoading} counts={counts} loadCostForecast={loadCostForecast} max={max} now={now} search={search} setCostInputs={setCostInputs} users={users} />
+          <CostsSection costData={costData} costError={costError} costInputs={costInputs} costLoading={costLoading} loadCostForecast={loadCostForecast} search={search} setCostInputs={setCostInputs} users={users} />
         )}
 
         {activeTab === "announce" && (
-          <AnnounceSection annBusy={annBusy} annData={annData} annError={annError} annForm={annForm} annLoading={annLoading} deleteAnnouncement={deleteAnnouncement} loadAnnouncements={loadAnnouncements} now={now} sendAnnouncement={sendAnnouncement} setAnnForm={setAnnForm} toggleAnnouncement={toggleAnnouncement} users={users} />
+          <AnnounceSection annBusy={annBusy} annData={annData} annError={annError} annForm={annForm} annLoading={annLoading} deleteAnnouncement={deleteAnnouncement} loadAnnouncements={loadAnnouncements} sendAnnouncement={sendAnnouncement} setAnnForm={setAnnForm} toggleAnnouncement={toggleAnnouncement} users={users} />
         )}
 
         {activeTab === "backups" && (
@@ -1375,7 +1375,7 @@ const AdminPanel = () => {
         )}
 
         {activeTab === "prospectflow" && (
-          <ProspectFlowSection email={email} loadCodeRevenue={loadCodeRevenue} loadProspectFlow={loadProspectFlow} max={max} pfCodeFilter={pfCodeFilter} pfData={pfData} pfError={pfError} pfLoading={pfLoading} pfSearch={pfSearch} pfStatusFilter={pfStatusFilter} plan={plan} setPfCodeFilter={setPfCodeFilter} setPfData={setPfData} setPfSearch={setPfSearch} setPfStatusFilter={setPfStatusFilter} stats={stats} users={users} />
+          <ProspectFlowSection email={email} loadCodeRevenue={loadCodeRevenue} loadProspectFlow={loadProspectFlow} pfCodeFilter={pfCodeFilter} pfData={pfData} pfError={pfError} pfLoading={pfLoading} pfSearch={pfSearch} pfStatusFilter={pfStatusFilter} setPfCodeFilter={setPfCodeFilter} setPfData={setPfData} setPfSearch={setPfSearch} setPfStatusFilter={setPfStatusFilter} stats={stats} users={users} />
         )}
 
         {/* ── REVENUE MODAL ── */}

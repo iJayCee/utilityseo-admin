@@ -1,7 +1,7 @@
 // CostsSection - extracted verbatim from App.jsx (admin split). Behaviour is
 // byte-identical to the inline version; props carry the App-level state and
 // handlers it used in place. Restyle happens as a separate pass.
-const CostsSection = ({ c, costData, costError, costInputs, costLoading, counts, loadCostForecast, max, now, search, setCostInputs, users }) => (
+const CostsSection = ({ costData, costError, costInputs, costLoading, loadCostForecast, search, setCostInputs, users }) => (
           <div style={{ maxWidth:1000, width:"100%", margin:"0 auto" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
               <div>

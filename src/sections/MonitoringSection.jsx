@@ -1,7 +1,7 @@
 // MonitoringSection - extracted verbatim from App.jsx (admin split). Behaviour is
 // byte-identical to the inline version; props carry the App-level state and
 // handlers it used in place. Restyle happens as a separate pass.
-const MonitoringSection = ({ loadMonitoring, m, monData, monError, monLoading, plan, stats }) => (
+const MonitoringSection = ({ loadMonitoring, monData, monError, monLoading, stats }) => (
           <div style={{ maxWidth:1100, width:"100%", margin:"0 auto" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
               <div>
