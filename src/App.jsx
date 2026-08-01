@@ -1371,7 +1371,7 @@ const AdminPanel = () => {
 
         {activeTab === "backups" && (
           <BackupsSection bkData={bkData} bkError={bkError} bkMsg={bkMsg} bkBusy={bkBusy}
-            bkLoading={bkLoading} loadBackups={loadBackups} runBackupNow={runBackupNow} restoreBackup={restoreBackup} />
+            bkLoading={bkLoading} loadBackups={loadBackups} runBackupNow={runBackupNow} restoreBackup={restoreBackup} restoreConfirm={restoreConfirm} setRestoreConfirm={setRestoreConfirm} />
         )}
 
         {activeTab === "prospectflow" && (

@@ -1,6 +1,6 @@
 // PromosSection - extracted verbatim from App.jsx (admin split). Behaviour is
 // byte-identical to the inline version; props carry the App-level state and
-// handlers it used in place. Restyle happens as a separate pass.
+// handlers it used in place. Restyle happens separately.
 const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPromoSignups, loading, loadingPromos, promoForm, promoFormError, promoSignups, promos, savingPromo, setPromoForm, stats, togglePromoActive, users }) => (
           <div>
             <div className="glass" style={{ borderRadius:18, padding:28, marginBottom:28 }}>

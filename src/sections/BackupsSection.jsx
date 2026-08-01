@@ -2,7 +2,7 @@
 // 2,600-line monolith into a component per section. Receives its state and
 // handlers as props so behaviour is byte-identical to the inline version;
 // restyling comes as a separate pass once every section is extracted.
-const BackupsSection = ({ bkData, bkError, bkMsg, bkBusy, bkLoading, loadBackups, runBackupNow, restoreBackup }) => (
+const BackupsSection = ({ bkBusy, bkData, bkError, bkLoading, bkMsg, loadBackups, restoreBackup, restoreConfirm, runBackupNow, setRestoreConfirm }) => (
           <div style={{ maxWidth:900, width:"100%", margin:"0 auto" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
               <div>
