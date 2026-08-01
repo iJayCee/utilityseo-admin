@@ -1,3 +1,4 @@
+import { planMeta, planLabel, planShort, Spinner } from "../shared.jsx";
 // PromosSection - extracted verbatim from App.jsx (admin split). Behaviour is
 // byte-identical to the inline version; props carry the App-level state and
 // handlers it used in place. Restyle happens separately.
