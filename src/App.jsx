@@ -2381,6 +2381,37 @@ const AdminPanel = () => {
               <button onClick={() => setViewingUser(null)} style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#94a3b8", fontSize:16, width:32, height:32, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"Sora,sans-serif" }}>✕</button>
             </div>
 
+            {/* Capabilities granted by support, not self-serve. */}
+            <div style={{ marginBottom:16, padding:"14px 18px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
+              <div style={{ minWidth:0 }}>
+                <p style={{ fontSize:13, fontWeight:700, color:"#e2e8f0", margin:0 }}>Weekly auto-scans</p>
+                <p style={{ fontSize:11, color:"#64748b", margin:"3px 0 0", lineHeight:1.5 }}>
+                  Lets this account schedule weekly re-crawls per project. Off for everyone by
+                  default - crawls cost server time - and enforced by the cron, not just the UI.
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  const next = !viewingUser.auto_scan_allowed;
+                  try {
+                    const r = await adminFetch(`${API_URL}/admin/users/${viewingUser.id}`, {
+                      method: "PATCH", headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ auto_scan_allowed: next }),
+                    });
+                    if (r.ok) {
+                      _setViewingUser({ ...viewingUser, auto_scan_allowed: next });
+                      setUsers(us => us.map(u => u.id === viewingUser.id ? { ...u, auto_scan_allowed: next } : u));
+                    }
+                  } catch {}
+                }}
+                style={{ flexShrink:0, padding:"7px 16px", borderRadius:9, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif",
+                  background: viewingUser.auto_scan_allowed ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${viewingUser.auto_scan_allowed ? "rgba(74,222,128,0.4)" : "rgba(255,255,255,0.12)"}`,
+                  color: viewingUser.auto_scan_allowed ? "#4ade80" : "#94a3b8" }}>
+                {viewingUser.auto_scan_allowed ? "Enabled" : "Disabled"}
+              </button>
+            </div>
+
             {/* Projects this user owns or can see, with the crawl ceiling for each. */}
             <div style={{ marginBottom:24, padding:"16px 18px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12 }}>
               <p style={{ fontSize:13, fontWeight:700, color:"#e2e8f0", marginBottom:4 }}>Projects</p>
