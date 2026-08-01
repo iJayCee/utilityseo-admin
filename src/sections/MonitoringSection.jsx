@@ -9,7 +9,7 @@ const MonitoringSection = ({ loadMonitoring, m, monData, monError, monLoading, p
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>System health, business stats and captured backend errors</p>
               </div>
               <button onClick={loadMonitoring}
-                style={{ padding:"9px 20px", background:"#6366f1", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                style={{ padding:"9px 20px", background:"#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
                 ↻ Refresh
               </button>
             </div>
@@ -54,7 +54,7 @@ const MonitoringSection = ({ loadMonitoring, m, monData, monError, monLoading, p
                     <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:16 }}>
                       {card("Users", s.users_total)}
                       {card("Active", s.users_active)}
-                      {card("Signups 7d", s.signups_7d, "#a5b4fc")}
+                      {card("Signups 7d", s.signups_7d, "#a78bfa")}
                       {card("Errors 1h", s.errors_1h, s.errors_1h > 0 ? "#f87171" : "#34d399")}
                       {card("Errors 24h", s.errors_24h, s.errors_24h > 0 ? "#fbbf24" : "#34d399")}
                     </div>
@@ -64,7 +64,7 @@ const MonitoringSection = ({ loadMonitoring, m, monData, monError, monLoading, p
                   {s && s.plans && s.plans.length > 0 && (
                     <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:24 }}>
                       {s.plans.map(p => (
-                        <span key={p.plan} style={{ background:"rgba(99,102,241,0.12)", border:"1px solid rgba(99,102,241,0.25)", borderRadius:99, padding:"5px 12px", fontSize:12, color:"#a5b4fc", fontFamily:"JetBrains Mono,monospace" }}>
+                        <span key={p.plan} style={{ background:"rgba(124,58,237,0.12)", border:"1px solid rgba(124,58,237,0.25)", borderRadius:99, padding:"5px 12px", fontSize:12, color:"#a78bfa", fontFamily:"JetBrains Mono,monospace" }}>
                           {p.plan}: <strong style={{ color:"#e2e8f0" }}>{p.count}</strong>
                         </span>
                       ))}

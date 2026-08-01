@@ -10,7 +10,7 @@ const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPro
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Code <span style={{ color:"#ef4444" }}>*</span></label>
                   <input value={promoForm.code} onChange={e => setPromoForm(f=>({...f,code:e.target.value.toUpperCase()}))} placeholder="e.g. LAUNCH50"
                     style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:"#fff", fontSize:14, outline:"none", fontFamily:"JetBrains Mono,monospace", boxSizing:"border-box", textTransform:"uppercase" }}
-                    onFocus={e=>e.target.style.border="1px solid #6366f1"} onBlur={e=>e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
+                    onFocus={e=>e.target.style.border="1px solid #7C3AED"} onBlur={e=>e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Trial Plan <span style={{ color:"#ef4444" }}>*</span></label>
@@ -23,13 +23,13 @@ const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPro
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Trial Days <span style={{ color:"#ef4444" }}>*</span></label>
                   <input type="number" min="1" value={promoForm.trial_days} onChange={e => setPromoForm(f=>({...f,trial_days:e.target.value}))} placeholder="14"
                     style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:"#fff", fontSize:14, outline:"none", fontFamily:"Sora,sans-serif", boxSizing:"border-box" }}
-                    onFocus={e=>e.target.style.border="1px solid #6366f1"} onBlur={e=>e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
+                    onFocus={e=>e.target.style.border="1px solid #7C3AED"} onBlur={e=>e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Max Uses <span style={{ color:"#475569", fontSize:10 }}>(blank = unlimited)</span></label>
                   <input type="number" min="1" value={promoForm.max_uses} onChange={e => setPromoForm(f=>({...f,max_uses:e.target.value}))} placeholder="Unlimited"
                     style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:"#fff", fontSize:14, outline:"none", fontFamily:"Sora,sans-serif", boxSizing:"border-box" }}
-                    onFocus={e=>e.target.style.border="1px solid #6366f1"} onBlur={e=>e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
+                    onFocus={e=>e.target.style.border="1px solid #7C3AED"} onBlur={e=>e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
                 </div>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Expiry Date <span style={{ color:"#475569", fontSize:10 }}>(optional)</span></label>
@@ -39,12 +39,12 @@ const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPro
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Description <span style={{ color:"#475569", fontSize:10 }}>(internal note)</span></label>
                   <input value={promoForm.description} onChange={e => setPromoForm(f=>({...f,description:e.target.value}))} placeholder="e.g. Launch campaign - influencer outreach May 2025"
                     style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"10px 14px", color:"#fff", fontSize:14, outline:"none", fontFamily:"Sora,sans-serif", boxSizing:"border-box" }}
-                    onFocus={e=>e.target.style.border="1px solid #6366f1"} onBlur={e=>e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
+                    onFocus={e=>e.target.style.border="1px solid #7C3AED"} onBlur={e=>e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
                 </div>
               </div>
               {promoFormError && <p style={{ color:"#ef4444", fontSize:13, marginBottom:12 }}>{promoFormError}</p>}
               <button onClick={createPromo} disabled={savingPromo}
-                style={{ padding:"11px 28px", background:savingPromo?"#3730a3":"#6366f1", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:savingPromo?"not-allowed":"pointer", fontFamily:"Sora,sans-serif", display:"flex", alignItems:"center", gap:8 }}>
+                style={{ padding:"11px 28px", background:savingPromo?"#3730a3":"#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:savingPromo?"not-allowed":"pointer", fontFamily:"Sora,sans-serif", display:"flex", alignItems:"center", gap:8 }}>
                 {savingPromo ? <><Spinner /> Creating…</> : "+ Create Code"}
               </button>
             </div>
@@ -63,7 +63,7 @@ const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPro
                   onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.02)"}
                   onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:6 }}>
-                    <span style={{ fontFamily:"JetBrains Mono,monospace", fontSize:13, fontWeight:700, color:p.is_active?"#a5b4fc":"#64748b", letterSpacing:"0.05em" }}>{p.code}</span>
+                    <span style={{ fontFamily:"JetBrains Mono,monospace", fontSize:13, fontWeight:700, color:p.is_active?"#a78bfa":"#64748b", letterSpacing:"0.05em" }}>{p.code}</span>
                     <span style={{ fontSize:12, padding:"3px 8px", borderRadius:6, background:planMeta(p.trial_plan).bg, color:planMeta(p.trial_plan).color, fontWeight:600 }}>
                       {planShort(p.trial_plan)}
                     </span>
@@ -78,7 +78,7 @@ const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPro
                   <span style={{ display:"none" }}></span><span style={{ display:"none" }}></span><span style={{ display:"none" }}></span>
                   <div style={{ display:"flex", gap:6 }}>
                     <button onClick={() => loadPromoSignups(p.id)}
-                      style={{ padding:"5px 10px", background:"rgba(99,102,241,0.1)", border:"1px solid rgba(99,102,241,0.25)", borderRadius:7, color:"#818cf8", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                      style={{ padding:"5px 10px", background:"rgba(124,58,237,0.1)", border:"1px solid rgba(124,58,237,0.25)", borderRadius:7, color:"#a78bfa", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
                       {expandedPromo === p.id ? "▲ Hide" : "👥 Signups"}
                     </button>
                     <button onClick={() => togglePromoActive(p)} title={p.is_active?"Deactivate":"Activate"}
@@ -96,7 +96,7 @@ const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPro
                 {expandedPromo === p.id && (() => {
                   const ps = promoSignups[p.id];
                   return (
-                    <div style={{ background:"rgba(99,102,241,0.04)", borderTop:"1px solid rgba(99,102,241,0.15)", padding:"16px 20px", marginTop:4 }}>
+                    <div style={{ background:"rgba(124,58,237,0.04)", borderTop:"1px solid rgba(124,58,237,0.15)", padding:"16px 20px", marginTop:4 }}>
                       {!ps || ps.loading ? (
                         <div style={{ display:"flex", alignItems:"center", gap:8, color:"#64748b", fontSize:13 }}><Spinner /> Loading signups…</div>
                       ) : ps.error ? (

@@ -10,7 +10,7 @@ const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, max, pf
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Promo code signups - commission tracking for Josh &amp; Joel</p>
               </div>
               <button onClick={() => { setPfData(null); loadProspectFlow(); }}
-                style={{ padding:"9px 20px", background:"#6366f1", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                style={{ padding:"9px 20px", background:"#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
                 ↻ Refresh
               </button>
             </div>
@@ -43,7 +43,7 @@ const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, max, pf
                 <div>
                   <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:28 }}>
                     {[
-                      { label:"Total Signups", val:pfData.users.length, col:"#818cf8" },
+                      { label:"Total Signups", val:pfData.users.length, col:"#a78bfa" },
                       { label:"Now Paying", val:totalPaying, col:"#34d399" },
                       { label:"Commission Eligible", val:totalEligible, col:"#f59e0b" },
                       { label:"Total Commission", val:`£${totalCommission.toFixed(2)}`, col:"#34d399" },
@@ -57,10 +57,10 @@ const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, max, pf
                   <div style={{ display:"flex", gap:14, marginBottom:28, flexWrap:"wrap" }}>
                     {Object.entries(byCode).map(([code, stats]) => (
                       <div key={code} onClick={() => setPfCodeFilter(pfCodeFilter===code ? "all" : code)}
-                        style={{ background:"#13131F", border:`1px solid ${pfCodeFilter===code?"#6366f1":"rgba(255,255,255,0.07)"}`, borderRadius:12, padding:"14px 18px", cursor:"pointer", minWidth:180 }}>
+                        style={{ background:"#13131F", border:`1px solid ${pfCodeFilter===code?"#7C3AED":"rgba(255,255,255,0.07)"}`, borderRadius:12, padding:"14px 18px", cursor:"pointer", minWidth:180 }}>
                         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
                           <span style={{ fontSize:14, fontWeight:800, color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace" }}>{code}</span>
-                          <span style={{ fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:99, background:"rgba(99,102,241,0.15)", color:"#a5b4fc" }}>{stats.signups} signup{stats.signups!==1?"s":""}</span>
+                          <span style={{ fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:99, background:"rgba(124,58,237,0.15)", color:"#a78bfa" }}>{stats.signups} signup{stats.signups!==1?"s":""}</span>
                         </div>
                         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"4px 12px" }}>
                           <div style={{ fontSize:12, color:"#64748b" }}>Paying: <span style={{ color:"#34d399", fontWeight:700 }}>{stats.paying}</span></div>
@@ -69,7 +69,7 @@ const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, max, pf
                           <div style={{ fontSize:12, color:"#64748b" }}>Commission: <span style={{ color:"#34d399", fontWeight:700 }}>£{stats.commission.toFixed(2)}</span></div>
                         </div>
                         <button onClick={e => { e.stopPropagation(); loadCodeRevenue(code); }}
-                          style={{ marginTop:12, width:"100%", padding:"7px 0", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#a5b4fc", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                          style={{ marginTop:12, width:"100%", padding:"7px 0", background:"rgba(124,58,237,0.15)", border:"1px solid rgba(124,58,237,0.3)", borderRadius:8, color:"#a78bfa", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
                           📊 Calculate earnings
                         </button>
                       </div>
@@ -80,7 +80,7 @@ const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, max, pf
                       <input value={pfSearch} onChange={e => setPfSearch(e.target.value)} placeholder="Search email, name or company..."
                         style={{ flex:1, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 14px", color:"#e2e8f0", fontSize:13, fontFamily:"Sora,sans-serif", outline:"none" }} />
                       <select value={pfCodeFilter} onChange={e => setPfCodeFilter(e.target.value)}
-                        style={{ background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.35)", borderRadius:10, padding:"9px 14px", color:"#a5b4fc", fontSize:13, fontWeight:700, fontFamily:"Sora,sans-serif", cursor:"pointer", outline:"none", minWidth:200 }}>
+                        style={{ background:"rgba(124,58,237,0.15)", border:"1px solid rgba(124,58,237,0.35)", borderRadius:10, padding:"9px 14px", color:"#a78bfa", fontSize:13, fontWeight:700, fontFamily:"Sora,sans-serif", cursor:"pointer", outline:"none", minWidth:200 }}>
                         <option value="all" style={{ background:"#13131F", color:"#e2e8f0" }}>All codes ({pfData.users.length})</option>
                         {codes.filter(cd => cd !== "all").map(code => (
                           <option key={code} value={code} style={{ background:"#13131F", color:"#e2e8f0" }}>{code} - {byCode[code]?.signups||0} signups</option>
@@ -90,7 +90,7 @@ const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, max, pf
                     </div>
                     <div style={{ display:"flex", gap:0, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:10, overflow:"hidden", width:"fit-content" }}>
                       {[
-                        { id:"all",      label:"All signups",         activeCol:"#818cf8", activeBg:"rgba(99,102,241,0.2)" },
+                        { id:"all",      label:"All signups",         activeCol:"#a78bfa", activeBg:"rgba(124,58,237,0.2)" },
                         { id:"paying",   label:"✓ Paying",            activeCol:"#34d399", activeBg:"rgba(52,211,153,0.15)" },
                         { id:"free",     label:"Not yet paying",      activeCol:"#f87171", activeBg:"rgba(248,113,113,0.15)" },
                         { id:"eligible", label:"Commission eligible", activeCol:"#f59e0b", activeBg:"rgba(245,158,11,0.15)" },
@@ -124,7 +124,7 @@ const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, max, pf
                             <div style={{ fontSize:13, fontWeight:600, color:"#e2e8f0" }}>{u.email}</div>
                             <div style={{ fontSize:11, color:"#64748b", marginTop:2 }}>{[u.first_name,u.last_name].filter(Boolean).join(" ")||u.company_name||"-"}</div>
                           </div>
-                          <div style={{ fontSize:12, fontFamily:"JetBrains Mono,monospace", color:"#818cf8", fontWeight:700, alignSelf:"center" }}>{u.promo_code_used}</div>
+                          <div style={{ fontSize:12, fontFamily:"JetBrains Mono,monospace", color:"#a78bfa", fontWeight:700, alignSelf:"center" }}>{u.promo_code_used}</div>
                           <div style={{ alignSelf:"center" }}>
                             <Badge plan={u.plan} />
                           </div>

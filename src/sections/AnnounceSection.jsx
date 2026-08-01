@@ -6,7 +6,7 @@ const AnnounceSection = ({ annBusy, annData, annError, annForm, annLoading, dele
             outage:      { label: "Outage",      icon: "🔴", col: "#f87171", desc: "Something is down right now" },
             maintenance: { label: "Maintenance", icon: "🛠", col: "#fbbf24", desc: "Planned or ongoing work" },
             update:      { label: "Update",      icon: "✨", col: "#34d399", desc: "New feature or improvement" },
-            notice:      { label: "Notice",      icon: "ℹ️", col: "#818cf8", desc: "General information" },
+            notice:      { label: "Notice",      icon: "ℹ️", col: "#a78bfa", desc: "General information" },
           };
           const TEMPLATES = {
             outage:      { title: "Service disruption", body: "We're aware of an issue affecting [feature] and are working on a fix. We'll update here as soon as it's resolved. Sorry for the disruption." },
@@ -23,7 +23,7 @@ const AnnounceSection = ({ annBusy, annData, annError, annForm, annLoading, dele
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "#e2e8f0", margin: 0 }}>📢 Announcements</h2>
                 <p style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0" }}>Broadcast a message to all users' notification bell. Full history kept below.</p>
               </div>
-              <button onClick={loadAnnouncements} style={{ padding: "9px 20px", background: "#6366f1", border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Sora,sans-serif" }}>↻ Refresh</button>
+              <button onClick={loadAnnouncements} style={{ padding: "9px 20px", background: "#7C3AED", border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Sora,sans-serif" }}>↻ Refresh</button>
             </div>
 
             {annError && <div style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 10, padding: "12px 16px", marginBottom: 16, color: "#f87171", fontSize: 13 }}>{annError}</div>}

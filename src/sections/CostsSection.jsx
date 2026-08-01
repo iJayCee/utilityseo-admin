@@ -9,7 +9,7 @@ const CostsSection = ({ c, costData, costError, costInputs, costLoading, counts,
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>What the pay-as-you-go APIs cost at different user counts. Adjust the assumptions to match reality.</p>
               </div>
               <button onClick={loadCostForecast}
-                style={{ padding:"9px 20px", background:"#6366f1", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                style={{ padding:"9px 20px", background:"#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
                 ↻ Reset
               </button>
             </div>
@@ -183,7 +183,7 @@ const CostsSection = ({ c, costData, costError, costInputs, costLoading, counts,
                             <span style={{ color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace", fontWeight:700 }}>{money(toGbp(usd))}</span>
                           </div>
                           <div style={{ height:5, background:"rgba(255,255,255,0.06)", borderRadius:3, overflow:"hidden" }}>
-                            <div style={{ height:"100%", width:`${Math.max(1, pct)}%`, background:"#818cf8", borderRadius:3 }} />
+                            <div style={{ height:"100%", width:`${Math.max(1, pct)}%`, background:"#a78bfa", borderRadius:3 }} />
                           </div>
                         </div>
                       );
@@ -210,8 +210,8 @@ const CostsSection = ({ c, costData, costError, costInputs, costLoading, counts,
                           const total = toGbp(pu.total) * n;
                           const isCurrent = n === (costData.signals.users || 1);
                           return (
-                            <tr key={n} style={{ textAlign:"right", borderTop:"1px solid rgba(255,255,255,0.05)", background:isCurrent ? "rgba(99,102,241,0.08)" : "transparent" }}>
-                              <td style={{ textAlign:"left", padding:"8px", color:"#e2e8f0", fontWeight:700 }}>{n.toLocaleString()}{isCurrent && <span style={{ fontSize:10, color:"#a5b4fc", marginLeft:6 }}>now</span>}</td>
+                            <tr key={n} style={{ textAlign:"right", borderTop:"1px solid rgba(255,255,255,0.05)", background:isCurrent ? "rgba(124,58,237,0.08)" : "transparent" }}>
+                              <td style={{ textAlign:"left", padding:"8px", color:"#e2e8f0", fontWeight:700 }}>{n.toLocaleString()}{isCurrent && <span style={{ fontSize:10, color:"#a78bfa", marginLeft:6 }}>now</span>}</td>
                               <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.serp) * n)}</td>
                               <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.backlinks) * n)}</td>
                               <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.ai) * n)}</td>

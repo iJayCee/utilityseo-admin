@@ -9,7 +9,7 @@ const CapacitySection = ({ capData, capError, capLoading, loadCapacity, max, now
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Where we are against our limits, and what to do as we grow</p>
               </div>
               <button onClick={loadCapacity}
-                style={{ padding:"9px 20px", background:"#6366f1", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                style={{ padding:"9px 20px", background:"#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
                 ↻ Refresh
               </button>
             </div>

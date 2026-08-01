@@ -62,7 +62,7 @@ const MonthlyChart = ({ users }) => {
   return (
     <div style={{ width:"100%", marginTop:8 }}>
       {activeBar !== null && (
-        <div style={{ textAlign:"center", marginBottom:6, fontSize:12, fontWeight:700, color:"#818cf8" }}>
+        <div style={{ textAlign:"center", marginBottom:6, fontSize:12, fontWeight:700, color:"#a78bfa" }}>
           {months[activeBar].label}: <span style={{ color:"#e2e8f0" }}>{counts[activeBar]} signup{counts[activeBar] !== 1 ? "s" : ""}</span>
         </div>
       )}
@@ -70,7 +70,7 @@ const MonthlyChart = ({ users }) => {
         {counts.map((c, i) => (
           <div key={i}
             onClick={() => setActiveBar(activeBar === i ? null : i)}
-            style={{ flex:1, background: activeBar === i ? "#a78bfa" : i === 11 ? "#818cf8" : "rgba(129,140,248,0.35)",
+            style={{ flex:1, background: activeBar === i ? "#a78bfa" : i === 11 ? "#a78bfa" : "rgba(129,140,248,0.35)",
               borderRadius:"3px 3px 0 0", height:`${Math.max((c / max) * 100, 4)}%`,
               transition:"all 0.15s", cursor:"pointer" }} />
         ))}
@@ -88,9 +88,9 @@ const MonthlyChart = ({ users }) => {
 // rows still render with a sensible label and colour.
 const PLAN_META = {
   free:         { label:"Free",          short:"Free",  color:"#64748b", bg:"rgba(255,255,255,0.06)" },
-  entrepreneur: { label:"Entrepreneur",  short:"Entr.", color:"#818cf8", bg:"rgba(99,102,241,0.15)" },
+  entrepreneur: { label:"Entrepreneur",  short:"Entr.", color:"#a78bfa", bg:"rgba(124,58,237,0.15)" },
   enterprise:   { label:"Enterprise",    short:"Ent.",  color:"#f59e0b", bg:"rgba(245,158,11,0.15)" },
-  pro:          { label:"Pro (legacy)",  short:"Pro",   color:"#a5b4fc", bg:"rgba(99,102,241,0.12)" },
+  pro:          { label:"Pro (legacy)",  short:"Pro",   color:"#a78bfa", bg:"rgba(124,58,237,0.12)" },
   proPlus:      { label:"Pro+ (legacy)", short:"Pro+",  color:"#fbbf24", bg:"rgba(245,158,11,0.12)" },
 };
 const planMeta  = (p) => PLAN_META[p] || PLAN_META.free;
@@ -124,13 +124,13 @@ const Input = ({ label, ...props }) => (
   <div style={{ marginBottom:16 }}>
     {label && <label style={{ display:"block", fontSize:13, color:"#94a3b8", marginBottom:6, fontWeight:500 }}>{label}</label>}
     <input {...props} style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, padding:"12px 16px", color:"#fff", fontSize:14, outline:"none", fontFamily:"Sora,sans-serif", transition:"border 0.15s", ...props.style }}
-      onFocus={e => e.target.style.border="1px solid #6366f1"}
+      onFocus={e => e.target.style.border="1px solid #7C3AED"}
       onBlur={e => e.target.style.border="1px solid rgba(255,255,255,0.1)"}
     />
   </div>
 );
 
-const Spinner = () => <div className="spin" style={{ width:20, height:20, border:"2px solid rgba(255,255,255,0.1)", borderTopColor:"#6366f1", borderRadius:"50%", display:"inline-block" }} />;
+const Spinner = () => <div className="spin" style={{ width:20, height:20, border:"2px solid rgba(255,255,255,0.1)", borderTopColor:"#7C3AED", borderRadius:"50%", display:"inline-block" }} />;
 
 // ─── EDIT MODAL ───────────────────────────────────────────────────────────────
 const EditModal = ({ user, onSave, onClose }) => {
@@ -158,7 +158,7 @@ const EditModal = ({ user, onSave, onClose }) => {
           {/* Current tiers are Entrepreneur (1 seat, 1 project) and Enterprise
               (unlimited). Legacy pro/proPlus rows show a note below if present. */}
           <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:6 }}>
-            {[["free","Free","#64748b"],["entrepreneur","Entrepreneur","#818cf8"],["enterprise","Enterprise","#f59e0b"]].map(([id,label,col]) => (
+            {[["free","Free","#64748b"],["entrepreneur","Entrepreneur","#a78bfa"],["enterprise","Enterprise","#f59e0b"]].map(([id,label,col]) => (
               <button key={id} onClick={() => setPlan(id)}
                 style={{ padding:"12px 8px", borderRadius:12, border:`2px solid ${plan===id ? col : "rgba(255,255,255,0.08)"}`, background: plan===id ? `${col}18` : "rgba(255,255,255,0.03)", color: plan===id ? col : "#64748b", fontWeight:600, fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", transition:"all 0.15s" }}>
                 {label}
@@ -209,7 +209,7 @@ const EditModal = ({ user, onSave, onClose }) => {
             <button onClick={() => setTempOn(!tempOn)}
               style={{ width:"100%", padding:"14px 16px", background:"none", border:"none", display:"flex", alignItems:"center", justifyContent:"space-between", cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:36, height:20, borderRadius:99, background: tempOn ? "#6366f1" : "rgba(255,255,255,0.1)", position:"relative", transition:"background 0.2s" }}>
+                <div style={{ width:36, height:20, borderRadius:99, background: tempOn ? "#7C3AED" : "rgba(255,255,255,0.1)", position:"relative", transition:"background 0.2s" }}>
                   <div style={{ position:"absolute", top:2, left: tempOn ? 18 : 2, width:16, height:16, borderRadius:"50%", background:"#fff", transition:"left 0.2s" }} />
                 </div>
                 <span style={{ fontSize:14, fontWeight:600, color:"#e2e8f0" }}>Temporary Access Override</span>
@@ -221,7 +221,7 @@ const EditModal = ({ user, onSave, onClose }) => {
               <div style={{ padding:"0 16px 16px", borderTop:"1px solid rgba(255,255,255,0.06)" }}>
                 <p style={{ fontSize:12, color:"#64748b", marginTop:14, marginBottom:8 }}>Temporary plan</p>
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:6, marginBottom:16 }}>
-                  {[["free","Free","#64748b"],["entrepreneur","Entrepreneur","#818cf8"],["enterprise","Enterprise","#f59e0b"]].map(([id,label,col]) => (
+                  {[["free","Free","#64748b"],["entrepreneur","Entrepreneur","#a78bfa"],["enterprise","Enterprise","#f59e0b"]].map(([id,label,col]) => (
                     <button key={id} onClick={() => setTempPlan(id)}
                       style={{ padding:"8px", borderRadius:10, border:`2px solid ${tempPlan===id ? col : "rgba(255,255,255,0.08)"}`, background: tempPlan===id ? `${col}18` : "rgba(255,255,255,0.03)", color: tempPlan===id ? col : "#64748b", fontWeight:600, fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
                       {label}
@@ -233,7 +233,7 @@ const EditModal = ({ user, onSave, onClose }) => {
                   <span style={{ fontSize:14, fontWeight:700, color:"#f59e0b" }}>{tempDays} days</span>
                 </div>
                 <input type="range" min={1} max={90} value={tempDays} onChange={e => setTempDays(Number(e.target.value))}
-                  style={{ width:"100%", accentColor:"#6366f1" }} />
+                  style={{ width:"100%", accentColor:"#7C3AED" }} />
                 <div style={{ padding:"10px 14px", background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.2)", borderRadius:10, marginTop:12 }}>
                   <p style={{ fontSize:12, color:"#fbbf24" }}>Will get <strong>{planLabel(tempPlan)}</strong> access for {tempDays} day{tempDays!==1?"s":""}, then revert to {planLabel(plan)}.</p>
                 </div>
@@ -245,7 +245,7 @@ const EditModal = ({ user, onSave, onClose }) => {
         <div style={{ padding:"16px 24px", borderTop:"1px solid rgba(255,255,255,0.06)", display:"flex", gap:10 }}>
           <button onClick={onClose} style={{ flex:1, padding:"12px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:12, color:"#64748b", fontSize:14, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>Cancel</button>
           <button onClick={() => onSave({ ...user, plan, status, cookieConsent, tempPlan: tempOn ? tempPlan : null, tempDays: tempOn ? tempDays : null, revokeTemp: !tempOn && !!user.tempPlan })}
-            style={{ flex:2, padding:"12px", background:"#6366f1", border:"none", borderRadius:12, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+            style={{ flex:2, padding:"12px", background:"#7C3AED", border:"none", borderRadius:12, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
             Save Changes
           </button>
         </div>
@@ -306,7 +306,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
             Info
           </button>
           <button onClick={onEdit}
-            style={{ padding:"6px 14px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+            style={{ padding:"6px 14px", background:"rgba(124,58,237,0.15)", border:"1px solid rgba(124,58,237,0.3)", borderRadius:8, color:"#a78bfa", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
             Edit
           </button>
           {!isDeactivated && (
@@ -364,7 +364,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
               </button>
             </div>
             <button onClick={onEdit}
-              style={{ width:"100%", padding:"10px", background:"rgba(99,102,241,0.15)", border:"1px solid rgba(99,102,241,0.3)", borderRadius:8, color:"#818cf8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
+              style={{ width:"100%", padding:"10px", background:"rgba(124,58,237,0.15)", border:"1px solid rgba(124,58,237,0.3)", borderRadius:8, color:"#a78bfa", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
               Edit
             </button>
             {!isDeactivated && (
@@ -623,7 +623,7 @@ const AdminPanel = () => {
     const newWin = window.open('', '_blank') || window;
     const isSameTab = newWin === window;
     if (newWin && !isSameTab) {
-      newWin.document.write('<html><body style="background:#0a0a0f;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#818cf8;font-size:15px;">Loading account…</body></html>');
+      newWin.document.write('<html><body style="background:#0a0a0f;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#a78bfa;font-size:15px;">Loading account…</body></html>');
     }
     adminFetch(`${API_URL}/admin/impersonate/${user.id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ adminEmail:adminCreds.email, adminPassword:adminCreds.password }) })
       .then(r => r.json().then(data => ({ ok:r.ok, data })))
@@ -987,7 +987,7 @@ const AdminPanel = () => {
   const SortTh = ({ col, label }) => {
     const active = sortCol === col;
     return (
-      <span onClick={() => toggleSort(col)} style={{ cursor:"pointer", userSelect:"none", fontSize:11, color:active?"#818cf8":"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", display:"flex", alignItems:"center", gap:3 }}>
+      <span onClick={() => toggleSort(col)} style={{ cursor:"pointer", userSelect:"none", fontSize:11, color:active?"#a78bfa":"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", display:"flex", alignItems:"center", gap:3 }}>
         {label} <span style={{ fontSize:9, opacity:active?1:0.4 }}>{active?(sortDir==="asc"?"▲":"▼"):"⇅"}</span>
       </span>
     );
@@ -1002,7 +1002,7 @@ const AdminPanel = () => {
   const countDeactivated = users.filter(u => u.status==="deactivated").length;
 
   const stats = [
-    { label:"Total Users",   val:users.length,                                      icon:"👥", col:"#818cf8" },
+    { label:"Total Users",   val:users.length,                                      icon:"👥", col:"#a78bfa" },
     { label:"Active",        val:users.filter(u=>u.status==="active").length,        icon:"✅", col:"#22c55e" },
     { label:"Deactivated",   val:countDeactivated,                                   icon:"○",  col:"#94a3b8",
       onClick: () => { setFilterStatus("deactivated"); setShowFilters(true); } },
@@ -1027,7 +1027,7 @@ const AdminPanel = () => {
             <Input label="Admin Email" type="email" placeholder="enter your email" value={email} onChange={e => setEmail(e.target.value)} />
             <Input label="Password" type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)} />
             {err && <p style={{ color:"#ef4444", fontSize:13, marginBottom:12 }}>{err}</p>}
-            <button type="submit" disabled={loading} style={{ width:"100%", padding:"13px", background:"#6366f1", border:"none", borderRadius:12, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+            <button type="submit" disabled={loading} style={{ width:"100%", padding:"13px", background:"#7C3AED", border:"none", borderRadius:12, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
               {loading ? <><Spinner /> Authenticating…</> : "Access Admin Panel →"}
             </button>
           </form>
@@ -1073,7 +1073,7 @@ const AdminPanel = () => {
             <div style={{ fontSize:13, color:"#475569", marginBottom:12 }}>Paid</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
               <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:"#64748b" }}>{countFree}</div><div style={{ fontSize:10, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Free</div></div>
-              <div style={{ textAlign:"center", borderLeft:"1px solid rgba(255,255,255,0.07)", borderRight:"1px solid rgba(255,255,255,0.07)" }}><div style={{ fontSize:20, fontWeight:800, color:"#818cf8" }}>{countEntrepreneur}</div><div style={{ fontSize:10, fontWeight:700, color:"#6366f1", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Entrepreneur</div></div>
+              <div style={{ textAlign:"center", borderLeft:"1px solid rgba(255,255,255,0.07)", borderRight:"1px solid rgba(255,255,255,0.07)" }}><div style={{ fontSize:20, fontWeight:800, color:"#a78bfa" }}>{countEntrepreneur}</div><div style={{ fontSize:10, fontWeight:700, color:"#7C3AED", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Entrepreneur</div></div>
               <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:"#f59e0b" }}>{countEnterprise}</div><div style={{ fontSize:10, fontWeight:700, color:"#d97706", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Enterprise</div></div>
             </div>
           </div>
@@ -1092,6 +1092,24 @@ const AdminPanel = () => {
             </div>
             <div style={{ fontSize:28, fontWeight:800, color:"#34d399", marginTop:4 }}>{newSignups}</div>
             <div style={{ fontSize:12, color:"#475569", marginBottom:4 }}>New Signups</div>
+          </div>
+
+          {/* Quick-find: type an email or name anywhere in the admin and land on
+              the filtered Users list. Support starts from "this customer emailed
+              us", so the search box lives in the header, not inside one tab. */}
+          <div className="glass" style={{ borderRadius:16, padding:"14px 20px", gridColumn:"1 / -1", display:"flex", alignItems:"center", gap:12 }}>
+            <span style={{ fontSize:16 }} aria-hidden="true">🔎</span>
+            <input
+              value={search}
+              onChange={e => { setSearch(e.target.value); if (activeTab !== "users" && e.target.value) handleTabSwitch("users"); }}
+              placeholder="Find a user by email, name or company - jumps to the Users list as you type"
+              style={{ flex:1, padding:"9px 12px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:9, color:"#e2e8f0", fontSize:13, fontFamily:"Sora,sans-serif", outline:"none" }} />
+            {search && (
+              <button onClick={() => setSearch("")}
+                style={{ padding:"7px 12px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#94a3b8", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                Clear
+              </button>
+            )}
           </div>
 
           <div className="glass" style={{ borderRadius:16, padding:20, gridColumn:"1 / -1" }}>
@@ -1120,7 +1138,7 @@ const AdminPanel = () => {
               <div style={{ display:"flex", gap:4 }}>
                 {group.tabs.map(tab => (
                   <button key={tab.id} className="tab-btn" onClick={() => handleTabSwitch(tab.id)}
-                    style={{ padding:"8px 16px", background:activeTab===tab.id?"rgba(99,102,241,0.2)":"rgba(255,255,255,0.03)", border:`1px solid ${activeTab===tab.id?"rgba(99,102,241,0.5)":"rgba(255,255,255,0.06)"}`, color:activeTab===tab.id?"#a5b4fc":"#64748b", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", borderRadius:9, transition:"all 0.15s" }}>
+                    style={{ padding:"8px 16px", background:activeTab===tab.id?"rgba(124,58,237,0.2)":"rgba(255,255,255,0.03)", border:`1px solid ${activeTab===tab.id?"rgba(124,58,237,0.5)":"rgba(255,255,255,0.06)"}`, color:activeTab===tab.id?"#a78bfa":"#64748b", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", borderRadius:9, transition:"all 0.15s" }}>
                     {tab.label}
                   </button>
                 ))}
@@ -1139,8 +1157,8 @@ const AdminPanel = () => {
               <>
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))", gap:12, marginBottom:20 }}>
                   {[
-                    ["Users", overview.users.total, `${overview.users.paid || 0} paid · ${overview.users.new_7d || 0} new this week`, "#a5b4fc"],
-                    ["Projects", overview.projects.total, null, "#a5b4fc"],
+                    ["Users", overview.users.total, `${overview.users.paid || 0} paid · ${overview.users.new_7d || 0} new this week`, "#a78bfa"],
+                    ["Projects", overview.projects.total, null, "#a78bfa"],
                     ["Site scans", overview.scans.total, `${overview.scans.last_7d || 0} this week`, "#7dd3fc"],
                     ["Errors (24h)", overview.errors.last_24h, overview.errors.last_24h > 0 ? "check Monitoring" : "all quiet", overview.errors.last_24h > 0 ? "#f87171" : "#4ade80"],
                     ["AI spend (30d)", `$${(overview.llm.cost_30d || 0).toFixed(2)}`, `${overview.llm.calls_30d || 0} calls`, "#fbbf24"],
@@ -1180,7 +1198,7 @@ const AdminPanel = () => {
                         "which brands the AI platforms name, question by question"],
                     ].map(([label, val, sub, desc]) => (
                       <div key={label} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:"14px 16px" }}>
-                        <p style={{ fontSize:11, color:"#a5b4fc", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", margin:0 }}>{label}</p>
+                        <p style={{ fontSize:11, color:"#a78bfa", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", margin:0 }}>{label}</p>
                         <p style={{ fontSize:24, fontWeight:800, color:"#e2e8f0", margin:"6px 0 0", fontFamily:"JetBrains Mono,monospace" }}>{(val ?? 0).toLocaleString()}</p>
                         <p style={{ fontSize:11, color:"#64748b", margin:"4px 0 0" }}>{sub}</p>
                         <p style={{ fontSize:10, color:"#475569", margin:"6px 0 0", lineHeight:1.5 }}>{desc}</p>
@@ -1200,11 +1218,11 @@ const AdminPanel = () => {
               <span style={{ position:"absolute", left:16, top:"50%", transform:"translateY(-50%)", color:"#475569", fontSize:16 }}>🔍</span>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by email, name or company…"
                 style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:14, padding:"12px 16px 12px 44px", color:"#fff", fontSize:14, outline:"none", fontFamily:"JetBrains Mono,monospace", boxSizing:"border-box" }}
-                onFocus={e => e.target.style.border="1px solid #6366f1"} onBlur={e => e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
+                onFocus={e => e.target.style.border="1px solid #7C3AED"} onBlur={e => e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
             </div>
             <button onClick={() => setShowFilters(f => !f)}
-              style={{ padding:"12px 18px", background:showFilters?"rgba(99,102,241,0.2)":"rgba(255,255,255,0.05)", border:`1px solid ${showFilters?"#6366f1":"rgba(255,255,255,0.1)"}`, borderRadius:14, color:showFilters?"#818cf8":"#94a3b8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
-              🎛 Filters {activeFiltersCount>0 && <span style={{ background:"#6366f1", color:"#fff", borderRadius:99, padding:"1px 7px", fontSize:11 }}>{activeFiltersCount}</span>}
+              style={{ padding:"12px 18px", background:showFilters?"rgba(124,58,237,0.2)":"rgba(255,255,255,0.05)", border:`1px solid ${showFilters?"#7C3AED":"rgba(255,255,255,0.1)"}`, borderRadius:14, color:showFilters?"#a78bfa":"#94a3b8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
+              🎛 Filters {activeFiltersCount>0 && <span style={{ background:"#7C3AED", color:"#fff", borderRadius:99, padding:"1px 7px", fontSize:11 }}>{activeFiltersCount}</span>}
             </button>
             <button onClick={exportCSV}
               style={{ padding:"12px 18px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:14, color:"#22c55e", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
@@ -1371,7 +1389,7 @@ const AdminPanel = () => {
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
                 <div>
                   <div style={{ fontSize:18, fontWeight:800, color:"#e2e8f0" }}>
-                    📊 <span style={{ fontFamily:"JetBrains Mono,monospace", color:"#a5b4fc" }}>{revenueModal.code}</span> earnings
+                    📊 <span style={{ fontFamily:"JetBrains Mono,monospace", color:"#a78bfa" }}>{revenueModal.code}</span> earnings
                   </div>
                   <div style={{ fontSize:12, color:"#64748b", marginTop:4 }}>Revenue generated by signups from this promo code</div>
                 </div>
@@ -1390,8 +1408,8 @@ const AdminPanel = () => {
                   <button key={p.id} onClick={() => loadCodeRevenue(revenueModal.code, p.id)}
                     style={{ padding:"8px 18px", border:"none", borderRight:i<arr.length-1?"1px solid rgba(255,255,255,0.07)":"none",
                       fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif",
-                      background:revenueModal.period===p.id?"rgba(99,102,241,0.25)":"transparent",
-                      color:revenueModal.period===p.id?"#a5b4fc":"#64748b" }}>
+                      background:revenueModal.period===p.id?"rgba(124,58,237,0.25)":"transparent",
+                      color:revenueModal.period===p.id?"#a78bfa":"#64748b" }}>
                     {p.label}
                   </button>
                 ))}
@@ -1407,7 +1425,7 @@ const AdminPanel = () => {
                     {/* Summary cards */}
                     <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:12, marginBottom:24 }}>
                       {[
-                        { label:"Total signups",    val:d.total_signups,                    col:"#818cf8" },
+                        { label:"Total signups",    val:d.total_signups,                    col:"#a78bfa" },
                         { label:"Paying customers", val:d.paying_users,                     col:"#34d399" },
                         { label:"Revenue",          val:`£${d.total_revenue.toFixed(2)}`,   col:"#e2e8f0" },
                         { label:"Commission owed",  val:`£${d.total_commission.toFixed(2)}`,col:"#f59e0b" },
@@ -1513,7 +1531,7 @@ const AdminPanel = () => {
                 1000-page limit (up to 10000); leave blank and save to restore the normal limits.
                 It permits a bigger crawl, it never forces one.
               </p>
-              {capMsg && <p style={{ fontSize:12, color:"#a5b4fc", marginBottom:10 }}>{capMsg}</p>}
+              {capMsg && <p style={{ fontSize:12, color:"#a78bfa", marginBottom:10 }}>{capMsg}</p>}
               {projects === null ? <p style={{ fontSize:12, color:"#64748b" }}>Loading…</p>
               : projects.length === 0 ? <p style={{ fontSize:12, color:"#64748b" }}>This user has no projects.</p>
               : projects.map(pr => (
@@ -1522,8 +1540,8 @@ const AdminPanel = () => {
                     <div style={{ display:"flex", alignItems:"center", gap:7 }}>
                       <span style={{ color:"#e2e8f0", fontSize:13, fontWeight:600 }}>{pr.name}</span>
                       <span style={{ fontSize:10, fontWeight:700, padding:"1px 7px", borderRadius:99,
-                        background: pr.access === "owner" ? "rgba(99,102,241,0.18)" : "rgba(148,163,184,0.14)",
-                        color: pr.access === "owner" ? "#a5b4fc" : "#94a3b8" }}>
+                        background: pr.access === "owner" ? "rgba(124,58,237,0.18)" : "rgba(148,163,184,0.14)",
+                        color: pr.access === "owner" ? "#a78bfa" : "#94a3b8" }}>
                         {pr.access === "owner" ? "owner" : `shared · ${pr.role || "member"}`}
                       </span>
                     </div>
@@ -1539,7 +1557,7 @@ const AdminPanel = () => {
                         placeholder="default"
                         style={{ width:96, padding:"6px 9px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#e2e8f0", fontSize:12, fontFamily:"JetBrains Mono,monospace", outline:"none" }} />
                       <button onClick={() => saveScanCap(pr.id)} disabled={capSaving === pr.id}
-                        style={{ padding:"6px 12px", background:"rgba(99,102,241,0.2)", border:"1px solid rgba(99,102,241,0.4)", borderRadius:8, color:"#a5b4fc", fontSize:11, fontWeight:700, cursor: capSaving === pr.id ? "not-allowed" : "pointer", fontFamily:"Sora,sans-serif", opacity: capSaving === pr.id ? 0.5 : 1 }}>
+                        style={{ padding:"6px 12px", background:"rgba(124,58,237,0.2)", border:"1px solid rgba(124,58,237,0.4)", borderRadius:8, color:"#a78bfa", fontSize:11, fontWeight:700, cursor: capSaving === pr.id ? "not-allowed" : "pointer", fontFamily:"Sora,sans-serif", opacity: capSaving === pr.id ? 0.5 : 1 }}>
                         {capSaving === pr.id ? "…" : "Save"}
                       </button>
                     </div>

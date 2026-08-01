@@ -9,7 +9,7 @@ const UpgradesSection = ({ loadUpgrades, now, upgData, upgError, upgLoading, use
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Paid APIs and infrastructure worth buying, and when each starts paying for itself</p>
               </div>
               <button onClick={loadUpgrades}
-                style={{ padding:"9px 20px", background:"#6366f1", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+                style={{ padding:"9px 20px", background:"#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
                 ↻ Refresh
               </button>
             </div>
@@ -23,7 +23,7 @@ const UpgradesSection = ({ loadUpgrades, now, upgData, upgError, upgLoading, use
               const META = {
                 now:   { col:"#34d399", bg:"rgba(52,211,153,0.10)", chip:"Recommended now" },
                 later: { col:"#64748b", bg:"rgba(100,116,139,0.08)", chip:"Later" },
-                done:  { col:"#818cf8", bg:"rgba(129,140,248,0.10)", chip:"✓ Done" },
+                done:  { col:"#a78bfa", bg:"rgba(129,140,248,0.10)", chip:"✓ Done" },
               };
               return (
                 <>
@@ -59,8 +59,8 @@ const UpgradesSection = ({ loadUpgrades, now, upgData, upgError, upgLoading, use
                           <div style={{ display:"flex", flexDirection:"column", gap:7, marginBottom:12 }}>
                             {(it.providers || []).map(p => (
                               <div key={p.name} style={{ display:"flex", gap:10, alignItems:"baseline", flexWrap:"wrap", padding:"7px 12px", background:"rgba(255,255,255,0.03)", borderRadius:9 }}>
-                                <span style={{ fontSize:13, fontWeight:700, color: p.name === it.recommended ? "#a5b4fc" : "#e2e8f0", minWidth:150 }}>
-                                  {p.name}{p.name === it.recommended && <span style={{ fontSize:10, color:"#a5b4fc", marginLeft:6 }}>◆ pick</span>}
+                                <span style={{ fontSize:13, fontWeight:700, color: p.name === it.recommended ? "#a78bfa" : "#e2e8f0", minWidth:150 }}>
+                                  {p.name}{p.name === it.recommended && <span style={{ fontSize:10, color:"#a78bfa", marginLeft:6 }}>◆ pick</span>}
                                 </span>
                                 <span style={{ fontSize:12, fontWeight:600, color:"#94a3b8", fontFamily:"JetBrains Mono,monospace" }}>{p.cost}</span>
                                 <span style={{ fontSize:11.5, color:"#64748b" }}>{p.note}</span>

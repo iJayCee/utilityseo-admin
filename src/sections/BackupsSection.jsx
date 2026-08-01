@@ -9,7 +9,7 @@ const BackupsSection = ({ bkData, bkError, bkMsg, bkBusy, bkLoading, loadBackups
                 <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>💾 Backups</h2>
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Off-Railway whole-database backups stored in your own bucket</p>
               </div>
-              <button onClick={loadBackups} style={{ padding:"9px 20px", background:"#6366f1", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>↻ Refresh</button>
+              <button onClick={loadBackups} style={{ padding:"9px 20px", background:"#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>↻ Refresh</button>
             </div>
 
             {bkError && <div style={{ background:"rgba(248,113,113,0.1)", border:"1px solid rgba(248,113,113,0.3)", borderRadius:10, padding:"12px 16px", marginBottom:16, color:"#f87171", fontSize:13 }}>{bkError}</div>}
