@@ -1146,6 +1146,12 @@ const AdminPanel = () => {
                       ["Keyword metrics", overview.dataAssets.keywordMetrics.total,
                         `${overview.dataAssets.keywordMetrics.new_7d || 0} new this week · ${overview.dataAssets.keywordMetrics.markets || 0} market${(overview.dataAssets.keywordMetrics.markets || 0) === 1 ? "" : "s"}`,
                         "volumes, competition and bid prices per keyword+market, from Keyword Planner"],
+                      // The series, as opposed to the latest value above. This
+                      // is the part that cannot be bought or backfilled - months
+                      // only accumulate by having been recorded.
+                      ["Keyword history", overview.dataAssets.keywordHistory?.total,
+                        `${overview.dataAssets.keywordHistory?.months || 0} month${(overview.dataAssets.keywordHistory?.months || 0) === 1 ? "" : "s"} · ${(overview.dataAssets.keywordHistory?.keywords || 0).toLocaleString()} terms`,
+                        "the same figures month by month - seasonality and rising terms, which vendors charge for"],
                       ["Rank snapshots", overview.dataAssets.keywordSnapshots.total,
                         `${overview.dataAssets.keywordSnapshots.days || 0} daily snapshots`,
                         "tracked-keyword positions, one row per keyword per day"],
