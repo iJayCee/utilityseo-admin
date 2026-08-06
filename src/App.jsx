@@ -97,15 +97,30 @@ const EditModal = ({ user, onSave, onClose }) => {
   const [tempPlan, setTempPlan] = useState(user.tempPlan || "enterprise");
   const [tempDays, setTempDays] = useState(7);
 
+  // Nothing here is applied until Save Changes is pressed, but the plan buttons
+  // highlight the moment they are clicked, so a selection LOOKS committed. The
+  // backdrop closed the modal on any outside click and silently discarded it -
+  // which reads exactly like "I set Enterprise and it went back", and is the
+  // most likely explanation for a plan change that never seemed to stick.
+  const dirty = plan !== user.plan
+    || status !== user.status
+    || cookieConsent !== (user.cookieConsent || null)
+    || tempOn !== !!user.tempPlan;
+
+  const closeGuarded = () => {
+    if (dirty && !window.confirm('You have unsaved changes. Discard them?')) return;
+    onClose();
+  };
+
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", backdropFilter:"blur(6px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:50, padding:24 }} onClick={onClose}>
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", backdropFilter:"blur(6px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:50, padding:24 }} onClick={closeGuarded}>
       <div style={{ width:"100%", maxWidth:480, background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:24, overflow:"hidden", boxShadow:"0 40px 80px rgba(0,0,0,0.6)" }} onClick={e => e.stopPropagation()}>
         <div style={{ padding:"20px 24px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <div>
             <h3 style={{ fontWeight:700, fontSize:16 }}>Edit User</h3>
             <p style={{ fontSize:12, color:"#475569", marginTop:2, fontFamily:"JetBrains Mono,monospace" }}>{user.email}</p>
           </div>
-          <button onClick={onClose} style={{ background:"none", border:"none", color:"#475569", cursor:"pointer", fontSize:20 }}>×</button>
+          <button onClick={closeGuarded} style={{ background:"none", border:"none", color:"#475569", cursor:"pointer", fontSize:20 }}>×</button>
         </div>
 
         <div style={{ padding:24, maxHeight:"70vh", overflowY:"auto" }}>
@@ -199,9 +214,9 @@ const EditModal = ({ user, onSave, onClose }) => {
         </div>
 
         <div style={{ padding:"16px 24px", borderTop:"1px solid rgba(255,255,255,0.06)", display:"flex", gap:10 }}>
-          <button onClick={onClose} style={{ flex:1, padding:"12px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:12, color:"#64748b", fontSize:14, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>Cancel</button>
+          <button onClick={closeGuarded} style={{ flex:1, padding:"12px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:12, color:"#64748b", fontSize:14, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>Cancel</button>
           <button onClick={() => onSave({ ...user, plan, status, cookieConsent, tempPlan: tempOn ? tempPlan : null, tempDays: tempOn ? tempDays : null, revokeTemp: !tempOn && !!user.tempPlan })}
-            style={{ flex:2, padding:"12px", background:"#7C3AED", border:"none", borderRadius:12, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+            style={{ flex:2, padding:"12px", background: dirty ? "#7C3AED" : "rgba(124,58,237,0.35)", border:"none", borderRadius:12, color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
             Save Changes
           </button>
         </div>
