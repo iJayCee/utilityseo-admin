@@ -236,6 +236,19 @@ const PrivacySection = ({ adminFetch, API_URL }) => {
             </div>
           </div>
 
+          {retention.leads?.total > 0 && (
+            <div style={{ marginBottom:18, paddingBottom:14, borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ ...label, marginBottom:8 }}>Free-scan leads</div>
+              <div style={{ fontSize:12, color:"#94a3b8", lineHeight:1.6 }}>
+                <span style={{ ...mono, color:"#c4b5fd" }}>{retention.leads.total}</span> held here rather than in the CMS.{" "}
+                <span style={{ ...mono, color:"#c4b5fd" }}>{retention.leads.linked}</span> joined to an account,{" "}
+                <span style={{ ...mono, color:"#c4b5fd" }}>{retention.leads.anonymous}</span> with no email at all,{" "}
+                <span style={{ ...mono, color:"#c4b5fd" }}>{retention.leads.consented}</span> opted in to marketing.
+                <div style={{ marginTop:5, color:"#64748b" }}>A lookup above finds these whether or not the person ever signed up, so one search answers the whole request.</div>
+              </div>
+            </div>
+          )}
+
           {retention.pending?.length > 0 && (
             <div style={{ marginBottom:18 }}>
               {retention.pending.slice(0, 10).map(p => (
