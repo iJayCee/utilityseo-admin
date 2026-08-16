@@ -18,6 +18,16 @@ const mono = { fontFamily:"JetBrains Mono,monospace" };
 
 const REQUEST_TYPES = ["access", "erasure", "objection", "rectification", "portability"];
 
+// Railway serves an HTML error page while a container is restarting, and
+// res.json() on that throws "Unexpected token '<'" - which is what this screen
+// showed during its own first deploy. Useless to read and it looks like the
+// feature is broken rather than the API being briefly away.
+const readJson = async (res) => {
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch { throw new Error(`The API returned ${res.status} instead of data. If a deploy just went out, give it a moment and refresh.`); }
+};
+
 const PrivacySection = ({ adminFetch, API_URL }) => {
   const [requests, setRequests] = useState([]);
   const [retention, setRetention] = useState(null);
@@ -41,9 +51,9 @@ const PrivacySection = ({ adminFetch, API_URL }) => {
         adminFetch(`${API_URL}/admin/data-requests`),
         adminFetch(`${API_URL}/admin/retention`),
       ]);
-      if (a.ok) setRequests((await a.json()).requests || []);
-      if (b.ok) setRetention(await b.json());
-      else setError((await b.json()).error || "Could not load retention status");
+      if (a.ok) setRequests((await readJson(a)).requests || []);
+      if (b.ok) setRetention(await readJson(b));
+      else setError((await readJson(b)).error || "Could not load retention status");
     } catch (e) { setError(e.message); }
     setBusy("");
   };
@@ -55,7 +65,7 @@ const PrivacySection = ({ adminFetch, API_URL }) => {
     setBusy("lookup"); setError(""); setFound(null);
     try {
       const r = await adminFetch(`${API_URL}/admin/data-request?email=${encodeURIComponent(lookupEmail.trim())}&counts=1`);
-      const j = await r.json();
+      const j = await readJson(r);
       if (!r.ok) setError(j.error || "Lookup failed"); else setFound(j);
     } catch (e) { setError(e.message); }
     setBusy("");
@@ -86,7 +96,7 @@ const PrivacySection = ({ adminFetch, API_URL }) => {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: newType, identifier: newId.trim() }),
       });
-      const j = await r.json();
+      const j = await readJson(r);
       if (!r.ok) setError(j.error || "Could not log the request");
       else {
         setMsg(`Logged. Due by ${new Date(new Date(j.received_at).setMonth(new Date(j.received_at).getMonth() + 1)).toLocaleDateString("en-GB")}.`);
@@ -115,7 +125,7 @@ const PrivacySection = ({ adminFetch, API_URL }) => {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dryRun }),
       });
-      const j = await r.json();
+      const j = await readJson(r);
       if (!r.ok) setError(j.error || "Run failed");
       else { setRunReport(j); if (!dryRun) { setRunConfirm(""); load(); } }
     } catch (e) { setError(e.message); }
