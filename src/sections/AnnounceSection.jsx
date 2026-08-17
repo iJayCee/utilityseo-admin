@@ -17,7 +17,7 @@ const AnnounceSection = ({ annBusy, annData, annError, annForm, annLoading, dele
           const applyTemplate = (type) => setAnnForm({ type, title: TEMPLATES[type].title, body: TEMPLATES[type].body });
           const fmtDate = (d) => new Date(d).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
           return (
-          <div style={{ maxWidth: 1000, width: "100%", margin: "0 auto" }}>
+          <div style={{ width:"100%" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
               <div>
                 <h2 style={{ fontSize: 20, fontWeight: 800, color: "#e2e8f0", margin: 0 }}>📢 Announcements</h2>

@@ -4,7 +4,7 @@ import { Badge } from "../shared.jsx";
 // handlers it used in place. Restyle happens separately.
 const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, pfCodeFilter, pfData, pfError, pfLoading, pfSearch, pfStatusFilter, setPfCodeFilter, setPfData, setPfSearch, setPfStatusFilter, stats, users }) => (
           <div>
-            <div style={{ maxWidth:1100, width:"100%", margin:"0 auto" }}>
+            <div style={{ width:"100%" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>
               <div>
                 <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>💰 ProspectFlow</h2>

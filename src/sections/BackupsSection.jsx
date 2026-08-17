@@ -3,7 +3,7 @@
 // handlers as props so behaviour is byte-identical to the inline version;
 // restyling comes as a separate pass once every section is extracted.
 const BackupsSection = ({ bkBusy, bkData, bkError, bkLoading, bkMsg, loadBackups, restoreBackup, restoreConfirm, runBackupNow, setRestoreConfirm }) => (
-          <div style={{ maxWidth:900, width:"100%", margin:"0 auto" }}>
+          <div style={{ width:"100%" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
               <div>
                 <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>💾 Backups</h2>

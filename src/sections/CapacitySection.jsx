@@ -2,7 +2,7 @@
 // byte-identical to the inline version; props carry the App-level state and
 // handlers it used in place. Restyle happens separately.
 const CapacitySection = ({ capData, capError, capLoading, loadCapacity }) => (
-          <div style={{ maxWidth:1000, width:"100%", margin:"0 auto" }}>
+          <div style={{ width:"100%" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
               <div>
                 <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>📊 Capacity</h2>

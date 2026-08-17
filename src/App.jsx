@@ -1022,7 +1022,12 @@ const AdminPanel = () => {
         <button onClick={() => { setAuthed(false); setEmail(""); setPass(""); localStorage.removeItem('admin_authed'); }} style={{ padding:"8px 16px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, color:"#ef4444", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>Sign Out</button>
       </div>
 
-      <div className="admin-body" style={{ padding:"32px" }}>
+      {/* One column for the whole panel. Before this the tab bar spanned the
+          full window while each section centred itself at its own max-width -
+          900, 960, 1000, 1100 - so the content moved sideways every time you
+          changed tab, and the tabs never lined up with what was under them.
+          1600 matches the customer app, so the two feel like one product. */}
+      <div className="admin-body" style={{ padding:"32px", maxWidth:1600, margin:"0 auto", boxSizing:"border-box" }}>
         {/* Stats */}
         <div className="stats-grid" style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:16, marginBottom:32 }}>
           {stats.map(s => (

@@ -136,7 +136,7 @@ const PrivacySection = ({ adminFetch, API_URL }) => {
   const done = requests.filter(r => r.completed_at);
 
   return (
-    <div style={{ maxWidth:960, width:"100%", margin:"0 auto" }}>
+    <div style={{ width:"100%" }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
         <div>
           <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>🔒 Privacy</h2>
