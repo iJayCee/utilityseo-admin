@@ -24,12 +24,10 @@ const users = Array.from({ length: 4 }, (_, i) => ({
   plan: ['entrepreneur', 'enterprise', 'free', 'entrepreneur'][i],
   joined: '2026-03-14T00:00:00Z',
   first_payment: i % 2 === 0 ? '2026-04-01T00:00:00Z' : null,
-  within_commission_window: i % 2 === 0,
-  // Field names matter: the section reads u.total_paid.toFixed(2) and
-  // u.commission_amount. Calling them revenue/commission threw and rendered
-  // nothing, which measured as a clean pass while testing zero.
+  // Field names matter: the section reads u.total_paid.toFixed(2). Calling it
+  // "revenue" threw and rendered nothing, which measured as a clean pass while
+  // testing zero.
   total_paid: 490 + i * 10,
-  commission_amount: 73.5,
 }));
 
 const pfData = { users, codes: [{ code: 'PARTNER2026', count: 4 }] };
@@ -100,7 +98,7 @@ createRoot(document.getElementById('root')).render(
       <ProspectFlowSection
         email="admin@utilityseo.com"
         users={users}
-        stats={{ signups: 4, paying: 2, eligible: 2, totalRevenue: 1960, commission: 294 }}
+        stats={{ signups: 4, paying: 2, totalRevenue: 1960 }}
         pfData={pfData}
         pfError={null}
         pfLoading={false}

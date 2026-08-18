@@ -1452,7 +1452,6 @@ const AdminPanel = () => {
                         { label:"Total signups",    val:d.total_signups,                    col:"#a78bfa" },
                         { label:"Paying customers", val:d.paying_users,                     col:"#34d399" },
                         { label:"Revenue",          val:`£${d.total_revenue.toFixed(2)}`,   col:"#e2e8f0" },
-                        { label:"Commission owed",  val:`£${d.total_commission.toFixed(2)}`,col:"#f59e0b" },
                       ].map(s => (
                         <div key={s.label} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:"14px 18px" }}>
                           <div style={{ fontSize:22, fontWeight:800, color:s.col, fontFamily:"JetBrains Mono,monospace" }}>{s.val}</div>
@@ -1461,20 +1460,13 @@ const AdminPanel = () => {
                       ))}
                     </div>
 
-                    {/* Commission callout */}
-                    <div style={{ background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.2)", borderRadius:12, padding:"14px 18px", marginBottom:20 }}>
-                      <div style={{ fontSize:13, fontWeight:700, color:"#f59e0b", marginBottom:4 }}>💰 Commission to pay</div>
-                      <div style={{ fontSize:28, fontWeight:800, color:"#f59e0b", fontFamily:"JetBrains Mono,monospace" }}>£{d.total_commission.toFixed(2)}</div>
-                      <div style={{ fontSize:11, color:"#92400e", marginTop:4 }}>15% of each customer's first payment · {d.paying_users} paying customer{d.paying_users!==1?"s":""}</div>
-                    </div>
-
                     {/* Per-user breakdown */}
                     {d.users.filter(u => u.revenue_in_period > 0 || u.first_payment).length > 0 && (
                       <div>
                         <div style={{ fontSize:12, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10 }}>Customer breakdown</div>
                         <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
                           {d.users.filter(u => u.revenue_in_period > 0 || u.first_payment).map((u, i) => (
-                            <div key={i} style={{ display:"grid", gridTemplateColumns:"1fr 80px 80px 80px", gap:12, padding:"10px 14px", background:"rgba(255,255,255,0.02)", borderRadius:10, alignItems:"center" }}>
+                            <div key={i} style={{ display:"grid", gridTemplateColumns:"1fr 90px 80px", gap:12, padding:"10px 14px", background:"rgba(255,255,255,0.02)", borderRadius:10, alignItems:"center" }}>
                               <div>
                                 <div style={{ fontSize:13, color:"#e2e8f0", fontWeight:600 }}>{u.email}</div>
                                 <div style={{ fontSize:11, color:"#64748b" }}>{u.name}</div>
@@ -1482,10 +1474,6 @@ const AdminPanel = () => {
                               <div style={{ textAlign:"right" }}>
                                 <div style={{ fontSize:12, color:"#34d399", fontWeight:700, fontFamily:"JetBrains Mono,monospace" }}>£{u.revenue_in_period.toFixed(2)}</div>
                                 <div style={{ fontSize:10, color:"#475569" }}>revenue</div>
-                              </div>
-                              <div style={{ textAlign:"right" }}>
-                                <div style={{ fontSize:12, color:"#f59e0b", fontWeight:700, fontFamily:"JetBrains Mono,monospace" }}>£{u.commission.toFixed(2)}</div>
-                                <div style={{ fontSize:10, color:"#475569" }}>commission</div>
                               </div>
                               <div style={{ textAlign:"right" }}>
                                 <Badge plan={u.plan} />
