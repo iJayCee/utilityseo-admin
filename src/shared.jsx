@@ -47,3 +47,63 @@ export const Input = ({ label, ...props }) => (
 );
 
 export const Spinner = () => <div className="spin" style={{ width:20, height:20, border:"2px solid rgba(255,255,255,0.1)", borderTopColor:"#7C3AED", borderRadius:"50%", display:"inline-block" }} />;
+
+// ── Section scaffolding ──────────────────────────────────────────────────────
+// Every tab was laying itself out by hand, and they had drifted: header margins
+// of 24 / 28 / none, card padding of "18px 20px" / 28 / 20, root wrappers of
+// <div style={{width:"100%"}}> / <div> / a redundant double wrapper. Nothing was
+// individually wrong, which is why it survived - but moving between tabs moved
+// the content, and that is what makes an app feel unfinished.
+//
+// These are the single definitions. A section that wants different spacing now
+// has to say so explicitly rather than differ by accident.
+
+export const SECTION_GAP = 24;   // header -> body
+export const CARD_GAP    = 20;   // card -> card
+
+// Card surface, matching the customer app's cardSty.
+export const card = {
+  background: "rgba(255,255,255,0.02)",
+  border: "1px solid rgba(255,255,255,0.07)",
+  borderRadius: 14,
+  padding: "18px 20px",
+  marginBottom: CARD_GAP,
+};
+
+export const label = {
+  fontSize: 11, fontWeight: 700, color: "#475569",
+  textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6,
+};
+
+// The root every section returns. Fixes the width/wrapper drift in one place.
+export const Section = ({ children }) => (
+  <div style={{ width: "100%" }}>{children}</div>
+);
+
+// Title on the left, actions on the right, one consistent gap underneath.
+// `right` takes the buttons a section used to place itself.
+export const SectionHeader = ({ title, subtitle, right }) => (
+  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
+                gap:16, flexWrap:"wrap", marginBottom:SECTION_GAP }}>
+    <div style={{ minWidth:0 }}>
+      <h3 style={{ fontSize:16, fontWeight:700, color:"#e2e8f0", margin:0 }}>{title}</h3>
+      {subtitle && <p style={{ fontSize:12.5, color:"#64748b", margin:"4px 0 0", lineHeight:1.5 }}>{subtitle}</p>}
+    </div>
+    {right && <div style={{ display:"flex", gap:8, flexWrap:"wrap", flexShrink:0 }}>{right}</div>}
+  </div>
+);
+
+// Horizontal scroller for a wide grid table.
+//
+// The admin tables are 680-740px of FIXED columns, so on a phone they do not
+// merely overflow - the flexible column collapses and the row is on screen and
+// unreadable. Worse, the users table sat inside a wrapper with overflow:hidden,
+// so it was clipped outright with no way to reach the rest.
+//
+// Desktop-safe by construction: when `min` fits the available width the
+// scroller is inert and the layout is unchanged.
+export const TableScroll = ({ min, children, style }) => (
+  <div className="scroll-x" style={style}>
+    <div style={{ minWidth: min }}>{children}</div>
+  </div>
+);

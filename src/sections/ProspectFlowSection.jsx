@@ -1,11 +1,11 @@
-import { Badge } from "../shared.jsx";
+import { Badge, TableScroll } from "../shared.jsx";
 // ProspectFlowSection - extracted verbatim from App.jsx (admin split). Behaviour is
 // byte-identical to the inline version; props carry the App-level state and
 // handlers it used in place. Restyle happens separately.
 const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, pfCodeFilter, pfData, pfError, pfLoading, pfSearch, pfStatusFilter, setPfCodeFilter, setPfData, setPfSearch, setPfStatusFilter, stats, users }) => (
           <div>
             <div style={{ width:"100%" }}>
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
               <div>
                 <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>💰 ProspectFlow</h2>
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Promo code signups - commission tracking for Josh &amp; Joel</p>
@@ -42,7 +42,7 @@ const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, pfCodeF
               const totalEligible = pfData.users.filter(u => u.within_commission_window).length;
               return (
                 <div>
-                  <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:28 }}>
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:16, marginBottom:28 }}>
                     {[
                       { label:"Total Signups", val:pfData.users.length, col:"#a78bfa" },
                       { label:"Now Paying", val:totalPaying, col:"#34d399" },
@@ -106,7 +106,12 @@ const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, pfCodeF
                       ))}
                     </div>
                   </div>
+                  {/* 650px of fixed columns, so on a phone the flexible User
+                      column collapses and the row is on screen but unreadable.
+                      Header and rows share ONE scroller so they cannot drift
+                      apart. Inert above ~700px. */}
                   <div style={{ background:"#13131F", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, overflow:"hidden" }}>
+                    <TableScroll min={700}>
                     <div style={{ display:"grid", gridTemplateColumns:"2.5fr 130px 90px 110px 120px 90px 110px", padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)", background:"rgba(255,255,255,0.02)" }}>
                       {["User","Code","Plan","Signed Up","First Payment","Revenue","Commission"].map(h => (
                         <div key={h} style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.06em" }}>{h}</div>
@@ -153,6 +158,7 @@ const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, pfCodeF
                         </div>
                       );
                     })}
+                    </TableScroll>
                   </div>
                   <div style={{ marginTop:10, padding:"8px 14px", background:"rgba(245,158,11,0.05)", border:"1px solid rgba(245,158,11,0.12)", borderRadius:8, fontSize:11, color:"#92400e" }}>
                     🟡 Amber row = commission eligible (first payment within 90 days) · Commission = 15% of first payment only

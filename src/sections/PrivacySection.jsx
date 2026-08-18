@@ -9,9 +9,8 @@
 // else on the admin reads any of it, so threading it upwards would only make
 // App.jsx longer.
 import { useState, useEffect } from "react";
+import { card, label } from "../shared.jsx";
 
-const card = { background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, padding:"18px 20px", marginBottom:20 };
-const label = { fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:6 };
 const input = { padding:"10px 14px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.12)", borderRadius:10, color:"#e2e8f0", fontSize:13, fontFamily:"Sora,sans-serif" };
 const btn = (bg = "#7C3AED") => ({ padding:"9px 18px", background:bg, border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" });
 const mono = { fontFamily:"JetBrains Mono,monospace" };

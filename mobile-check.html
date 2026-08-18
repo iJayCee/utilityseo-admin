@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin mobile width check (dev only)</title>
+    <style>
+      /* Copied from App.jsx's <style> block so the harness measures the same
+         rules the real app ships. */
+      html, body, #root { width: 100%; height: 100%; overflow-x: hidden; }
+      body { margin: 0; font-family: Sora, sans-serif; background: #0a0a0f; color: #fff; }
+      .glass { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+      .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .admin-body { scrollbar-gutter: stable; padding: 32px; max-width: 1600px; margin: 0 auto; box-sizing: border-box; }
+      .desktop-only { display: grid; }
+      .mobile-only { display: none; }
+      @media (max-width: 700px) {
+        .desktop-only { display: none !important; }
+        .mobile-only { display: block !important; }
+        .admin-body { padding: 16px !important; }
+      }
+      @media (max-width: 640px) {
+        .admin-body { padding: 14px !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/mobile-check.jsx"></script>
+  </body>
+</html>

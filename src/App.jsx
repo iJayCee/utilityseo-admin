@@ -29,6 +29,15 @@ const GlobalStyles = () => (
     input, select, textarea { font-family: 'Sora', sans-serif; }
     .desktop-only { display: grid; }
     .mobile-only { display: none; }
+    /* Horizontal scroller for wide grid tables. Must exist as its own rule -
+       in the customer app the same class was declared on elements while only
+       `.glass.scroll-x` had CSS, so three tables silently overflowed. A class
+       that does nothing is worse than no class, because the markup reads as
+       handled. */
+    .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* A short page has no scrollbar and a long one does, so without this the
+       content column shifts a few px between tabs. */
+    .admin-body { scrollbar-gutter: stable; }
     @media (max-width: 700px) {
       .desktop-only { display: none !important; }
       .mobile-only { display: block !important; }
@@ -41,6 +50,22 @@ const GlobalStyles = () => (
       .promo-table-header { display: none !important; }
       .promo-row { display: flex !important; flex-direction: column !important; gap: 8px !important; padding: 16px !important; }
       .promo-row-grid { display: contents !important; }
+    }
+    /* Phones. 700px above covers the tablet-ish reflow; these are the things
+       that only break on a real handset. */
+    @media (max-width: 640px) {
+      /* Every tab's own padding, in one place, so they cannot drift again. */
+      .admin-body { padding: 14px !important; }
+      /* Stat cards go two-up rather than five-up; below ~380px, one-up. */
+      .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+      /* The tab bar is the primary nav here - let it wrap instead of pushing
+         the page sideways. */
+      .tab-bar { flex-wrap: wrap !important; }
+      /* Thumb targets. 44px is the floor, and several admin buttons were ~28. */
+      .tab-btn, .admin-body button { min-height: 40px; }
+    }
+    @media (max-width: 380px) {
+      .stats-grid { grid-template-columns: 1fr !important; }
     }
   `}</style>
 );
