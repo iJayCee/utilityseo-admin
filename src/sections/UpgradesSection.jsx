@@ -36,7 +36,7 @@ const UpgradesSection = ({ loadUpgrades, upgData, upgError, upgLoading, users })
                     ].map(([label, val, col]) => (
                       <div key={label} className="glass" style={{ borderRadius:12, padding:"12px 16px", flex:"1 1 150px", minWidth:150 }}>
                         <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:5 }}>{label}</div>
-                        <div style={{ fontSize:22, fontWeight:800, color:col, fontFamily:"JetBrains Mono,monospace" }}>{val ?? "—"}</div>
+                        <div style={{ fontSize:22, fontWeight:800, color:col, fontFamily:"JetBrains Mono,monospace" }}>{val ?? "-"}</div>
                       </div>
                     ))}
                   </div>

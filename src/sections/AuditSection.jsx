@@ -44,7 +44,7 @@ const when = (iso) => {
 };
 
 const val = (v) => {
-  if (v === null || v === undefined) return "—";
+  if (v === null || v === undefined) return "-";
   if (typeof v === "string") return v;
   return JSON.stringify(v);
 };

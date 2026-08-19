@@ -31,7 +31,7 @@ const BackupsSection = ({ bkBusy, bkData, bkError, bkLoading, bkMsg, loadBackups
                   </div>
                   <div>
                     <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:6 }}>Size</div>
-                    <div style={{ fontSize:18, fontWeight:800, color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace" }}>{bkData.lastBackupSize ? `${(bkData.lastBackupSize / 1048576).toFixed(1)} MB` : "—"}</div>
+                    <div style={{ fontSize:18, fontWeight:800, color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace" }}>{bkData.lastBackupSize ? `${(bkData.lastBackupSize / 1048576).toFixed(1)} MB` : "-"}</div>
                   </div>
                   <div>
                     <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:6 }}>Schedule</div>

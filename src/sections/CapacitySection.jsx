@@ -26,7 +26,7 @@ const CapacitySection = ({ capData, capError, capLoading, loadCapacity }) => (
                 : overall === "warn"
                   ? "⚠ One or more metrics are approaching their limit - see the amber items below."
                   : "🔴 One or more metrics are at capacity - action recommended now.";
-              const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString());
+              const fmt = (n) => (n == null ? "-" : Number(n).toLocaleString());
               return (
                 <>
                   <div style={{ background:BG[overall], border:`1px solid ${COL[overall]}55`, borderRadius:12, padding:"14px 18px", marginBottom:20, color:COL[overall], fontSize:14, fontWeight:600 }}>

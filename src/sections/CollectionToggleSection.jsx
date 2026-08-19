@@ -98,14 +98,14 @@ const CollectionToggleSection = ({ adminFetch, API_URL }) => {
       {freshSecret && (
         <div style={{ ...card, background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.35)" }}>
           <div style={{ ...label, color: "#fbbf24" }}>
-            {freshSecret.rotated ? "New secret for" : "Secret for"} {freshSecret.name} — shown once
+            {freshSecret.rotated ? "New secret for" : "Secret for"} {freshSecret.name} - shown once
           </div>
           <p style={{ ...mono, fontSize: 13, color: "#fcd34d", wordBreak: "break-all", margin: "6px 0 10px",
                       background: "rgba(0,0,0,0.35)", padding: "10px 12px", borderRadius: 8 }}>
             {freshSecret.secret}
           </p>
           <p style={{ fontSize: 12, color: "#fcd34d", margin: "0 0 10px", lineHeight: 1.6 }}>
-            Copy this now. Only a hash is stored, so it cannot be shown again — rotate if it is lost.
+            Copy this now. Only a hash is stored, so it cannot be shown again - rotate if it is lost.
             {freshSecret.rotated ? " The previous secret stopped working immediately." : ""}
             {" "}Send it as <span style={mono}>Authorization: Bearer &lt;secret&gt;</span>, never in a URL.
           </p>
@@ -130,7 +130,7 @@ const CollectionToggleSection = ({ adminFetch, API_URL }) => {
           <p style={{ fontSize: 12, color: "#94a3b8", margin: "0 0 12px" }}>
             Last changed by <strong style={{ color: "#cbd5e1" }}>{t.changed_by || "unknown"}</strong>
             {" on "}{new Date(t.changed_at).toLocaleString("en-GB")}
-            {t.reason ? ` — "${t.reason}"` : ""}
+            {t.reason ? ` - "${t.reason}"` : ""}
           </p>
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
@@ -149,7 +149,7 @@ const CollectionToggleSection = ({ adminFetch, API_URL }) => {
               <div key={i} style={{ display: "flex", gap: 12, padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", fontSize: 12, flexWrap: "wrap" }}>
                 <span style={{ ...mono, color: "#a78bfa", minWidth: 110 }}>{h.action}</span>
                 <span style={{ color: "#94a3b8", flex: 1, minWidth: 150 }}>
-                  {h.new_stopped === null ? "—" : `${stateWord(h.old_stopped)} → ${stateWord(h.new_stopped)}`}
+                  {h.new_stopped === null ? "-" : `${stateWord(h.old_stopped)} → ${stateWord(h.new_stopped)}`}
                   {h.reason ? ` · "${h.reason}"` : ""}
                 </span>
                 <span style={{ color: "#cbd5e1" }}>{h.actor}</span>

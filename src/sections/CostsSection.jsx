@@ -76,7 +76,7 @@ const CostsSection = ({ costData, costError, costInputs, costLoading, loadCostFo
                             {[
                               ["Last 30 days", usdM(usage.total?.cost), "#34d399"],
                               ["Month to date", usdM(usage.monthToDate?.cost), "#e2e8f0"],
-                              ["Per paying customer", usage.payingCustomers > 0 ? usdM((usage.total?.cost || 0) / usage.payingCustomers) : "—", "#e2e8f0"],
+                              ["Per paying customer", usage.payingCustomers > 0 ? usdM((usage.total?.cost || 0) / usage.payingCustomers) : "-", "#e2e8f0"],
                               ["Tokens (in/out)", `${Math.round((usage.total?.in_tok || 0) / 1000)}k / ${Math.round((usage.total?.out_tok || 0) / 1000)}k`, "#94a3b8"],
                             ].map(([l, v, c]) => (
                               <div key={l} style={{ background:"rgba(255,255,255,0.03)", borderRadius:10, padding:"12px 14px", flex:"1 1 130px", minWidth:130 }}>
@@ -156,7 +156,7 @@ const CostsSection = ({ costData, costError, costInputs, costLoading, loadCostFo
                     {[
                       ["Cost / user / month", money(perUserGbp), "#f59e0b"],
                       ["Subscription / user", money(sub), "#e2e8f0"],
-                      ["Gross margin", marginPct == null ? "—" : marginPct + "%", marginPct >= 80 ? "#34d399" : marginPct >= 50 ? "#fbbf24" : "#f87171"],
+                      ["Gross margin", marginPct == null ? "-" : marginPct + "%", marginPct >= 80 ? "#34d399" : marginPct >= 50 ? "#fbbf24" : "#f87171"],
                     ].map(([l, v, c]) => (
                       <div key={l} className="glass" style={{ borderRadius:14, padding:"16px 18px", flex:"1 1 160px", minWidth:160 }}>
                         <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:6 }}>{l}</div>
@@ -216,7 +216,7 @@ const CostsSection = ({ costData, costError, costInputs, costLoading, loadCostFo
                               <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.backlinks) * n)}</td>
                               <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.ai) * n)}</td>
                               <td style={{ padding:"8px", color:"#f59e0b", fontWeight:800 }}>{money(total)}</td>
-                              <td style={{ padding:"8px", color: rev > 0 && total / rev < 0.2 ? "#34d399" : "#94a3b8" }}>{rev > 0 ? Math.round((total / rev) * 100) + "% of rev" : "—"}</td>
+                              <td style={{ padding:"8px", color: rev > 0 && total / rev < 0.2 ? "#34d399" : "#94a3b8" }}>{rev > 0 ? Math.round((total / rev) * 100) + "% of rev" : "-"}</td>
                             </tr>
                           );
                         })}

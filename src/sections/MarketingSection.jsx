@@ -27,7 +27,7 @@ const gbp = (pence) => `£${((Number(pence) || 0) / 100).toLocaleString("en-GB",
 // Null means "no signups of this kind", which is NOT £0.00 - that would read
 // as free. The dash plus a label is the difference between "we measured
 // nothing" and "it cost nothing".
-const cps = (pence) => (pence === null || pence === undefined ? "—" : gbp(pence));
+const cps = (pence) => (pence === null || pence === undefined ? "-" : gbp(pence));
 const shortMonth = (m) => {
   try { return new Date(`${m}-01T00:00:00Z`).toLocaleDateString("en-GB", { month: "short", year: "2-digit" }); }
   catch { return m; }

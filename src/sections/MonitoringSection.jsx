@@ -20,7 +20,7 @@ const MonitoringSection = ({ loadMonitoring, monData, monError, monLoading, stat
             {monData && !monLoading && (() => {
               const h = monData.health || {};
               const s = monData.stats;
-              const fmtUptime = (sec) => { if (sec == null) return "—"; const d=Math.floor(sec/86400), hr=Math.floor((sec%86400)/3600), m=Math.floor((sec%3600)/60); return d>0?`${d}d ${hr}h`:hr>0?`${hr}h ${m}m`:`${m}m`; };
+              const fmtUptime = (sec) => { if (sec == null) return "-"; const d=Math.floor(sec/86400), hr=Math.floor((sec%86400)/3600), m=Math.floor((sec%3600)/60); return d>0?`${d}d ${hr}h`:hr>0?`${hr}h ${m}m`:`${m}m`; };
               const card = (label, value, accent) => (
                 <div className="glass" style={{ borderRadius:14, padding:"16px 18px", flex:"1 1 150px", minWidth:150 }}>
                   <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:6 }}>{label}</div>
@@ -35,13 +35,13 @@ const MonitoringSection = ({ loadMonitoring, monData, monError, monLoading, stat
                   <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:16 }}>
                     {card("Database", dbOk ? "● Connected" : "● Down", dbOk ? "#34d399" : "#f87171")}
                     {card("Uptime", fmtUptime(h.uptime_s))}
-                    {card("Memory", h.memory_mb ? `${h.memory_mb.heap_used} / ${h.memory_mb.heap_total} MB` : "—")}
-                    {card("DB Pool", h.pool ? `${h.pool.idle}/${h.pool.total} idle` : "—", h.pool && h.pool.waiting > 0 ? "#fbbf24" : "#e2e8f0")}
+                    {card("Memory", h.memory_mb ? `${h.memory_mb.heap_used} / ${h.memory_mb.heap_total} MB` : "-")}
+                    {card("DB Pool", h.pool ? `${h.pool.idle}/${h.pool.total} idle` : "-", h.pool && h.pool.waiting > 0 ? "#fbbf24" : "#e2e8f0")}
                     {/* Build = the commit actually RUNNING. Amber once it's a week
                         old: if you've pushed since and this hasn't changed, deploys
                         are failing silently (this exact failure went unnoticed for
                         5 days in Jul 2026 - npm ci broke on every Railway build). */}
-                    {card("Build", h.commit ? `${h.commit} · ${fmtUptime(h.uptime_s)} old` : "—", (h.uptime_s || 0) > 7 * 86400 ? "#fbbf24" : "#e2e8f0")}
+                    {card("Build", h.commit ? `${h.commit} · ${fmtUptime(h.uptime_s)} old` : "-", (h.uptime_s || 0) > 7 * 86400 ? "#fbbf24" : "#e2e8f0")}
                   </div>
                   {(h.uptime_s || 0) > 7 * 86400 && (
                     <p style={{ fontSize:12, color:"#fbbf24", margin:"0 0 16px" }}>
@@ -93,9 +93,9 @@ const MonitoringSection = ({ loadMonitoring, monData, monError, monLoading, stat
                               <tr key={e.id} style={{ borderTop:"1px solid rgba(255,255,255,0.05)", color:"#94a3b8" }}>
                                 <td style={{ padding:"6px 10px", whiteSpace:"nowrap" }}>{new Date(e.created_at).toLocaleString()}</td>
                                 <td style={{ padding:"6px 10px", color:lvlColor(e.level), fontWeight:700 }}>{e.level}</td>
-                                <td style={{ padding:"6px 10px" }}>{e.source || "—"}</td>
+                                <td style={{ padding:"6px 10px" }}>{e.source || "-"}</td>
                                 <td style={{ padding:"6px 10px", color:"#cbd5e1", maxWidth:360, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }} title={e.message}>{e.message}</td>
-                                <td style={{ padding:"6px 10px" }}>{e.method ? `${e.method} ${e.path || ""}` : "—"}</td>
+                                <td style={{ padding:"6px 10px" }}>{e.method ? `${e.method} ${e.path || ""}` : "-"}</td>
                               </tr>
                             ))}
                           </tbody>
