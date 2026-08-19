@@ -195,6 +195,40 @@ const MarketingSection = ({ adminFetch, API_URL }) => {
 
       {data && (
         <>
+          {/* THE FUNNEL: leads -> signups -> paying, plus verified revenue.
+              "Paying" means at least one successful Stripe charge - a granted
+              plan is not cash and does not count. The lead -> signup step is
+              indicative (they are parallel entry points, not a sequence);
+              signup -> paying is a true subset and its rate can be trusted. */}
+          {data.funnel && (
+            <div style={{ ...card, marginBottom:20 }}>
+              <p style={label}>Funnel</p>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(130px, 1fr))", gap:10, marginTop:8 }}>
+                {data.funnel.stages.map((s, i) => (
+                  <div key={s.key} style={{ padding:"12px 14px", borderRadius:10, background:"rgba(124,58,237,0.06)", border:"1px solid rgba(124,58,237,0.2)" }}>
+                    <p style={{ ...label, marginBottom:4 }}>{s.label}</p>
+                    <p style={{ ...mono, fontSize:22, fontWeight:700, color:"#e2e8f0", margin:0 }}>{s.count}</p>
+                    {i > 0 && (
+                      <p style={{ fontSize:11, color: s.indicative ? "#64748b" : "#94a3b8", margin:"4px 0 0" }}>
+                        {s.ratePctFromPrev === null ? "no upstream yet" : `${s.ratePctFromPrev}% of ${data.funnel.stages[i - 1].label.toLowerCase()}`}
+                        {s.indicative ? " · indicative" : ""}
+                      </p>
+                    )}
+                    {i === 0 && <p style={{ fontSize:11, color:"#64748b", margin:"4px 0 0" }}>free-scan emails</p>}
+                  </div>
+                ))}
+                <div style={{ padding:"12px 14px", borderRadius:10, background:"rgba(34,197,94,0.06)", border:"1px solid rgba(34,197,94,0.25)" }}>
+                  <p style={{ ...label, marginBottom:4 }}>Revenue</p>
+                  <p style={{ ...mono, fontSize:22, fontWeight:700, color:"#22c55e", margin:0 }}>{gbp(data.funnel.revenuePence)}</p>
+                  <p style={{ fontSize:11, color:"#64748b", margin:"4px 0 0" }}>Stripe-verified, all time</p>
+                </div>
+              </div>
+              <p style={{ fontSize:11, color:"#475569", margin:"10px 0 0", lineHeight:1.5 }}>
+                Leads and signups are parallel doors in, so that first rate is directional, not causal. Paying counts only people with a successful Stripe charge - plans granted by hand are not revenue.
+              </p>
+            </div>
+          )}
+
           {/* Totals. Spend is a single figure because a pound is a pound.
               Signups are three figures because they are three different
               claims - and merging them is the one thing this screen must
@@ -217,6 +251,18 @@ const MarketingSection = ({ adminFetch, API_URL }) => {
                   can never produce a tracked signup would make the channels
                   that do work look expensive. */}
               <p style={{ fontSize:11.5, color:"#64748b", margin:"4px 0 0" }}>over {gbp(t.trackablePence)} of taggable spend</p>
+            </div>
+            {/* ROAS over trackable spend, from tracked users' Stripe charges
+                only. Null (a dash) until there is both spend and attributable
+                revenue - never a made-up number from softer evidence. */}
+            <div style={{ ...card, marginBottom:0 }}>
+              <p style={label}>ROAS (tracked)</p>
+              <p style={{ ...mono, fontSize:24, fontWeight:700, color: t.revenue?.roas === null || t.revenue?.roas === undefined ? "#64748b" : t.revenue.roas >= 1 ? "#22c55e" : "#f87171", margin:0 }}>
+                {t.revenue?.roas === null || t.revenue?.roas === undefined ? "-" : `${t.revenue.roas}x`}
+              </p>
+              <p style={{ fontSize:11.5, color:"#64748b", margin:"4px 0 0" }}>
+                {gbp(t.revenue?.trackedPence || 0)} back from {t.revenue?.trackedPaying || 0} paying
+              </p>
             </div>
             <div style={{ ...card, marginBottom:0 }}>
               <p style={label}>Self-reported / manual</p>
@@ -323,6 +369,27 @@ const MarketingSection = ({ adminFetch, API_URL }) => {
                     </div>
                   ))}
                 </div>
+
+                {/* Returns, tracked evidence only: what the people who arrived
+                    carrying this campaign's tag went on to pay via Stripe.
+                    ROAS/ROI stay dashes until there is spend to divide by -
+                    and there is deliberately no claimed or manual revenue,
+                    because invented money on a budget screen is worse than a
+                    dash. */}
+                {c.utm_campaign && (
+                  <div style={{ display:"flex", gap:16, flexWrap:"wrap", alignItems:"baseline", marginTop:10, padding:"10px 12px", borderRadius:10, background:"rgba(34,197,94,0.04)", border:"1px solid rgba(34,197,94,0.15)" }}>
+                    <span style={{ ...label, marginBottom:0 }}>Returns</span>
+                    <span style={{ ...mono, fontSize:13, color:"#22c55e" }}>{gbp(c.revenue?.trackedPence || 0)} revenue</span>
+                    <span style={{ ...mono, fontSize:13, color:"#e2e8f0" }}>{c.revenue?.trackedPaying || 0} paying</span>
+                    <span style={{ ...mono, fontSize:13, color: c.revenue?.roas === null || c.revenue?.roas === undefined ? "#64748b" : c.revenue.roas >= 1 ? "#22c55e" : "#f87171" }}>
+                      ROAS {c.revenue?.roas === null || c.revenue?.roas === undefined ? "-" : `${c.revenue.roas}x`}
+                    </span>
+                    <span style={{ ...mono, fontSize:13, color: c.revenue?.roiPct === null || c.revenue?.roiPct === undefined ? "#64748b" : c.revenue.roiPct >= 0 ? "#22c55e" : "#f87171" }}>
+                      ROI {c.revenue?.roiPct === null || c.revenue?.roiPct === undefined ? "-" : `${c.revenue.roiPct > 0 ? "+" : ""}${c.revenue.roiPct}%`}
+                    </span>
+                    <span style={{ fontSize:10.5, color:"#475569" }}>from tracked signups' Stripe charges</span>
+                  </div>
+                )}
               </div>
 
               <div style={{ display:"flex", gap:8, marginTop:12, flexWrap:"wrap" }}>
