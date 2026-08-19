@@ -33,9 +33,11 @@ const GlobalStyles = () => (
     .mobile-only { display: none; }
     /* Horizontal scroller for wide grid tables. Must exist as its own rule -
        in the customer app the same class was declared on elements while only
-       `.glass.scroll-x` had CSS, so three tables silently overflowed. A class
-       that does nothing is worse than no class, because the markup reads as
-       handled. */
+       .glass.scroll-x (never write that as a backtick-quoted span here - this
+       whole block is a template literal, and a stray backtick closes it early
+       and blanks the entire admin) had CSS, so three tables silently
+       overflowed. A class that does nothing is worse than no class, because
+       the markup reads as handled. */
     .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     /* A short page has no scrollbar and a long one does, so without this the
        content column shifts a few px between tabs. */
