@@ -7,7 +7,7 @@ const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, pfCodeF
             <div style={{ width:"100%" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
               <div>
-                <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>💰 ProspectFlow</h2>
+                <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>ProspectFlow</h2>
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Who signed up with a promo code, and what they have paid since</p>
               </div>
               <button onClick={() => { setPfData(null); loadProspectFlow(); }}
@@ -64,7 +64,7 @@ const ProspectFlowSection = ({ email, loadCodeRevenue, loadProspectFlow, pfCodeF
                         </div>
                         <button onClick={e => { e.stopPropagation(); loadCodeRevenue(code); }}
                           style={{ marginTop:12, width:"100%", padding:"7px 0", background:"rgba(124,58,237,0.15)", border:"1px solid rgba(124,58,237,0.3)", borderRadius:8, color:"#a78bfa", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
-                          📊 Revenue breakdown
+                          Revenue breakdown
                         </button>
                       </div>
                     ))}

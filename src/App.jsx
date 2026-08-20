@@ -191,14 +191,14 @@ const EditModal = ({ user, onSave, onClose }) => {
 
           {status === "deactivated" && (
             <div style={{ padding:"10px 14px", background:"rgba(148,163,184,0.08)", border:"1px solid rgba(148,163,184,0.2)", borderRadius:10, marginBottom:20 }}>
-              <p style={{ fontSize:12, color:"#94a3b8" }}>⚠️ Deactivated accounts cannot log in. The user deactivated their own account and can be reactivated here.</p>
+              <p style={{ fontSize:12, color:"#94a3b8" }}>Deactivated accounts cannot log in. The user deactivated their own account and can be reactivated here.</p>
             </div>
           )}
 
           {/* Cookie Consent */}
           <p style={{ fontSize:12, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Cookie Consent</p>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:8, marginBottom:20 }}>
-            {[["accepted","✅ Accepted","#22c55e"],["declined","❌ Declined","#ef4444"],[null,"⏳ Not Set","#475569"]].map(([val, label, col]) => (
+            {[["accepted","Accepted","#22c55e"],["declined","Declined","#ef4444"],[null,"⏳ Not Set","#475569"]].map(([val, label, col]) => (
               <button key={String(val)} onClick={() => setCookieConsent(val)}
                 style={{ padding:"10px 8px", borderRadius:12, border:`2px solid ${cookieConsent===val ? col : "rgba(255,255,255,0.08)"}`, background: cookieConsent===val ? `${col}18` : "rgba(255,255,255,0.03)", color: cookieConsent===val ? col : "#64748b", fontWeight:600, fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", transition:"all 0.15s" }}>
                 {label}
@@ -293,7 +293,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
           <span style={{ fontSize:10, color:"#334155", display:"block" }}>lifetime</span>
         </div>
         <span title={`Cookie: ${u.cookieConsent || "not set"}`} style={{ fontSize:14, textAlign:"center" }}>
-          {u.cookieConsent === "accepted" ? "✅" : u.cookieConsent === "declined" ? "❌" : "⏳"}
+          {u.cookieConsent === "accepted" ? "" : u.cookieConsent === "declined" ? "" : "⏳"}
         </span>
         <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' })}</span>
         <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '-'}</span>
@@ -301,7 +301,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
           <button onClick={onToggleStar}
             title={starred ? "Unstar" : "Star user"}
             style={{ padding:"6px 14px", background: starred ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)", border:`1px solid ${starred ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.08)"}`, borderRadius:8, color: starred ? "#f59e0b" : "#475569", fontSize:14, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
-            {starred ? "★" : "☆"}
+            {starred ? "" : ""}
           </button>
           <button onClick={onInfo}
             style={{ padding:"6px 14px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:8, color:"#4ade80", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
@@ -314,7 +314,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
           {!isDeactivated && (
             <button onClick={onAccess}
               style={{ padding:"6px 14px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, color:"#f87171", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, whiteSpace:"nowrap" }}>
-              👤 Access Account
+              Access Account
             </button>
           )}
         </div>
@@ -358,7 +358,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
             <div style={{ display:"flex", gap:8 }}>
               <button onClick={onToggleStar}
                 style={{ flex:1, padding:"10px", background: starred ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)", border:`1px solid ${starred ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.08)"}`, borderRadius:8, color: starred ? "#f59e0b" : "#475569", fontSize:14, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
-                {starred ? "★ Starred" : "☆ Star"}
+                {starred ? "Starred" : "Star"}
               </button>
               <button onClick={onInfo}
                 style={{ flex:1, padding:"10px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:8, color:"#4ade80", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
@@ -372,7 +372,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
             {!isDeactivated && (
               <button onClick={onAccess}
                 style={{ width:"100%", padding:"10px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:8, color:"#f87171", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
-                👤 Access Account
+                Access Account
               </button>
             )}
           </div>
@@ -1004,8 +1004,8 @@ const AdminPanel = () => {
   const countDeactivated = users.filter(u => u.status==="deactivated").length;
 
   const stats = [
-    { label:"Total Users",   val:users.length,                                      icon:"👥", col:"#a78bfa" },
-    { label:"Active",        val:users.filter(u=>u.status==="active").length,        icon:"✅", col:"#22c55e" },
+    { label:"Total Users",   val:users.length,                                      icon:"", col:"#a78bfa" },
+    { label:"Active",        val:users.filter(u=>u.status==="active").length,        icon:"", col:"#22c55e" },
     { label:"Deactivated",   val:countDeactivated,                                   icon:"○",  col:"#94a3b8",
       onClick: () => { setFilterStatus("deactivated"); setShowFilters(true); } },
     { label:"Temp Access",   val:users.filter(u=>u.tempPlan).length,                 icon:"⏱", col:"#38bdf8" },
@@ -1074,7 +1074,7 @@ const AdminPanel = () => {
 
           <div className="glass" style={{ borderRadius:16, padding:20 }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:2 }}>
-              <span style={{ fontSize:24 }}>💰</span>
+              <span style={{ fontSize:24 }}></span>
               <span style={{ fontSize:26, fontWeight:800, color:"#f59e0b" }}>{countPaid}</span>
             </div>
             <div style={{ fontSize:13, color:"#475569", marginBottom:12 }}>Paid</div>
@@ -1087,7 +1087,7 @@ const AdminPanel = () => {
 
           <div className="glass" style={{ borderRadius:16, padding:20 }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:2 }}>
-              <span style={{ fontSize:20 }}>📈</span>
+              <span style={{ fontSize:20 }}></span>
               <div style={{ display:"flex", gap:3 }}>
                 {[{label:"7d",val:7},{label:"30d",val:30},{label:"90d",val:90},{label:"1yr",val:365}].map(p => (
                   <button key={p.val} onClick={() => setStatsWindow(p.val)}
@@ -1105,7 +1105,7 @@ const AdminPanel = () => {
               the filtered Users list. Support starts from "this customer emailed
               us", so the search box lives in the header, not inside one tab. */}
           <div className="glass" style={{ borderRadius:16, padding:"14px 20px", gridColumn:"1 / -1", display:"flex", alignItems:"center", gap:12 }}>
-            <span style={{ fontSize:16 }} aria-hidden="true">🔎</span>
+            <span style={{ fontSize:16 }} aria-hidden="true"></span>
             <input
               value={search}
               onChange={e => { setSearch(e.target.value); if (activeTab !== "users" && e.target.value) handleTabSwitch("users"); }}
@@ -1230,18 +1230,18 @@ const AdminPanel = () => {
         <div style={{ marginBottom:16 }}>
           <div style={{ display:"flex", gap:10, marginBottom:10, flexWrap:"wrap" }}>
             <div style={{ position:"relative", flex:1, minWidth:200 }}>
-              <span style={{ position:"absolute", left:16, top:"50%", transform:"translateY(-50%)", color:"#475569", fontSize:16 }}>🔍</span>
+              <span style={{ position:"absolute", left:16, top:"50%", transform:"translateY(-50%)", color:"#475569", fontSize:16 }}></span>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by email, name or company…"
                 style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:14, padding:"12px 16px 12px 44px", color:"#fff", fontSize:14, outline:"none", fontFamily:"JetBrains Mono,monospace", boxSizing:"border-box" }}
                 onFocus={e => e.target.style.border="1px solid #7C3AED"} onBlur={e => e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
             </div>
             <button onClick={() => setShowFilters(f => !f)}
               style={{ padding:"12px 18px", background:showFilters?"rgba(124,58,237,0.2)":"rgba(255,255,255,0.05)", border:`1px solid ${showFilters?"#7C3AED":"rgba(255,255,255,0.1)"}`, borderRadius:14, color:showFilters?"#a78bfa":"#94a3b8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
-              🎛 Filters {activeFiltersCount>0 && <span style={{ background:"#7C3AED", color:"#fff", borderRadius:99, padding:"1px 7px", fontSize:11 }}>{activeFiltersCount}</span>}
+              Filters {activeFiltersCount>0 && <span style={{ background:"#7C3AED", color:"#fff", borderRadius:99, padding:"1px 7px", fontSize:11 }}>{activeFiltersCount}</span>}
             </button>
             <button onClick={exportCSV}
               style={{ padding:"12px 18px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:14, color:"#22c55e", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
-              ⬇ Export CSV
+              ↓ Export CSV
             </button>
           </div>
 
@@ -1287,8 +1287,8 @@ const AdminPanel = () => {
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Marketing</label>
                   <select value={filterMarketing} onChange={e=>setFilterMarketing(e.target.value)} style={{ width:"100%", background:"#0d0d18", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, padding:"9px 12px", color:"#e2e8f0", fontSize:13, outline:"none", fontFamily:"Sora,sans-serif", cursor:"pointer" }}>
                     <option value="all">All</option>
-                    <option value="Yes">✅ Opted in</option>
-                    <option value="No">❌ Opted out</option>
+                    <option value="Yes">Opted in</option>
+                    <option value="No">Opted out</option>
                   </select>
                 </div>
                 <div>
@@ -1311,7 +1311,7 @@ const AdminPanel = () => {
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <button onClick={() => setFilterStarred(s => !s)}
               style={{ padding:"6px 14px", background:filterStarred?"rgba(245,158,11,0.15)":"rgba(255,255,255,0.04)", border:`1px solid ${filterStarred?"rgba(245,158,11,0.4)":"rgba(255,255,255,0.08)"}`, borderRadius:8, color:filterStarred?"#f59e0b":"#475569", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>
-              {filterStarred ? "★ Starred" : "☆ Starred"}
+              {filterStarred ? "Starred" : "Starred"}
             </button>
             <p style={{ color:"#334155", fontSize:12 }}>{filtered.length} of {users.length} users{activeFiltersCount>0?" (filtered)":""}</p>
             {countDeactivated > 0 && filterStatus !== "deactivated" && (
@@ -1333,7 +1333,7 @@ const AdminPanel = () => {
               <SortTh col="status" label="Status" />
               <SortTh col="searches" label="Today" />
               <SortTh col="totalScans" label="Lifetime" />
-              <span title="Cookie Consent" style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>🍪</span>
+              <span title="Cookie Consent" style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}></span>
               <SortTh col="joined" label="Joined" />
               <SortTh col="lastLogin" label="Last Seen" />
               <span style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>Actions</span>
@@ -1420,7 +1420,7 @@ const AdminPanel = () => {
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
                 <div>
                   <div style={{ fontSize:18, fontWeight:800, color:"#e2e8f0" }}>
-                    📊 <span style={{ fontFamily:"JetBrains Mono,monospace", color:"#a78bfa" }}>{revenueModal.code}</span> earnings
+                    <span style={{ fontFamily:"JetBrains Mono,monospace", color:"#a78bfa" }}>{revenueModal.code}</span> earnings
                   </div>
                   <div style={{ fontSize:12, color:"#64748b", marginTop:4 }}>Revenue generated by signups from this promo code</div>
                 </div>
@@ -1603,7 +1603,7 @@ const AdminPanel = () => {
             )}
 
             {[
-              { title:"Account", icon:"👤", rows:[
+              { title:"Account", icon:"", rows:[
                 ["Email", viewingUser.email],
                 ["Plan", viewingUser.plan?viewingUser.plan.charAt(0).toUpperCase()+viewingUser.plan.slice(1):"-"],
                 ["Status", viewingUser.status],
@@ -1613,10 +1613,10 @@ const AdminPanel = () => {
                 ["Scans Today", viewingUser.searches??"-"],
                 ["Lifetime Scans", viewingUser.totalScans??"-"],
               ]},
-              { title:"Personal", icon:"📋", rows:[["First Name",viewingUser.firstName||"-"],["Last Name",viewingUser.lastName||"-"],["Phone",viewingUser.phone||"-"]]},
-              { title:"Company", icon:"🏢", rows:[["Company Name",viewingUser.companyName||"-"],["Job Role",viewingUser.jobRole||"-"],["Sector",viewingUser.companySector||"-"]]},
-              { title:"Marketing & Acquisition", icon:"📣", rows:[["Heard About Us",viewingUser.referralSource||"-"],["Marketing Consent",viewingUser.marketingConsent]]},
-              { title:"Privacy & Consent", icon:"🍪", rows:[["Cookie Consent",viewingUser.cookieConsent]]},
+              { title:"Personal", icon:"", rows:[["First Name",viewingUser.firstName||"-"],["Last Name",viewingUser.lastName||"-"],["Phone",viewingUser.phone||"-"]]},
+              { title:"Company", icon:"", rows:[["Company Name",viewingUser.companyName||"-"],["Job Role",viewingUser.jobRole||"-"],["Sector",viewingUser.companySector||"-"]]},
+              { title:"Marketing & Acquisition", icon:"", rows:[["Heard About Us",viewingUser.referralSource||"-"],["Marketing Consent",viewingUser.marketingConsent]]},
+              { title:"Privacy & Consent", icon:"", rows:[["Cookie Consent",viewingUser.cookieConsent]]},
             ].map(section => (
               <div key={section.title} style={{ marginBottom:20 }}>
                 <p style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>{section.icon} {section.title}</p>
@@ -1629,8 +1629,8 @@ const AdminPanel = () => {
                              : label==="Marketing Consent" ? (value==="Yes"?"#22c55e":"#ef4444")
                              : label==="Cookie Consent" ? (value==="accepted"?"#22c55e":value==="declined"?"#ef4444":"#f59e0b")
                              : "#e2e8f0" }}>
-                        {label==="Marketing Consent" ? (value==="Yes"?"✅ Opted in":"❌ Opted out")
-                          : label==="Cookie Consent" ? (value==="accepted"?"✅ Accepted":value==="declined"?"❌ Declined":"⏳ Not yet set")
+                        {label==="Marketing Consent" ? (value==="Yes"?"Opted in":"Opted out")
+                          : label==="Cookie Consent" ? (value==="accepted"?"Accepted":value==="declined"?"Declined":"⏳ Not yet set")
                           : label==="Status" ? (value==="active"?"● Active":value==="deactivated"?"○ Deactivated":"⊘ Suspended")
                           : String(value??"-")}
                       </span>
@@ -1641,7 +1641,7 @@ const AdminPanel = () => {
             ))}
 
             <div style={{ marginTop:8 }}>
-              <p style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>📝 Admin Notes</p>
+              <p style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10 }}>Admin Notes</p>
               <textarea value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Internal notes about this account - visible to admins only..." rows={4}
                 style={{ width:"100%", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:12, padding:"12px 14px", color:"#e2e8f0", fontSize:13, fontFamily:"JetBrains Mono,monospace", resize:"vertical", outline:"none", boxSizing:"border-box", lineHeight:1.6 }} />
               <button onClick={() => saveNote(viewingUser.id, noteText)} disabled={noteSaving}
@@ -1652,7 +1652,7 @@ const AdminPanel = () => {
 
             {/* Danger zone - hard delete trigger */}
             <div style={{ marginTop:24, paddingTop:18, borderTop:"1px solid rgba(239,68,68,0.15)" }}>
-              <p style={{ fontSize:11, fontWeight:700, color:"#f87171", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>⚠ Danger zone</p>
+              <p style={{ fontSize:11, fontWeight:700, color:"#f87171", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>Danger zone</p>
               <p style={{ fontSize:12, color:"#94a3b8", lineHeight:1.55, marginBottom:10 }}>
                 Permanently delete this user and all their data - projects, scans, keywords, brand tracking history, blog plans, integration tokens. This cannot be undone. Prefer "deactivate" unless you genuinely need the email freed up.
               </p>
@@ -1670,7 +1670,7 @@ const AdminPanel = () => {
         <div onClick={(e) => { if (e.target === e.currentTarget) { setHardDeletingUser(null); setHardDeleteConfirm(''); } }}
           style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", zIndex:1100, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
           <div style={{ width:"100%", maxWidth:480, background:"#13131F", border:"1px solid rgba(239,68,68,0.4)", borderRadius:16, padding:"24px 26px", boxShadow:"0 24px 60px rgba(239,68,68,0.15)" }}>
-            <p style={{ fontSize:11, fontWeight:700, color:"#f87171", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>⚠ Permanent deletion</p>
+            <p style={{ fontSize:11, fontWeight:700, color:"#f87171", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>Permanent deletion</p>
             <p style={{ fontSize:16, fontWeight:800, color:"#fff", marginBottom:8 }}>Delete {hardDeletingUser.email}?</p>
             <p style={{ fontSize:13, color:"#94a3b8", lineHeight:1.6, marginBottom:14 }}>
               Removes the user row, every project they own, and all associated scans, keywords, brand tracking, blog plans, and integration tokens. <strong style={{ color:"#fca5a5" }}>This cannot be undone.</strong>

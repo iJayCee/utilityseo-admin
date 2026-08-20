@@ -5,7 +5,7 @@ const CostsSection = ({ costData, costError, costInputs, costLoading, loadCostFo
           <div style={{ width:"100%" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
               <div>
-                <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>💷 Cost forecast</h2>
+                <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>Cost forecast</h2>
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>What the pay-as-you-go APIs cost at different user counts. Adjust the assumptions to match reality.</p>
               </div>
               <button onClick={loadCostForecast}

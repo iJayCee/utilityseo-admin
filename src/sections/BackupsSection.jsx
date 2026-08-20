@@ -6,7 +6,7 @@ const BackupsSection = ({ bkBusy, bkData, bkError, bkLoading, bkMsg, loadBackups
           <div style={{ width:"100%" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
               <div>
-                <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>💾 Backups</h2>
+                <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>Backups</h2>
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Off-Railway whole-database backups stored in your own bucket</p>
               </div>
               <button onClick={loadBackups} style={{ padding:"9px 20px", background:"#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>↻ Refresh</button>
@@ -47,7 +47,7 @@ const BackupsSection = ({ bkBusy, bkData, bkError, bkLoading, bkMsg, loadBackups
                 </div>
 
                 <div style={{ background:"rgba(248,113,113,0.06)", border:"1px solid rgba(248,113,113,0.25)", borderRadius:14, padding:"18px 20px", marginBottom:28 }}>
-                  <h3 style={{ fontSize:15, fontWeight:800, color:"#f87171", margin:"0 0 6px" }}>⚠ Restore latest backup</h3>
+                  <h3 style={{ fontSize:15, fontWeight:800, color:"#f87171", margin:"0 0 6px" }}>Restore latest backup</h3>
                   <p style={{ fontSize:13, color:"#94a3b8", margin:"0 0 14px", lineHeight:1.6 }}>
                     This overwrites the live database with the most recent backup. A fresh safety backup is taken automatically first. To proceed, type <strong style={{ color:"#e2e8f0" }}>RESTORE LIVE DATABASE</strong> below.
                   </p>

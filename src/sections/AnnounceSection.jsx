@@ -3,10 +3,10 @@
 // handlers it used in place. Restyle happens separately.
 const AnnounceSection = ({ annBusy, annData, annError, annForm, annLoading, deleteAnnouncement, loadAnnouncements, sendAnnouncement, setAnnForm, toggleAnnouncement, users }) => {
           const TYPES = {
-            outage:      { label: "Outage",      icon: "🔴", col: "#f87171", desc: "Something is down right now" },
-            maintenance: { label: "Maintenance", icon: "🛠", col: "#fbbf24", desc: "Planned or ongoing work" },
-            update:      { label: "Update",      icon: "✨", col: "#34d399", desc: "New feature or improvement" },
-            notice:      { label: "Notice",      icon: "ℹ️", col: "#a78bfa", desc: "General information" },
+            outage:      { label: "Outage",      icon: "", col: "#f87171", desc: "Something is down right now" },
+            maintenance: { label: "Maintenance", icon: "", col: "#fbbf24", desc: "Planned or ongoing work" },
+            update:      { label: "Update",      icon: "", col: "#34d399", desc: "New feature or improvement" },
+            notice:      { label: "Notice",      icon: "ℹ", col: "#a78bfa", desc: "General information" },
           };
           const TEMPLATES = {
             outage:      { title: "Service disruption", body: "We're aware of an issue affecting [feature] and are working on a fix. We'll update here as soon as it's resolved. Sorry for the disruption." },
@@ -20,7 +20,7 @@ const AnnounceSection = ({ annBusy, annData, annError, annForm, annLoading, dele
           <div style={{ width:"100%" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
               <div>
-                <h2 style={{ fontSize: 20, fontWeight: 800, color: "#e2e8f0", margin: 0 }}>📢 Announcements</h2>
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: "#e2e8f0", margin: 0 }}>Announcements</h2>
                 <p style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0" }}>Broadcast a message to all users' notification bell. Full history kept below.</p>
               </div>
               <button onClick={loadAnnouncements} style={{ padding: "9px 20px", background: "#7C3AED", border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Sora,sans-serif" }}>↻ Refresh</button>

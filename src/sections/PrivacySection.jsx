@@ -138,7 +138,7 @@ const PrivacySection = ({ adminFetch, API_URL }) => {
     <div style={{ width:"100%" }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
         <div>
-          <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>🔒 Privacy</h2>
+          <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>Privacy</h2>
           <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Subject requests, retention and erasure. Requests are due one calendar month from arrival.</p>
         </div>
         <button onClick={load} style={btn()}>↻ Refresh</button>
@@ -303,7 +303,7 @@ const PrivacySection = ({ adminFetch, API_URL }) => {
               </div>
               {runReport.warnings?.length > 0 && (
                 <div style={{ marginTop:10, color:"#fcd34d", fontSize:12 }}>
-                  {runReport.warnings.map((w, i) => <div key={i}>⚠ {w}</div>)}
+                  {runReport.warnings.map((w, i) => <div key={i}>{w}</div>)}
                 </div>
               )}
             </div>

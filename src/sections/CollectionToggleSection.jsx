@@ -86,7 +86,7 @@ const CollectionToggleSection = ({ adminFetch, API_URL }) => {
   return (
     <div style={{ width: "100%" }}>
       <div style={{ marginBottom: 24 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: "#e2e8f0", margin: 0 }}>🛑 Collection toggle</h2>
+        <h2 style={{ fontSize: 20, fontWeight: 800, color: "#e2e8f0", margin: 0 }}>Collection toggle</h2>
         <p style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0", maxWidth: 700, lineHeight: 1.6 }}>
           A kill switch an external tool polls before each scheduled run. Holds no customer data and is not
           attached to any project or account. Switching it off stops that tool collecting; it cannot start it.

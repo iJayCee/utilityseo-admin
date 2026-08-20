@@ -5,7 +5,7 @@ const UpgradesSection = ({ loadUpgrades, upgData, upgError, upgLoading, users })
           <div style={{ width:"100%" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
               <div>
-                <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>🛒 Upgrades</h2>
+                <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>Upgrades</h2>
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Paid APIs and infrastructure worth buying, and when each starts paying for itself</p>
               </div>
               <button onClick={loadUpgrades}

@@ -305,7 +305,7 @@ export default function LoadTestPanel() {
     ok: c.green, error: c.red, warn: c.amber, info: c.muted,
   })[type] || c.muted;
 
-  const insightIcon = (type) => ({ ok: '✓', error: '✗', warn: '⚠', info: '→' })[type] || '→';
+  const insightIcon = (type) => ({ ok: '✓', error: '✗', warn: '', info: '→' })[type] || '→';
   const insightColor = (type) => ({ ok: c.green, error: c.red, warn: c.amber, info: c.purpleLight })[type] || c.muted;
 
   return (
@@ -314,7 +314,7 @@ export default function LoadTestPanel() {
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 6 }}>
-          ⚡ Load Test
+          Load Test
         </h1>
         <p style={{ fontSize: 13, color: c.muted }}>Simulate traffic against the production backend. Measures latency, error rates and capacity headroom.</p>
       </div>
@@ -381,7 +381,7 @@ export default function LoadTestPanel() {
             {status === 'idle' && (
               <button onClick={startTest} disabled={selectedActions.size === 0}
                 style={{ width: '100%', padding: '13px 0', borderRadius: 10, border: 'none', background: selectedActions.size === 0 ? 'rgba(124,58,237,0.3)' : c.purple, color: '#fff', fontSize: 14, fontWeight: 800, cursor: selectedActions.size === 0 ? 'not-allowed' : 'pointer', fontFamily: 'Sora,sans-serif', letterSpacing: '-0.01em' }}>
-                ⚡ Start Load Test
+                Start Load Test
               </button>
             )}
             {status === 'running' && (
@@ -474,7 +474,7 @@ export default function LoadTestPanel() {
                         <td style={{ padding: '8px 10px', color: a.p95 > 2000 ? c.red : c.text }}>{a.p95}ms</td>
                         <td style={{ padding: '8px 10px' }}>
                           <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: ok ? 'rgba(34,197,94,0.12)' : 'rgba(248,113,113,0.12)', color: ok ? c.green : c.red }}>
-                            {ok ? '● Healthy' : '⚠ Check'}
+                            {ok ? '● Healthy' : 'Check'}
                           </span>
                         </td>
                       </tr>

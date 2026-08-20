@@ -5,7 +5,7 @@ import { planMeta, planLabel, planShort, Spinner } from "../shared.jsx";
 const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPromoSignups, loading, loadingPromos, promoForm, promoFormError, promoSignups, promos, savingPromo, setPromoForm, stats, togglePromoActive, users }) => (
           <div>
             <div className="glass" style={{ borderRadius:18, padding:28, marginBottom:28 }}>
-              <h3 style={{ fontSize:16, fontWeight:700, color:"#e2e8f0", marginBottom:20 }}>🎟 Create Promo Code</h3>
+              <h3 style={{ fontSize:16, fontWeight:700, color:"#e2e8f0", marginBottom:20 }}>Create Promo Code</h3>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:14, marginBottom:16 }}>
                 <div>
                   <label style={{ fontSize:11, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", display:"block", marginBottom:6 }}>Code <span style={{ color:"#ef4444" }}>*</span></label>
@@ -80,7 +80,7 @@ const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPro
                   <div style={{ display:"flex", gap:6 }}>
                     <button onClick={() => loadPromoSignups(p.id)}
                       style={{ padding:"5px 10px", background:"rgba(124,58,237,0.1)", border:"1px solid rgba(124,58,237,0.25)", borderRadius:7, color:"#a78bfa", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
-                      {expandedPromo === p.id ? "▲ Hide" : "👥 Signups"}
+                      {expandedPromo === p.id ? "▲ Hide" : "Signups"}
                     </button>
                     <button onClick={() => togglePromoActive(p)} title={p.is_active?"Deactivate":"Activate"}
                       style={{ padding:"5px 10px", background:p.is_active?"rgba(239,68,68,0.1)":"rgba(34,197,94,0.1)", border:`1px solid ${p.is_active?"rgba(239,68,68,0.3)":"rgba(34,197,94,0.3)"}`, borderRadius:7, color:p.is_active?"#f87171":"#22c55e", fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>

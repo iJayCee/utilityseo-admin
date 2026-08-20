@@ -5,7 +5,7 @@ const CapacitySection = ({ capData, capError, capLoading, loadCapacity }) => (
           <div style={{ width:"100%" }}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
               <div>
-                <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>📊 Capacity</h2>
+                <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>Capacity</h2>
                 <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>Where we are against our limits, and what to do as we grow</p>
               </div>
               <button onClick={loadCapacity}
@@ -24,8 +24,8 @@ const CapacitySection = ({ capData, capError, capLoading, loadCapacity }) => (
               const headline = overall === "ok"
                 ? "✓ All systems well within limits - no action needed."
                 : overall === "warn"
-                  ? "⚠ One or more metrics are approaching their limit - see the amber items below."
-                  : "🔴 One or more metrics are at capacity - action recommended now.";
+                  ? "One or more metrics are approaching their limit - see the amber items below."
+                  : "One or more metrics are at capacity - action recommended now.";
               const fmt = (n) => (n == null ? "-" : Number(n).toLocaleString());
               return (
                 <>
