@@ -120,13 +120,15 @@ const MonthlyChart = ({ users }) => {
 import { PLAN_META, planMeta, planLabel, planShort, isLegacyPlan, Badge, StatusBadge, Input, Spinner } from "./shared.jsx";
 
 // ─── EDIT MODAL ───────────────────────────────────────────────────────────────
-const EditModal = ({ user, onSave, onClose }) => {
+const EditModal = ({ user, onSave, onClose, adminFetch, apiUrl }) => {
   const [plan, setPlan] = useState(user.plan);
   const [status, setStatus] = useState(user.status);
   const [cookieConsent, setCookieConsent] = useState(user.cookieConsent || null);
   const [tempOn, setTempOn] = useState(!!user.tempPlan);
   const [tempPlan, setTempPlan] = useState(user.tempPlan || "enterprise");
   const [tempDays, setTempDays] = useState(7);
+  const [cmsAudit, setCmsAudit] = useState(null);       // null = collapsed
+  const [cmsAuditOpen, setCmsAuditOpen] = useState(null); // entry id with detail expanded
 
   // Nothing here is applied until Save Changes is pressed, but the plan buttons
   // highlight the moment they are clicked, so a selection LOOKS committed. The
@@ -173,6 +175,50 @@ const EditModal = ({ user, onSave, onClose }) => {
             </div>
           )}
           {!isLegacyPlan(plan) && <div style={{ marginBottom:14 }} />}
+
+          {/* CMS activity: the in-depth trail for support - everything the
+              platform wrote to this account's sites, detail payload included
+              (never secrets; enforced at write time). The customer sees the
+              summary version of the same rows in their own app. */}
+          <div style={{ margin:"6px 0 18px" }}>
+            <button
+              onClick={async () => {
+                if (cmsAudit) { setCmsAudit(null); return; }
+                try {
+                  const r = await adminFetch(`${apiUrl}/admin/users/${user.id}/cms-audit`);
+                  const d = await r.json();
+                  setCmsAudit(d.entries || []);
+                } catch { setCmsAudit([]); }
+              }}
+              style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:10, color:"#a78bfa", fontWeight:600, fontSize:12, padding:"8px 14px", cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+              {cmsAudit ? "Hide CMS activity" : "CMS activity"}
+            </button>
+            {cmsAudit && (cmsAudit.length === 0 ? (
+              <p style={{ fontSize:11.5, color:"#475569", marginTop:8 }}>No CMS writes recorded for this account.</p>
+            ) : (
+              <div style={{ marginTop:8, border:"1px solid rgba(255,255,255,0.08)", borderRadius:10, maxHeight:260, overflowY:"auto" }}>
+                {cmsAudit.map(e => (
+                  <div key={e.id} style={{ borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
+                    <div onClick={() => setCmsAuditOpen(cmsAuditOpen === e.id ? null : e.id)}
+                      style={{ display:"flex", gap:8, alignItems:"baseline", padding:"7px 10px", fontSize:11.5, cursor:"pointer" }}>
+                      <span style={{ color:"#475569", fontFamily:"JetBrains Mono,monospace", fontSize:10, whiteSpace:"nowrap" }}>
+                        {new Date(e.created_at).toLocaleString("en-GB", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}
+                      </span>
+                      <span style={{ color:"#e2e8f0", flex:1, minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                        {e.actor || "autopilot"} · {e.action} · {e.provider}{e.target ? ` · ${e.target}` : ""}
+                      </span>
+                      <span style={{ color:"#475569", fontSize:10 }}>{e.project_name}</span>
+                    </div>
+                    {cmsAuditOpen === e.id && e.detail && (
+                      <pre style={{ margin:0, padding:"6px 10px 10px 10px", fontSize:10, color:"#94a3b8", fontFamily:"JetBrains Mono,monospace", whiteSpace:"pre-wrap", wordBreak:"break-all" }}>
+                        {JSON.stringify(e.detail, null, 1)}
+                      </pre>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
 
           {/* Status - now includes Deactivated */}
           <p style={{ fontSize:12, color:"#64748b", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:10 }}>Account Status</p>
@@ -1701,7 +1747,7 @@ const AdminPanel = () => {
         </div>
       )}
 
-      {editing && <EditModal user={editing} onClose={() => setEditing(null)}
+      {editing && <EditModal user={editing} onClose={() => setEditing(null)} adminFetch={adminFetch} apiUrl={API_URL}
         onSave={(updated) => { updateUser(updated.id, { plan:updated.plan, status:updated.status, tempPlan:updated.tempPlan, tempDays:updated.tempDays, revokeTemp:updated.revokeTemp }); setEditing(null); }} />}
     </div>
   );
