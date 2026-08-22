@@ -1402,7 +1402,6 @@ const AdminPanel = () => {
         {activeTab === "promos" && (
           <PromosSection createPromo={createPromo} deletePromo={deletePromo} email={email} expandedPromo={expandedPromo} loadPromoSignups={loadPromoSignups} loading={loading} loadingPromos={loadingPromos} promoForm={promoForm} promoFormError={promoFormError} promoSignups={promoSignups} promos={promos} savingPromo={savingPromo} setPromoForm={setPromoForm} stats={stats} togglePromoActive={togglePromoActive} users={users} />
         )}
-      </div>
 
 
         {/* ── PROSPECTFLOW TAB ── */}
@@ -1454,6 +1453,9 @@ const AdminPanel = () => {
         {activeTab === "prospectflow" && (
           <ProspectFlowSection email={email} loadCodeRevenue={loadCodeRevenue} loadProspectFlow={loadProspectFlow} pfCodeFilter={pfCodeFilter} pfData={pfData} pfError={pfError} pfLoading={pfLoading} pfSearch={pfSearch} pfStatusFilter={pfStatusFilter} setPfCodeFilter={setPfCodeFilter} setPfData={setPfData} setPfSearch={setPfSearch} setPfStatusFilter={setPfStatusFilter} stats={stats} users={users} />
         )}
+
+        {/* .admin-body closes HERE, after the last tab. It used to close straight after the promos tab, which left the twelve tabs below it outside the padded, max-width container - they rendered edge to edge while every other page had margins. The revenue modal below is position:fixed, so it does not care either way. */}
+      </div>
 
         {/* ── REVENUE MODAL ── */}
         {revenueModal && (

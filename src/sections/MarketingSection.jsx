@@ -52,6 +52,113 @@ const readJson = async (res) => {
 
 const EMPTY_FORM = { name:"", platform:"google_ads", details:"", utmCampaign:"", utmSource:"", landingUrl:"", startedOn:"", endedOn:"", manualSignups:"" };
 
+
+// The leads themselves.
+//
+// The funnel above counts them and the privacy panel counts them again, but
+// until now there was nowhere to look at one - so a lead arrived, became a
+// number, and was never followed up. Signed-up leads are marked, because
+// "120 leads" and "9 of them became accounts" are different facts and only
+// the second tells you whether any of this is working.
+const LeadsPanel = ({ adminFetch, API_URL }) => {
+  const [data, setData] = useState(null);
+  const [search, setSearch] = useState("");
+  const [consentedOnly, setConsentedOnly] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const load = async () => {
+    setBusy(true);
+    try {
+      const qs = new URLSearchParams({ limit: "200" });
+      if (search.trim()) qs.set("search", search.trim());
+      if (consentedOnly) qs.set("consented", "1");
+      const r = await adminFetch(`${API_URL}/admin/marketing/leads?${qs}`);
+      setData(await r.json());
+    } catch { setData({ leads: [], counts: {} }); }
+    setBusy(false);
+  };
+
+  useEffect(() => { if (open && !data) load(); /* eslint-disable-next-line */ }, [open]);
+
+  const c = data?.counts || {};
+  return (
+    <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:16, padding:"18px 20px", marginTop:16 }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
+        <div>
+          <div style={{ fontSize:14, fontWeight:700, color:"#e2e8f0" }}>Leads</div>
+          <div style={{ fontSize:12, color:"#64748b", marginTop:3 }}>
+            {data
+              ? `${c.total} total · ${c.consented} opted in to marketing · ${c.anonymous} with no email · ${c.last7} in the last 7 days`
+              : "Everyone who ran a free scan or asked for a report."}
+          </div>
+        </div>
+        <button onClick={() => setOpen(o => !o)}
+          style={{ padding:"8px 14px", borderRadius:10, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.04)", color:"#a78bfa", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+          {open ? "Hide" : "View leads"}
+        </button>
+      </div>
+
+      {open && (
+        <>
+          <div style={{ display:"flex", gap:8, alignItems:"center", margin:"14px 0 10px", flexWrap:"wrap" }}>
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") load(); }}
+              placeholder="Search email or site…"
+              style={{ flex:1, minWidth:200, padding:"8px 12px", borderRadius:10, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.04)", color:"#e2e8f0", fontSize:13, fontFamily:"Sora,sans-serif", outline:"none" }} />
+            <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"#94a3b8", cursor:"pointer" }}>
+              <input type="checkbox" checked={consentedOnly} onChange={e => setConsentedOnly(e.target.checked)} />
+              Opted in only
+            </label>
+            <button onClick={load} disabled={busy}
+              style={{ padding:"8px 14px", borderRadius:10, border:"none", background:"#7C3AED", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+              {busy ? "Loading…" : "Search"}
+            </button>
+          </div>
+
+          {!data ? null : data.leads.length === 0 ? (
+            <div style={{ fontSize:12.5, color:"#64748b", padding:"12px 0" }}>No leads match that.</div>
+          ) : (
+            <div style={{ overflowX:"auto", maxHeight:460, overflowY:"auto", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10 }}>
+              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                <thead>
+                  <tr>
+                    {["Email","Site","Source","Score","Campaign","When","Account"].map(h => (
+                      <th key={h} style={{ position:"sticky", top:0, background:"#0d0d18", textAlign:"left", padding:"9px 12px", fontSize:10.5, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.08)", whiteSpace:"nowrap" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.leads.map(l => (
+                    <tr key={l.id}>
+                      <td style={{ padding:"9px 12px", color:"#e2e8f0", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>
+                        {l.email || <span style={{ color:"#475569" }}>anonymous</span>}
+                        {l.marketing_consent && <span title="Opted in to marketing" style={{ marginLeft:6, fontSize:9.5, fontWeight:700, padding:"1px 6px", borderRadius:99, background:"rgba(52,211,153,0.12)", color:"#34d399" }}>OPT-IN</span>}
+                      </td>
+                      <td title={l.url} style={{ padding:"9px 12px", color:"#94a3b8", borderBottom:"1px solid rgba(255,255,255,0.05)", maxWidth:220, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontFamily:"JetBrains Mono,monospace" }}>{l.url}</td>
+                      <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>{l.source}</td>
+                      <td style={{ padding:"9px 12px", color:"#94a3b8", borderBottom:"1px solid rgba(255,255,255,0.05)", fontFamily:"JetBrains Mono,monospace" }}>{l.score ?? "-"}</td>
+                      <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>{l.utm_campaign || l.utm_source || "-"}</td>
+                      <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>
+                        {new Date(l.submitted_at).toLocaleDateString("en-GB", { day:"numeric", month:"short" })}
+                      </td>
+                      <td style={{ padding:"9px 12px", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>
+                        {l.user_id
+                          ? <span style={{ fontSize:10.5, fontWeight:700, padding:"2px 8px", borderRadius:99, background:"rgba(124,58,237,0.15)", color:"#a78bfa" }}>{l.plan || "signed up"}</span>
+                          : <span style={{ color:"#475569" }}>-</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
 const MarketingSection = ({ adminFetch, API_URL }) => {
   const [data, setData]       = useState(null);
   const [error, setError]     = useState("");
@@ -228,6 +335,10 @@ const MarketingSection = ({ adminFetch, API_URL }) => {
               </p>
             </div>
           )}
+
+          {/* The list behind the funnel's first number. It sits directly under
+              the count it explains rather than behind a tab nobody opens. */}
+          <LeadsPanel adminFetch={adminFetch} API_URL={API_URL} />
 
           {/* Totals. Spend is a single figure because a pound is a pound.
               Signups are three figures because they are three different
