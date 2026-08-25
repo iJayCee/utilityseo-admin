@@ -518,7 +518,35 @@ const AdminPanel = () => {
 
   // Overview is the landing tab: the founder's daily check should be zero
   // clicks, and every other tab is a drill-down from it.
-  const [activeTab, setActiveTab] = useState("overview");
+  // Openable from a link. The error digest email has an "Open Monitoring"
+  // button, and this panel always started on Overview regardless of where the
+  // link pointed - so the button led to the right app and the wrong screen,
+  // with no way to tell that Monitoring was two clicks away.
+  //
+  // Validated against the known ids rather than trusted: an unknown ?tab=
+  // should land on Overview, not on a blank panel.
+  const TAB_IDS = new Set([
+    'overview', 'users', 'upgrades', 'promos', 'prospectflow', 'costs', 'marketing',
+    'monitoring', 'capacity', 'backups', 'loadtest', 'announce', 'privacy', 'audit',
+    'externaldata', 'collection',
+  ]);
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      const t = new URLSearchParams(window.location.search).get('tab');
+      return t && TAB_IDS.has(t) ? t : 'overview';
+    } catch { return 'overview'; }
+  });
+
+  // Kept in the URL as it changes, so a refresh or a bookmark returns to the
+  // same screen instead of bouncing back to Overview.
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      if (activeTab === 'overview') url.searchParams.delete('tab');
+      else url.searchParams.set('tab', activeTab);
+      window.history.replaceState({}, '', url);
+    } catch { /* history is not worth an error */ }
+  }, [activeTab]);
   const [overview, setOverview] = useState(null);
   // Projects belonging to the user currently open in the info modal - both the
   // ones they own and the ones shared with them. Support always arrives from
