@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 // of their group when they are not configured.
 
 const CARD = { background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, padding:"16px 18px" };
+const LINK = { fontSize:11.5, color:"#a78bfa", textDecoration:"none", fontWeight:600, whiteSpace:"nowrap" };
 const LABEL = { fontSize:10, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em" };
 
 const StatusPill = ({ service }) => {
@@ -83,11 +84,32 @@ const ServiceRow = ({ s }) => (
       </div>
     )}
 
-    {s.signup && !s.configured && !s.retired && (
-      <a href={s.signup} target="_blank" rel="noopener noreferrer"
-        style={{ display:"inline-block", marginTop:8, fontSize:11.5, color:"#a78bfa", textDecoration:"none", fontWeight:600 }}>
-        Get a key &rarr;
-      </a>
+    {/* Always shown, not only when something is missing.
+        The old version offered a link exclusively when a service was
+        unconfigured, which is the one moment you do not need it: a working
+        service is the one whose balance runs out, whose quota is hit, and
+        whose dashboard you actually have to find. */}
+    {(s.links || (s.signup && !s.configured)) && !s.retired && (
+      <div style={{ display:"flex", gap:14, flexWrap:"wrap", alignItems:"center", marginTop:9 }}>
+        {s.links?.console && (
+          <a href={s.links.console} target="_blank" rel="noopener noreferrer" style={LINK}>
+            Sign in &rarr;
+          </a>
+        )}
+        {s.links?.billing && (
+          <a href={s.links.billing} target="_blank" rel="noopener noreferrer" style={LINK}>
+            Billing and credit &rarr;
+          </a>
+        )}
+        {s.signup && !s.configured && (
+          <a href={s.signup} target="_blank" rel="noopener noreferrer" style={LINK}>
+            Get a key &rarr;
+          </a>
+        )}
+        {s.links?.note && (
+          <span style={{ fontSize:11, color:"#64748b", lineHeight:1.5 }}>{s.links.note}</span>
+        )}
+      </div>
     )}
   </div>
 );
