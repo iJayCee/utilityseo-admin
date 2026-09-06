@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import BackupsSection from "./sections/BackupsSection";
 import ExternalDataSection from "./sections/ExternalDataSection";
+import DemoAccessSection from "./sections/DemoAccessSection";
 import PromosSection from "./sections/PromosSection.jsx";
 import MonitoringSection from "./sections/MonitoringSection.jsx";
 import CapacitySection from "./sections/CapacitySection.jsx";
@@ -528,7 +529,7 @@ const AdminPanel = () => {
   const TAB_IDS = new Set([
     'overview', 'users', 'upgrades', 'promos', 'prospectflow', 'costs', 'marketing',
     'monitoring', 'capacity', 'backups', 'loadtest', 'announce', 'privacy', 'audit',
-    'externaldata', 'collection',
+    'externaldata', 'collection', 'demoaccess',
   ]);
   const [activeTab, setActiveTab] = useState(() => {
     try {
@@ -1215,7 +1216,7 @@ const AdminPanel = () => {
             { name:"Operations", tabs:[{id:"monitoring",label:"Monitoring"},{id:"capacity",label:"Capacity"},{id:"backups",label:"Backups"},{id:"loadtest",label:"Load test"}] },
             { name:"Comms", tabs:[{id:"announce",label:"Announcements"}] },
             { name:"Legal", tabs:[{id:"privacy",label:"Privacy"},{id:"audit",label:"Audit log"}] },
-            { name:"External", tabs:[{id:"externaldata",label:"External data"},{id:"collection",label:"Collection toggle"}] },
+            { name:"External", tabs:[{id:"externaldata",label:"External data"},{id:"collection",label:"Collection toggle"},{id:"demoaccess",label:"Demo access"}] },
           ].map(group => (
             <div key={group.name || "overview"}>
               {group.name && <p style={{ fontSize:10, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.08em", margin:"0 0 5px 4px" }}>{group.name}</p>}
@@ -1469,6 +1470,10 @@ const AdminPanel = () => {
 
         {activeTab === "externaldata" && (
           <ExternalDataSection adminFetch={adminFetch} API_URL={API_URL} />
+        )}
+
+        {activeTab === "demoaccess" && (
+          <DemoAccessSection adminFetch={adminFetch} API_URL={API_URL} />
         )}
 
         {activeTab === "marketing" && (
