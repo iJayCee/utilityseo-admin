@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import BackupsSection from "./sections/BackupsSection";
 import ExternalDataSection from "./sections/ExternalDataSection";
 import DemoAccessSection from "./sections/DemoAccessSection";
+import ProspectsSection from "./sections/ProspectsSection";
 import PromosSection from "./sections/PromosSection.jsx";
 import MonitoringSection from "./sections/MonitoringSection.jsx";
 import CapacitySection from "./sections/CapacitySection.jsx";
@@ -529,7 +530,7 @@ const AdminPanel = () => {
   const TAB_IDS = new Set([
     'overview', 'users', 'upgrades', 'promos', 'prospectflow', 'costs', 'marketing',
     'monitoring', 'capacity', 'backups', 'loadtest', 'announce', 'privacy', 'audit',
-    'externaldata', 'collection', 'demoaccess',
+    'externaldata', 'collection', 'demoaccess', 'prospects',
   ]);
   const [activeTab, setActiveTab] = useState(() => {
     try {
@@ -1212,7 +1213,7 @@ const AdminPanel = () => {
           {[
             { name:null, tabs:[{id:"overview",label:"◈ Overview"}] },
             { name:"People", tabs:[{id:"users",label:"Users"},{id:"upgrades",label:"Upgrades"}] },
-            { name:"Revenue", tabs:[{id:"promos",label:"Promo codes"},{id:"prospectflow",label:"ProspectFlow"},{id:"costs",label:"Cost forecast"},{id:"marketing",label:"Marketing"}] },
+            { name:"Revenue", tabs:[{id:"promos",label:"Promo codes"},{id:"prospects",label:"Prospects"},{id:"prospectflow",label:"ProspectFlow"},{id:"costs",label:"Cost forecast"},{id:"marketing",label:"Marketing"}] },
             { name:"Operations", tabs:[{id:"monitoring",label:"Monitoring"},{id:"capacity",label:"Capacity"},{id:"backups",label:"Backups"},{id:"loadtest",label:"Load test"}] },
             { name:"Comms", tabs:[{id:"announce",label:"Announcements"}] },
             { name:"Legal", tabs:[{id:"privacy",label:"Privacy"},{id:"audit",label:"Audit log"}] },
@@ -1474,6 +1475,10 @@ const AdminPanel = () => {
 
         {activeTab === "demoaccess" && (
           <DemoAccessSection adminFetch={adminFetch} API_URL={API_URL} />
+        )}
+
+        {activeTab === "prospects" && (
+          <ProspectsSection adminFetch={adminFetch} API_URL={API_URL} />
         )}
 
         {activeTab === "marketing" && (

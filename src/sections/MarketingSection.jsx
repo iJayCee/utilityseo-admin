@@ -61,6 +61,23 @@ const EMPTY_FORM = { name:"", platform:"google_ads", details:"", utmCampaign:"",
 // "120 leads" and "9 of them became accounts" are different facts and only
 // the second tells you whether any of this is working.
 const LeadsPanel = ({ adminFetch, API_URL }) => {
+  // Send a lead to the Prospects pipeline: same URL, same flow as one typed
+  // in by hand. The lead id travels with it so the two rows stay connected.
+  const [prospecting, setProspecting] = useState(null);
+  const [prospected, setProspected] = useState([]);
+  const addProspect = async (l) => {
+    setProspecting(l.id);
+    try {
+      const r = await adminFetch(`${API_URL}/admin/prospects`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: l.url, email: l.email || undefined, leadId: l.id }),
+      });
+      if (r.ok) setProspected(p => [...p, l.id]);
+    } catch { /* the Prospects tab is the place that reports its own errors */ }
+    finally { setProspecting(null); }
+  };
+
   const [data, setData] = useState(null);
   const [search, setSearch] = useState("");
   const [consentedOnly, setConsentedOnly] = useState(false);
@@ -135,7 +152,23 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
                         {l.email || <span style={{ color:"#475569" }}>anonymous</span>}
                         {l.marketing_consent && <span title="Opted in to marketing" style={{ marginLeft:6, fontSize:9.5, fontWeight:700, padding:"1px 6px", borderRadius:99, background:"rgba(52,211,153,0.12)", color:"#34d399" }}>OPT-IN</span>}
                       </td>
-                      <td title={l.url} style={{ padding:"9px 12px", color:"#94a3b8", borderBottom:"1px solid rgba(255,255,255,0.05)", maxWidth:220, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", fontFamily:"JetBrains Mono,monospace" }}>{l.url}</td>
+                      <td title={l.url} style={{ padding:"9px 12px", borderBottom:"1px solid rgba(255,255,255,0.05)", maxWidth:240 }}>
+                        {/* The address is the useful thing on this row: it is
+                            somebody's actual website and the first thing you
+                            want to do is look at it. Opened in a new tab with
+                            noopener, because it is a stranger's site. */}
+                        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                          <a href={l.url} target="_blank" rel="noopener noreferrer"
+                            style={{ flex:1, minWidth:0, color:"#818cf8", textDecoration:"none", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                            {l.url.replace(/^https?:\/\/(www\.)?/, "")}
+                          </a>
+                          <button onClick={() => addProspect(l)} disabled={prospecting === l.id}
+                            title="Add to Prospects: scans the site, looks for a contact and drafts an email"
+                            style={{ flexShrink:0, minHeight:26, padding:"0 8px", borderRadius:7, border:"1px solid rgba(124,58,237,0.35)", background:"rgba(124,58,237,0.12)", color:"#a78bfa", fontSize:11, fontWeight:600, cursor:"pointer" }}>
+                            {prospecting === l.id ? "…" : prospected.includes(l.id) ? "Added" : "Prospect"}
+                          </button>
+                        </div>
+                      </td>
                       <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>{l.source}</td>
                       <td style={{ padding:"9px 12px", color:"#94a3b8", borderBottom:"1px solid rgba(255,255,255,0.05)", fontFamily:"JetBrains Mono,monospace" }}>{l.score ?? "-"}</td>
                       <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>{l.utm_campaign || l.utm_source || "-"}</td>
