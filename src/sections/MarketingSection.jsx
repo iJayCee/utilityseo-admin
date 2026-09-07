@@ -171,7 +171,20 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
                       </td>
                       <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>{l.source}</td>
                       <td style={{ padding:"9px 12px", color:"#94a3b8", borderBottom:"1px solid rgba(255,255,255,0.05)", fontFamily:"JetBrains Mono,monospace" }}>{l.score ?? "-"}</td>
-                      <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>{l.utm_campaign || l.utm_source || "-"}</td>
+                      <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>{/* Campaign and source are different facts and were sharing one
+                            cell, so "chatgpt.com" (a source: they arrived from
+                            ChatGPT) looked like a campaign name we had chosen.
+                            Shown separately, and labelled. */}
+                        {l.utm_campaign || l.utm_source ? (
+                          <>
+                            {l.utm_campaign && <div title="utm_campaign">{l.utm_campaign}</div>}
+                            {l.utm_source && (
+                              <div style={{ fontSize:10.5, color:"#475569" }} title="utm_source: where they came from">
+                                via {l.utm_source}{l.utm_medium ? ` · ${l.utm_medium}` : ""}
+                              </div>
+                            )}
+                          </>
+                        ) : <span style={{ color:"#475569" }}>direct</span>}</td>
                       <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>
                         {/* Date and the time to the second. Several leads
                             arrive within a minute of each other from one
