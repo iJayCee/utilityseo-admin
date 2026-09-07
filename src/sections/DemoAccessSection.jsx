@@ -47,8 +47,8 @@ const DemoAccessSection = ({ adminFetch, API_URL }) => {
   const card = { background: "var(--card-bg, #13131F)", border: "1px solid var(--card-border, rgba(255,255,255,0.07))", borderRadius: 14, padding: "18px 20px", marginBottom: 16 };
   const muted = { fontSize: 12.5, color: "var(--text-muted, #64748b)", lineHeight: 1.6, margin: 0 };
 
-  if (!data && !error) return <div style={card}><p style={muted}>Loading…</p></div>;
-
+  // Heading first, loading state in the body: the same shape as every other
+  // section, and the only version a render test can see past.
   return (
     <div>
       <div style={card}>
@@ -58,6 +58,8 @@ const DemoAccessSection = ({ adminFetch, API_URL }) => {
         </p>
         {error && <p style={{ ...muted, color: "#f87171", marginTop: 10 }}>{error}</p>}
       </div>
+
+      {!data && !error && <div style={card}><p style={muted}>Loading…</p></div>}
 
       {data && (
         <>

@@ -104,8 +104,10 @@ const ProspectsSection = ({ adminFetch, API_URL }) => {
     try { await navigator.clipboard.writeText(text); setCopied(id); setTimeout(() => setCopied(""), 2000); } catch { setError("Could not copy. Select the text and copy it by hand."); }
   };
 
-  if (!data && !error) return <div style={card}><p style={muted}>Loading…</p></div>;
-
+  // The heading renders straight away, the way every other section does.
+  // Returning a bare "Loading…" left the tab with no title for as long as
+  // the request took, and meant a render test of this section only ever
+  // proved that the word Loading appears.
   return (
     <div>
       <div style={card}>
@@ -139,6 +141,7 @@ const ProspectsSection = ({ adminFetch, API_URL }) => {
         {error && <p style={{ ...muted, color: "#f87171", marginTop: 10 }}>{error}</p>}
       </div>
 
+      {!data && !error && <div style={card}><p style={muted}>Loading…</p></div>}
       {data?.prospects?.length === 0 && <div style={card}><p style={muted}>Nothing here yet. Add a website above, or send one over from the Leads table on the Marketing tab.</p></div>}
 
       {data?.prospects?.map(p => {
