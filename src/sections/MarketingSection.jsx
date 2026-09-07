@@ -63,6 +63,11 @@ const EMPTY_FORM = { name:"", platform:"google_ads", details:"", utmCampaign:"",
 const LeadsPanel = ({ adminFetch, API_URL }) => {
   // Send a lead to the Prospects pipeline: same URL, same flow as one typed
   // in by hand. The lead id travels with it so the two rows stay connected.
+  //
+  // The scan starts server side and nobody waits for it. Pressing this on
+  // twenty leads in a minute queues twenty scans that run one at a time, so
+  // the button comes back immediately and the Prospects tab fills in as they
+  // finish, rather than the browser holding twenty open crawls.
   const [prospecting, setProspecting] = useState(null);
   const [prospected, setProspected] = useState([]);
   const addProspect = async (l) => {
@@ -71,7 +76,7 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
       const r = await adminFetch(`${API_URL}/admin/prospects`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: l.url, email: l.email || undefined, leadId: l.id }),
+        body: JSON.stringify({ url: l.url, email: l.email || undefined, leadId: l.id, research: true }),
       });
       if (r.ok) setProspected(p => [...p, l.id]);
     } catch { /* the Prospects tab is the place that reports its own errors */ }
@@ -163,7 +168,7 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
                             {l.url.replace(/^https?:\/\/(www\.)?/, "")}
                           </a>
                           <button onClick={() => addProspect(l)} disabled={prospecting === l.id}
-                            title="Add to Prospects: scans the site, looks for a contact and drafts an email"
+                            title={prospected.includes(l.id) ? "Added. The scan is running now; the result appears in the Prospects tab." : "Add to Prospects: scans the site, looks for a contact and drafts an email"}
                             style={{ flexShrink:0, minHeight:26, padding:"0 8px", borderRadius:7, border:"1px solid rgba(124,58,237,0.35)", background:"rgba(124,58,237,0.12)", color:"#a78bfa", fontSize:11, fontWeight:600, cursor:"pointer" }}>
                             {prospecting === l.id ? "…" : prospected.includes(l.id) ? "Added" : "Prospect"}
                           </button>
