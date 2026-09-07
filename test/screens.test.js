@@ -48,6 +48,17 @@ const adminFetch = async () => new Response('{}', { status: 200, headers: { 'Con
 const API_URL = 'http://harness/api';
 const selfContained = { adminFetch, API_URL };
 
+// App.jsx derives stats from the user list, so before anything loads it is an
+// array of four zeroed cards, not an empty object. A section that maps over it
+// crashes on a fixture that gets the shape wrong, which is the fixture lying
+// rather than the section failing.
+const STATS = [
+  { label: 'Total Users', val: 0, icon: '', col: '#a78bfa' },
+  { label: 'Active', val: 0, icon: '', col: '#22c55e' },
+  { label: 'Deactivated', val: 0, icon: '○', col: '#94a3b8', onClick: noop },
+  { label: 'Temp Access', val: 0, icon: '⏱', col: '#38bdf8' },
+];
+
 // The props App.jsx passes, in the state they are in right after mount:
 // nothing loaded, no error, handlers that do nothing. A section that cannot
 // render that state is broken for the first second of every visit.
@@ -65,16 +76,18 @@ const PROPS = {
   DemoAccessSection:      selfContained,
   ExternalDataSection:    selfContained,
   MarketingSection:       selfContained,
-  MonitoringSection:      { loadMonitoring: noop, monData: null, monError: null, monLoading: false, stats: {} },
+  MonitoringSection:      { loadMonitoring: noop, monData: null, monError: null, monLoading: false, stats: STATS },
   PrivacySection:         selfContained,
+  PromosSection:          { createPromo: noop, deletePromo: noop, email: '', expandedPromo: null, loadPromoSignups: noop, loading: false, loadingPromos: false, promoForm: { code: '', description: '', trial_plan: 'enterprise', trial_days: '14', max_uses: '', expires_at: '' }, promoFormError: '', promoSignups: {}, promos: [], savingPromo: false, setPromoForm: noop, stats: STATS, togglePromoActive: noop, users: [] },
+  ProspectFlowSection:    { email: '', loadCodeRevenue: noop, loadProspectFlow: noop, pfCodeFilter: 'all', pfData: null, pfError: '', pfLoading: false, pfSearch: '', pfStatusFilter: 'all', setPfCodeFilter: noop, setPfData: noop, setPfSearch: noop, setPfStatusFilter: noop, stats: STATS, users: [] },
   ProspectsSection:       selfContained,
   UpgradesSection:        { loadUpgrades: noop, upgData: null, upgError: null, upgLoading: false, users: [] },
 };
 
-// These take a large bag of App state and are covered by the drift test
-// below rather than rendered, because inventing forty props would test the
-// fixture rather than the section.
-const NOT_RENDERED = new Set(['PromosSection', 'ProspectFlowSection']);
+// Every section in the folder now renders. The set stays so the drift test
+// below keeps working, and so a section that genuinely cannot be rendered has
+// somewhere honest to go rather than being quietly dropped from PROPS.
+const NOT_RENDERED = new Set([]);
 
 let React, renderToStaticMarkup;
 before(async () => {
