@@ -173,7 +173,15 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
                       <td style={{ padding:"9px 12px", color:"#94a3b8", borderBottom:"1px solid rgba(255,255,255,0.05)", fontFamily:"JetBrains Mono,monospace" }}>{l.score ?? "-"}</td>
                       <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>{l.utm_campaign || l.utm_source || "-"}</td>
                       <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>
-                        {new Date(l.submitted_at).toLocaleDateString("en-GB", { day:"numeric", month:"short" })}
+                        {/* Date and the time to the second. Several leads
+                            arrive within a minute of each other from one
+                            person trying a few URLs, and a bare date cannot
+                            tell that apart from five separate visitors. */}
+                        <div>{new Date(l.submitted_at).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"2-digit" })}</div>
+                        <div style={{ fontSize:10.5, color:"#475569", fontFamily:"JetBrains Mono,monospace" }}
+                          title={new Date(l.submitted_at).toISOString()}>
+                          {new Date(l.submitted_at).toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false })}
+                        </div>
                       </td>
                       <td style={{ padding:"9px 12px", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>
                         {l.user_id

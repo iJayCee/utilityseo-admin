@@ -1,3 +1,4 @@
+import BalancesPanel from "./BalancesPanel";
 import { useState, useEffect } from "react";
 
 // Everything this platform depends on that we do not control.
@@ -152,6 +153,10 @@ const ExternalDataSection = ({ adminFetch, API_URL }) => {
           &#8635; Refresh
         </button>
       </div>
+
+      {/* What is about to run out, and where to top it up. Above the
+          service list because it is the question people open this tab for. */}
+      <BalancesPanel adminFetch={adminFetch} API_URL={API_URL} />
 
       {error && (
         <div style={{ background:"rgba(248,113,113,0.1)", border:"1px solid rgba(248,113,113,0.3)", borderRadius:10, padding:"12px 16px", marginBottom:16, color:"#f87171", fontSize:13 }}>
