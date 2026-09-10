@@ -16,66 +16,8 @@ import MarketingSection from "./sections/MarketingSection.jsx";
 import AuditSection from "./sections/AuditSection.jsx";
 import LoadTestPanel from "./LoadTestPanel";
 
-const LOGO_BASE64 = "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCABBAEEDASIAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAAAAQCAwUGAQcI/8QALhAAAgIBAgQEBgEFAAAAAAAAAAECAwQRYQUSMVEGcXKxFCEjJDSRQVJTYpKh/8QAGgEAAgMBAQAAAAAAAAAAAAAAAgQDBQYBB//EACoRAAICAgEBBgYDAAAAAAAAAAABAgMEERIhBRMUMVFxIjIzNEFhUpHB/9oADAMBAAIRAxEAPwD8jQqSrjol0B1rshmEPpx8kDgazwy4roOcBN1rsRcF2G3AawuDcSzo82Jg5F0f6owfL++hD4NzeorbOcDHdexFw2N3M8PcZxa3ZfwzKjBLVyVbaXm10MpwF7cKUHqUdAOGhRwIuA24EHATnjAOIrygXcoC/cA8Tcqh9KHpQOAxTD6FfpXsShWpWRT6NrU9A8PqCf6LLj0NrwvwfHcY5udBWa/OuuXTTu+50lOWkko6JL5JL+Dk6ctJJJ6JDdWZuS42VCpaiDGejraszc5vxh4axOJ0TzMGqFObFczUVordmu+/7JVZm41Vmbjtl9eTDhYtoNyUlpnyeVbTaa0aK3A3/FOPCvjeQ4LSNjU0t2tX/wB1MlwMtbi8ZNC7gIcoF/KBW9wR8Tfoh9vX6F7HsoNJtdS/Hh9tV6F7EnA9HWKpVpeqLPhtCFWZuNVZm5l8VxbaZPIpi5Qfzkl1W/kJVZm5gMmVuFc6ren+r1RWT5Vy0zrKszcaqzNzk6szcexrrJx5lrp3GcTJndNQh1YUJOT0izjNnxGdOfVJKP6EHAclAg4F9LGf5GuBmcoF3KBUdwQ8To8WH2tXoj7EnAtwVGeDRODUouuOjXkWOB6dXj7qi16ItlHohNwE8jhmHdLmnjx5n1a1jr+jVcCDgLZGBXcuNkU1+1sGVal5oyquGYlT1jSm/wDJt+5e4LsOOBBwFIdn1UrVcFH2WgFUo+SFHAg4DjgQcCOeMccTI5QD4jF/v1/7AZrdX8l/aFPh9RTgn4K9THWAC/Z/2tfsga/kRFnjABhhHhFgBEzjPGU5f49npYALX/Tl7MCXkzBAAMGVx//Z";
-
-const GlobalStyles = () => (
-  <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body, #root { width: 100%; height: 100%; overflow-x: hidden; }
-    body { font-family: 'Sora', sans-serif; background: #0a0a0f; color: #fff; }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0a0a0f; }
-    ::-webkit-scrollbar-thumb { background: #2d2d3d; border-radius: 3px; }
-    .mono { font-family: 'JetBrains Mono', monospace; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spin { animation: spin 1s linear infinite; }
-    .glass { background: rgba(255,255,255,0.04); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
-    input, select, textarea { font-family: 'Sora', sans-serif; }
-    .desktop-only { display: grid; }
-    .mobile-only { display: none; }
-    /* Horizontal scroller for wide grid tables. Must exist as its own rule -
-       in the customer app the same class was declared on elements while only
-       .glass.scroll-x (never write that as a backtick-quoted span here - this
-       whole block is a template literal, and a stray backtick closes it early
-       and blanks the entire admin) had CSS, so three tables silently
-       overflowed. A class that does nothing is worse than no class, because
-       the markup reads as handled. */
-    .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    /* A short page has no scrollbar and a long one does, so without this the
-       content column shifts a few px between tabs. */
-    .admin-body { scrollbar-gutter: stable; }
-    @media (max-width: 700px) {
-      .desktop-only { display: none !important; }
-      .mobile-only { display: block !important; }
-      .admin-header { padding: 12px 16px !important; }
-      .admin-body { padding: 16px !important; }
-      .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
-      .admin-chart-card { grid-column: 1 / -1 !important; }
-      .tab-bar { gap: 4px !important; }
-      .tab-btn { padding: 8px 12px !important; font-size: 12px !important; }
-      .promo-table-header { display: none !important; }
-      .promo-row { display: flex !important; flex-direction: column !important; gap: 8px !important; padding: 16px !important; }
-      .promo-row-grid { display: contents !important; }
-    }
-    /* Phones. 700px above covers the tablet-ish reflow; these are the things
-       that only break on a real handset. */
-    @media (max-width: 640px) {
-      /* Every tab's own padding, in one place, so they cannot drift again. */
-      .admin-body { padding: 14px !important; }
-      /* Stat cards go two-up rather than five-up; below ~380px, one-up. */
-      .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
-      /* The tab bar is the primary nav here - let it wrap instead of pushing
-         the page sideways. */
-      .tab-bar { flex-wrap: wrap !important; }
-      /* Thumb targets. 44px is the floor, and several admin buttons were ~28. */
-      .tab-btn, .admin-body button { min-height: 40px; }
-    }
-    @media (max-width: 380px) {
-      .stats-grid { grid-template-columns: 1fr !important; }
-    }
-  `}</style>
-);
+import Shell, { LogoMark, Kpi, Skeleton, SkeletonRows, KpiSkeleton, EmptyState } from './Shell.jsx';
+import { TAB_IDS } from './nav.js';
 
 const MonthlyChart = ({ users }) => {
   const [activeBar, setActiveBar] = useState(null);
@@ -527,11 +469,6 @@ const AdminPanel = () => {
   //
   // Validated against the known ids rather than trusted: an unknown ?tab=
   // should land on Overview, not on a blank panel.
-  const TAB_IDS = new Set([
-    'overview', 'users', 'upgrades', 'promos', 'prospectflow', 'costs', 'marketing',
-    'monitoring', 'capacity', 'backups', 'loadtest', 'announce', 'privacy', 'audit',
-    'externaldata', 'collection', 'demoaccess', 'prospects',
-  ]);
   const [activeTab, setActiveTab] = useState(() => {
     try {
       const t = new URLSearchParams(window.location.search).get('tab');
@@ -630,7 +567,10 @@ const AdminPanel = () => {
   const MAIN_APP_URL = import.meta.env.VITE_MAIN_APP_URL || 'https://app.utilityseo.com';
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
-  useEffect(() => { if (authed) { loadUsers(); loadOverview(); } }, []);
+  // The screen the URL asked for loads too. Before this, only Overview and
+  // Users loaded on start, so the error digest email's "Open Monitoring" link
+  // opened Monitoring with nothing on it until you pressed Refresh.
+  useEffect(() => { if (authed) { loadUsers(); loadOverview(); if (activeTab !== 'overview') handleTabSwitch(activeTab); } }, []);
 
   const showToast = (msg, isError = false) => {
     setToast({ msg, isError });
@@ -1090,11 +1030,11 @@ const AdminPanel = () => {
 
   // ─── LOGIN ───────────────────────────────────────────────────────────────────
   if (!authed) return (
-    <div style={{ minHeight:"100vh", background:"#070710", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
       <div style={{ width:"100%", maxWidth:400 }}>
         <div style={{ textAlign:"center", marginBottom:32 }}>
           <div style={{ display:"inline-flex", alignItems:"center", gap:10, marginBottom:12 }}>
-            <img src={LOGO_BASE64} alt="UtilitySEO" style={{ width:36, height:36, borderRadius:8, objectFit:"cover" }} />
+            <LogoMark size={36} />
             <span style={{ fontSize:20, fontWeight:800 }}>UtilitySEO</span>
           </div>
           <br />
@@ -1116,150 +1056,91 @@ const AdminPanel = () => {
   );
 
   // ─── DASHBOARD ───────────────────────────────────────────────────────────────
+  const signOut = () => { setAuthed(false); setEmail(""); setPass(""); localStorage.removeItem('admin_authed'); };
+  // Typing a customer's name anywhere lands on the Users list: support starts
+  // from "this customer emailed us".
+  const onSearch = (v) => { setSearch(v); if (activeTab !== "users" && v) handleTabSwitch("users"); };
+
   return (
-    <div style={{ minHeight:"100vh", background:"#070710", fontFamily:"Sora,sans-serif" }}>
-      {toast && <div style={{ position:"fixed", top:20, right:20, zIndex:999, background:toast.isError?"#ef4444":"#22c55e", color:"#fff", padding:"12px 20px", borderRadius:12, fontSize:13, fontWeight:600, boxShadow:"0 8px 32px rgba(0,0,0,0.4)" }}>{toast.isError?"✗":"✓"} {toast.msg}</div>}
+    <>
+      {toast && <div className={`toast${toast.isError ? " is-error" : ""}`} role="status">{toast.msg}</div>}
 
-      <div className="admin-header" style={{ background:"#0d0d18", borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"16px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-          <img src={LOGO_BASE64} alt="UtilitySEO" style={{ width:32, height:32, borderRadius:8, objectFit:"cover" }} />
-          <span style={{ fontSize:16, fontWeight:700 }}>UtilitySEO</span>
-          <span style={{ padding:"3px 12px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", borderRadius:99, fontSize:11, fontWeight:700, color:"#ef4444", letterSpacing:"0.05em" }}>SUPER ADMIN</span>
-        </div>
-        <button onClick={() => { setAuthed(false); setEmail(""); setPass(""); localStorage.removeItem('admin_authed'); }} style={{ padding:"8px 16px", background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, color:"#ef4444", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>Sign Out</button>
-      </div>
+      <Shell activeTab={activeTab} onNav={handleTabSwitch} search={search} onSearch={onSearch}
+        onSignOut={signOut} adminEmail={adminCreds?.email} appUrl={MAIN_APP_URL}>
+        {() => (<>
 
-      {/* One column for the whole panel. Before this the tab bar spanned the
-          full window while each section centred itself at its own max-width -
-          900, 960, 1000, 1100 - so the content moved sideways every time you
-          changed tab, and the tabs never lined up with what was under them.
-          1600 matches the customer app, so the two feel like one product. */}
-      <div className="admin-body" style={{ padding:"32px", maxWidth:1600, margin:"0 auto", boxSizing:"border-box" }}>
-        {/* Stats */}
-        <div className="stats-grid" style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:16, marginBottom:32 }}>
-          {stats.map(s => (
-            <div key={s.label} className="glass" style={{ borderRadius:16, padding:20, cursor:s.onClick?"pointer":"default", transition:"border-color 0.15s" }}
-              onClick={s.onClick}
-              onMouseEnter={e => { if(s.onClick) e.currentTarget.style.borderColor="rgba(255,255,255,0.15)"; }}
-              onMouseLeave={e => { if(s.onClick) e.currentTarget.style.borderColor="rgba(255,255,255,0.08)"; }}>
-              <div style={{ fontSize:24, marginBottom:8 }}>{s.icon}</div>
-              <div style={{ fontSize:32, fontWeight:800, color:s.col }}>{s.val}</div>
-              <div style={{ fontSize:13, color:"#475569", marginTop:4 }}>{s.label}</div>
-              {s.onClick && <div style={{ fontSize:10, color:"#334155", marginTop:4 }}>click to filter ↗</div>}
-            </div>
-          ))}
-
-          <div className="glass" style={{ borderRadius:16, padding:20 }}>
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:2 }}>
-              <span style={{ fontSize:24 }}></span>
-              <span style={{ fontSize:26, fontWeight:800, color:"#f59e0b" }}>{countPaid}</span>
-            </div>
-            <div style={{ fontSize:13, color:"#475569", marginBottom:12 }}>Paid</div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
-              <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:"#64748b" }}>{countFree}</div><div style={{ fontSize:10, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Free</div></div>
-              <div style={{ textAlign:"center", borderLeft:"1px solid rgba(255,255,255,0.07)", borderRight:"1px solid rgba(255,255,255,0.07)" }}><div style={{ fontSize:20, fontWeight:800, color:"#a78bfa" }}>{countEntrepreneur}</div><div style={{ fontSize:10, fontWeight:700, color:"#7C3AED", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Entrepreneur</div></div>
-              <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:"#f59e0b" }}>{countEnterprise}</div><div style={{ fontSize:10, fontWeight:700, color:"#d97706", textTransform:"uppercase", letterSpacing:"0.04em", marginTop:2 }}>Enterprise</div></div>
-            </div>
-          </div>
-
-          <div className="glass" style={{ borderRadius:16, padding:20 }}>
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:2 }}>
-              <span style={{ fontSize:20 }}></span>
-              <div style={{ display:"flex", gap:3 }}>
-                {[{label:"7d",val:7},{label:"30d",val:30},{label:"90d",val:90},{label:"1yr",val:365}].map(p => (
-                  <button key={p.val} onClick={() => setStatsWindow(p.val)}
-                    style={{ padding:"2px 6px", fontSize:9, fontWeight:700, fontFamily:"Sora,sans-serif", cursor:"pointer", borderRadius:5, border:`1px solid ${statsWindow===p.val?"#34d399":"rgba(255,255,255,0.1)"}`, background:statsWindow===p.val?"rgba(52,211,153,0.15)":"rgba(255,255,255,0.04)", color:statsWindow===p.val?"#34d399":"#475569" }}>
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div style={{ fontSize:28, fontWeight:800, color:"#34d399", marginTop:4 }}>{newSignups}</div>
-            <div style={{ fontSize:12, color:"#475569", marginBottom:4 }}>New Signups</div>
-          </div>
-
-          {/* Quick-find: type an email or name anywhere in the admin and land on
-              the filtered Users list. Support starts from "this customer emailed
-              us", so the search box lives in the header, not inside one tab. */}
-          <div className="glass" style={{ borderRadius:16, padding:"14px 20px", gridColumn:"1 / -1", display:"flex", alignItems:"center", gap:12 }}>
-            <span style={{ fontSize:16 }} aria-hidden="true"></span>
-            <input
-              value={search}
-              onChange={e => { setSearch(e.target.value); if (activeTab !== "users" && e.target.value) handleTabSwitch("users"); }}
-              placeholder="Find a user by email, name or company - jumps to the Users list as you type"
-              style={{ flex:1, padding:"9px 12px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:9, color:"#e2e8f0", fontSize:13, fontFamily:"Sora,sans-serif", outline:"none" }} />
-            {search && (
-              <button onClick={() => setSearch("")}
-                style={{ padding:"7px 12px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#94a3b8", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
-                Clear
-              </button>
-            )}
-          </div>
-
-          <div className="glass" style={{ borderRadius:16, padding:20, gridColumn:"1 / -1" }}>
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
-              <span style={{ fontSize:13, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em" }}>Monthly Signups - Last 12 Months</span>
-              <span style={{ fontSize:11, color:"#334155" }}>Current month highlighted</span>
-            </div>
-            <MonthlyChart users={users} />
-          </div>
-        </div>
-
-        {/* Tab Bar */}
-        {/* Navigation grouped by the job you came to do, not a flat strip of
-            eleven tabs. Overview stands alone as the landing view; everything
-            else is a drill-down inside one of four groups. */}
-        <div className="tab-bar" style={{ display:"flex", gap:22, marginBottom:28, borderBottom:"1px solid rgba(255,255,255,0.07)", paddingBottom:10, flexWrap:"wrap", alignItems:"flex-end" }}>
-          {[
-            { name:null, tabs:[{id:"overview",label:"◈ Overview"}] },
-            { name:"People", tabs:[{id:"users",label:"Users"},{id:"upgrades",label:"Upgrades"}] },
-            { name:"Revenue", tabs:[{id:"promos",label:"Promo codes"},{id:"prospects",label:"Prospects"},{id:"prospectflow",label:"ProspectFlow"},{id:"costs",label:"Cost forecast"},{id:"marketing",label:"Marketing"}] },
-            { name:"Operations", tabs:[{id:"monitoring",label:"Monitoring"},{id:"capacity",label:"Capacity"},{id:"backups",label:"Backups"},{id:"loadtest",label:"Load test"}] },
-            { name:"Comms", tabs:[{id:"announce",label:"Announcements"}] },
-            { name:"Legal", tabs:[{id:"privacy",label:"Privacy"},{id:"audit",label:"Audit log"}] },
-            { name:"External", tabs:[{id:"externaldata",label:"External data"},{id:"collection",label:"Collection toggle"},{id:"demoaccess",label:"Demo access"}] },
-          ].map(group => (
-            <div key={group.name || "overview"}>
-              {group.name && <p style={{ fontSize:10, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.08em", margin:"0 0 5px 4px" }}>{group.name}</p>}
-              <div style={{ display:"flex", gap:4 }}>
-                {group.tabs.map(tab => (
-                  <button key={tab.id} className="tab-btn" onClick={() => handleTabSwitch(tab.id)}
-                    style={{ padding:"8px 16px", background:activeTab===tab.id?"rgba(124,58,237,0.2)":"rgba(255,255,255,0.03)", border:`1px solid ${activeTab===tab.id?"rgba(124,58,237,0.5)":"rgba(255,255,255,0.06)"}`, color:activeTab===tab.id?"#a78bfa":"#64748b", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif", borderRadius:9, transition:"all 0.15s" }}>
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ── USERS TAB ── */}
-        {/* ── OVERVIEW TAB ── */}
         {activeTab === "overview" && (
-          <div>
-            {overview === null && <p style={{ color:"#64748b" }}>Loading…</p>}
-            {overview?.error && <p style={{ color:"#f87171" }}>Could not load the overview.</p>}
-            {overview && !overview.error && (
-              <>
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))", gap:12, marginBottom:20 }}>
-                  {[
-                    ["Users", overview.users.total, `${overview.users.paid || 0} paid · ${overview.users.new_7d || 0} new this week`, "#a78bfa"],
-                    ["Projects", overview.projects.total, null, "#a78bfa"],
-                    ["Site scans", overview.scans.total, `${overview.scans.last_7d || 0} this week`, "#7dd3fc"],
-                    ["Errors (24h)", overview.errors.last_24h, overview.errors.last_24h > 0 ? "check Monitoring" : "all quiet", overview.errors.last_24h > 0 ? "#f87171" : "#4ade80"],
-                    ["AI spend (30d)", `$${(overview.llm.cost_30d || 0).toFixed(2)}`, `${overview.llm.calls_30d || 0} calls`, "#fbbf24"],
-                    ["Database", overview.dbSize || "-", null, "#94a3b8"],
-                  ].map(([label, val, sub, col]) => (
-                    <div key={label}
-                      onClick={() => { const go = { "Users":"users", "Errors (24h)":"monitoring", "AI spend (30d)":"costs", "Site scans":"capacity", "Database":"backups" }[label]; if (go) handleTabSwitch(go); }}
-                      title="Open the detailed view"
-                      style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, padding:"16px 18px", cursor:"pointer" }}>
-                      <p style={{ fontSize:11, color:"#64748b", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", margin:0 }}>{label}</p>
-                      <p style={{ fontSize:26, fontWeight:800, color:col, margin:"6px 0 0", fontFamily:"JetBrains Mono,monospace" }}>{val ?? "-"}</p>
-                      {sub && <p style={{ fontSize:11, color:"#475569", margin:"4px 0 0" }}>{sub}</p>}
+          <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+            {overview === null && <KpiSkeleton n={6} />}
+            {overview?.error && (
+              <div className="card"><EmptyState title="Could not load the overview" text="The server did not answer. Try again in a moment."
+                action={<button type="button" className="btn btn-sm" onClick={loadOverview}>Try again</button>} /></div>
+            )}
+            {overview && !overview.error && (() => {
+              const errs = overview.errors?.last_24h || 0;
+              const attention = [
+                errs > 0 && { text: `${errs} error${errs === 1 ? "" : "s"} in the last 24 hours`, tab: "monitoring", tone: "red" },
+                (overview.users?.new_7d || 0) > 0 && { text: `${overview.users.new_7d} new signup${overview.users.new_7d === 1 ? "" : "s"} this week to welcome`, tab: "users", tone: "green" },
+                users.filter(u => u.tempPlan).length > 0 && { text: `${users.filter(u => u.tempPlan).length} account${users.filter(u => u.tempPlan).length === 1 ? "" : "s"} on a trial or temporary plan`, tab: "upgrades", tone: "purple" },
+                countDeactivated > 0 && { text: `${countDeactivated} deactivated account${countDeactivated === 1 ? "" : "s"}`, tab: "users", tone: "grey", onClick: () => { setFilterStatus("deactivated"); setShowFilters(true); handleTabSwitch("users"); } },
+              ].filter(Boolean);
+              const tonePill = { red: "pill-red", green: "pill-green", purple: "pill-purple", grey: "pill-grey" };
+              return (
+                <>
+                  <div className="kpi-grid">
+                    <Kpi label="Users" value={overview.users.total} sub={`${overview.users.paid || 0} paying · ${overview.users.new_7d || 0} new this week`} tone="purple" onClick={() => handleTabSwitch("users")} />
+                    <Kpi label="New signups" value={newSignups} tone="green"
+                      sub={<span style={{ display:"inline-flex", gap:4 }}>{[7, 30, 90, 365].map(d => (
+                        <button key={d} type="button" onClick={e => { e.stopPropagation(); setStatsWindow(d); }}
+                          className={`btn btn-sm${statsWindow === d ? " btn-active" : ""}`} style={{ minHeight:24, padding:"1px 8px", fontSize:11 }}>
+                          {d === 365 ? "1yr" : `${d}d`}</button>))}</span>} />
+                    <Kpi label="Site scans" value={overview.scans.total} sub={`${overview.scans.last_7d || 0} this week`} tone="sky" onClick={() => handleTabSwitch("capacity")} />
+                    <Kpi label="Errors (24h)" value={errs} sub={errs > 0 ? "open Monitoring" : "all quiet"} tone={errs > 0 ? "red" : "green"} onClick={() => handleTabSwitch("monitoring")} />
+                    <Kpi label="AI spend (30d)" value={`$${(overview.llm.cost_30d || 0).toFixed(2)}`} sub={`${overview.llm.calls_30d || 0} calls`} tone="gold" onClick={() => handleTabSwitch("costs")} />
+                    <Kpi label="Database" value={overview.dbSize || "-"} tone="grey" onClick={() => handleTabSwitch("backups")} />
+                  </div>
+
+                  <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))", gap:16 }}>
+                    <div className="card">
+                      <p className="card-title">Needs your attention</p>
+                      <p className="card-sub">What changed, and where to go for it.</p>
+                      {attention.length === 0 ? (
+                        <p style={{ marginTop:14, fontSize:13, color:"var(--green)" }}>Nothing waiting. All quiet.</p>
+                      ) : (
+                        <div style={{ display:"flex", flexDirection:"column", gap:8, marginTop:14 }}>
+                          {attention.map(a => (
+                            <button key={a.text} type="button" onClick={a.onClick || (() => handleTabSwitch(a.tab))}
+                              style={{ display:"flex", alignItems:"center", gap:10, width:"100%", textAlign:"left", padding:"10px 12px", borderRadius:10, border:"1px solid var(--border)", background:"rgba(255,255,255,0.02)", color:"var(--text)", fontSize:13, cursor:"pointer", minHeight:40 }}>
+                              <span className={`pill ${tonePill[a.tone]}`} style={{ width:8, height:8, padding:0, borderRadius:99 }} aria-hidden="true" />
+                              <span style={{ flex:1 }}>{a.text}</span>
+                              <span style={{ color:"var(--muted)", fontSize:12 }}>Open</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+
+                    <div className="card">
+                      <p className="card-title">Plans</p>
+                      <p className="card-sub">{countPaid} paying of {users.length} accounts.</p>
+                      <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:10, marginTop:14 }}>
+                        {[["Free", countFree, "#94a3b8"], ["Entrepreneur", countEntrepreneur, "var(--purple-text)"], ["Enterprise", countEnterprise, "var(--gold)"]].map(([l, n, col]) => (
+                          <div key={l} style={{ textAlign:"center", padding:"10px 6px", borderRadius:10, background:"rgba(255,255,255,0.02)", border:"1px solid var(--border)" }}>
+                            <div className="mono" style={{ fontSize:22, fontWeight:700, color:col }}>{n}</div>
+                            <div className="label" style={{ marginTop:2 }}>{l}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card">
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:12, flexWrap:"wrap" }}>
+                      <p className="card-title">Signups, last 12 months</p>
+                      <span style={{ fontSize:11, color:"var(--muted)" }}>Current month on the right. Click a bar.</span>
+                    </div>
+                    <MonthlyChart users={users} />
+                  </div>
 
                 {/* The data flywheel: the asset that grows with usage and cannot be
                     bought or backfilled later. Shown with growth, because a flat
@@ -1298,28 +1179,20 @@ const AdminPanel = () => {
                     ))}
                   </div>
                 </div>
-              </>
-            )}
+                </>
+              );
+            })()}
           </div>
         )}
 
         {activeTab === "users" && (<>
         <div style={{ marginBottom:16 }}>
-          <div style={{ display:"flex", gap:10, marginBottom:10, flexWrap:"wrap" }}>
-            <div style={{ position:"relative", flex:1, minWidth:200 }}>
-              <span style={{ position:"absolute", left:16, top:"50%", transform:"translateY(-50%)", color:"#475569", fontSize:16 }}></span>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by email, name or company…"
-                style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:14, padding:"12px 16px 12px 44px", color:"#fff", fontSize:14, outline:"none", fontFamily:"JetBrains Mono,monospace", boxSizing:"border-box" }}
-                onFocus={e => e.target.style.border="1px solid #7C3AED"} onBlur={e => e.target.style.border="1px solid rgba(255,255,255,0.1)"} />
-            </div>
-            <button onClick={() => setShowFilters(f => !f)}
-              style={{ padding:"12px 18px", background:showFilters?"rgba(124,58,237,0.2)":"rgba(255,255,255,0.05)", border:`1px solid ${showFilters?"#7C3AED":"rgba(255,255,255,0.1)"}`, borderRadius:14, color:showFilters?"#a78bfa":"#94a3b8", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
-              Filters {activeFiltersCount>0 && <span style={{ background:"#7C3AED", color:"#fff", borderRadius:99, padding:"1px 7px", fontSize:11 }}>{activeFiltersCount}</span>}
+          <div style={{ display:"flex", gap:8, marginBottom:10, flexWrap:"wrap", alignItems:"center" }}>
+            <button type="button" className={`btn${showFilters ? " btn-active" : ""}`} onClick={() => setShowFilters(f => !f)}>
+              Filters {activeFiltersCount>0 && <span className="pill pill-purple">{activeFiltersCount}</span>}
             </button>
-            <button onClick={exportCSV}
-              style={{ padding:"12px 18px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:14, color:"#22c55e", fontSize:13, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600, display:"flex", alignItems:"center", gap:6, whiteSpace:"nowrap" }}>
-              ↓ Export CSV
-            </button>
+            <button type="button" className="btn" onClick={exportCSV}>Export CSV</button>
+            {search && <span style={{ fontSize:12, color:"var(--muted)" }}>Showing matches for "{search}"</span>}
           </div>
 
           {showFilters && (
@@ -1401,7 +1274,7 @@ const AdminPanel = () => {
         </div>
 
         {loadingUsers ? (
-          <div style={{ textAlign:"center", padding:60 }}><Spinner /><p style={{ color:"#64748b", marginTop:16 }}>Loading users...</p></div>
+          <div className="card"><SkeletonRows rows={8} /></div>
         ) : (
           <div className="glass" style={{ borderRadius:18, overflow:"hidden" }}>
             <div style={{ display:"grid", gridTemplateColumns:"2fr 100px 130px 60px 60px 50px 90px 110px 140px", gap:16, padding:"12px 20px", borderBottom:"1px solid rgba(255,255,255,0.06)" }} className="desktop-only">
@@ -1497,8 +1370,8 @@ const AdminPanel = () => {
           <ProspectFlowSection email={email} loadCodeRevenue={loadCodeRevenue} loadProspectFlow={loadProspectFlow} pfCodeFilter={pfCodeFilter} pfData={pfData} pfError={pfError} pfLoading={pfLoading} pfSearch={pfSearch} pfStatusFilter={pfStatusFilter} setPfCodeFilter={setPfCodeFilter} setPfData={setPfData} setPfSearch={setPfSearch} setPfStatusFilter={setPfStatusFilter} stats={stats} users={users} />
         )}
 
-        {/* .admin-body closes HERE, after the last tab. It used to close straight after the promos tab, which left the twelve tabs below it outside the padded, max-width container - they rendered edge to edge while every other page had margins. The revenue modal below is position:fixed, so it does not care either way. */}
-      </div>
+        </>)}
+      </Shell>
 
         {/* ── REVENUE MODAL ── */}
         {revenueModal && (
@@ -1794,10 +1667,8 @@ const AdminPanel = () => {
 
       {editing && <EditModal user={editing} onClose={() => setEditing(null)} adminFetch={adminFetch} apiUrl={API_URL}
         onSave={(updated) => { updateUser(updated.id, { plan:updated.plan, status:updated.status, tempPlan:updated.tempPlan, tempDays:updated.tempDays, revokeTemp:updated.revokeTemp }); setEditing(null); }} />}
-    </div>
+    </>
   );
 };
 
-export default function App() {
-  return (<><GlobalStyles /><AdminPanel /></>);
-}
+export default AdminPanel;
