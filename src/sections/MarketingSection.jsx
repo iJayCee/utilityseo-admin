@@ -16,11 +16,10 @@
 // answer, and nobody looking at it could tell which parts were which - while
 // the cost-per-signup underneath it drives real budget decisions.
 import { useState, useEffect } from "react";
-import { card, label, Section, SectionHeader } from "../shared.jsx";
+import { Section } from "../shared.jsx";
+import { EmptyState, Kpi, SkeletonRows } from "../Shell.jsx";
 
-const input = { padding:"10px 14px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.12)", borderRadius:10, color:"#e2e8f0", fontSize:13, fontFamily:"Sora,sans-serif", width:"100%", boxSizing:"border-box" };
-const btn = (bg = "#7C3AED") => ({ padding:"10px 18px", background:bg, border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif", minHeight:44 });
-const ghost = { ...btn("transparent"), border:"1px solid rgba(255,255,255,0.12)", color:"#e2e8f0", fontWeight:600 };
+const CARD_GAP = 20;
 const mono = { fontFamily:"JetBrains Mono,monospace" };
 
 const gbp = (pence) => `£${((Number(pence) || 0) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -34,14 +33,14 @@ const shortMonth = (m) => {
 };
 
 const STATUS = {
-  running:   { color:"#22c55e", bg:"rgba(34,197,94,0.1)",   label:"Running" },
-  scheduled: { color:"#38bdf8", bg:"rgba(56,189,248,0.1)",  label:"Scheduled" },
-  ended:     { color:"#64748b", bg:"rgba(148,163,184,0.1)", label:"Ended" },
+  running:   { pill:"pill-green", label:"Running" },
+  scheduled: { pill:"pill-purple", label:"Scheduled" },
+  ended:     { pill:"pill-grey", label:"Ended" },
 };
 
 const StatusPill = ({ status }) => {
   const c = STATUS[status] || STATUS.running;
-  return <span style={{ fontSize:11, fontWeight:700, color:c.color, background:c.bg, border:`1px solid ${c.color}33`, padding:"3px 10px", borderRadius:99, whiteSpace:"nowrap" }}>{c.label}</span>;
+  return <span className={`pill ${c.pill}`}>{c.label}</span>;
 };
 
 const readJson = async (res) => {
@@ -105,18 +104,17 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
 
   const c = data?.counts || {};
   return (
-    <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:16, padding:"18px 20px", marginTop:16 }}>
+    <div className="card" style={{ marginTop:16, marginBottom:CARD_GAP }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
         <div>
-          <div style={{ fontSize:14, fontWeight:700, color:"#e2e8f0" }}>Leads</div>
-          <div style={{ fontSize:12, color:"#64748b", marginTop:3 }}>
+          <div className="card-title" style={{ fontSize:14 }}>Leads</div>
+          <div className="card-sub">
             {data
               ? `${c.total} total · ${c.consented} opted in to marketing · ${c.anonymous} with no email · ${c.last7} in the last 7 days`
               : "Everyone who ran a free scan or asked for a report."}
           </div>
         </div>
-        <button onClick={() => setOpen(o => !o)}
-          style={{ padding:"8px 14px", borderRadius:10, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.04)", color:"#a78bfa", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+        <button type="button" className="btn btn-sm" onClick={() => setOpen(o => !o)}>
           {open ? "Hide" : "View leads"}
         </button>
       </div>
@@ -124,59 +122,58 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
       {open && (
         <>
           <div style={{ display:"flex", gap:8, alignItems:"center", margin:"14px 0 10px", flexWrap:"wrap" }}>
-            <input value={search} onChange={e => setSearch(e.target.value)}
+            <input className="field" value={search} onChange={e => setSearch(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") load(); }}
               placeholder="Search email or site…"
-              style={{ flex:1, minWidth:200, padding:"8px 12px", borderRadius:10, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.04)", color:"#e2e8f0", fontSize:13, fontFamily:"Sora,sans-serif", outline:"none" }} />
-            <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"#94a3b8", cursor:"pointer" }}>
+              style={{ flex:1, minWidth:200, width:"auto" }} />
+            <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"var(--text-2)", cursor:"pointer" }}>
               <input type="checkbox" checked={consentedOnly} onChange={e => setConsentedOnly(e.target.checked)} />
               Opted in only
             </label>
-            <button onClick={load} disabled={busy}
-              style={{ padding:"8px 14px", borderRadius:10, border:"none", background:"#7C3AED", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
+            <button type="button" className="btn btn-primary btn-sm" onClick={load} disabled={busy}>
               {busy ? "Loading…" : "Search"}
             </button>
           </div>
 
-          {!data ? null : data.leads.length === 0 ? (
-            <div style={{ fontSize:12.5, color:"#64748b", padding:"12px 0" }}>No leads match that.</div>
+          {!data ? (busy ? <SkeletonRows rows={4} /> : null) : data.leads.length === 0 ? (
+            <EmptyState title="No leads match that" text="Try a shorter search, or clear the opted-in filter." />
           ) : (
-            <div style={{ overflowX:"auto", maxHeight:460, overflowY:"auto", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10 }}>
-              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+            <div className="scroll-x" style={{ maxHeight:460, overflowY:"auto", border:"1px solid var(--border)", borderRadius:10 }}>
+              <table className="tbl" style={{ fontSize:12 }}>
                 <thead>
                   <tr>
                     {["Email","Site","Source","Score","Campaign","When","Account"].map(h => (
-                      <th key={h} style={{ position:"sticky", top:0, background:"#0d0d18", textAlign:"left", padding:"9px 12px", fontSize:10.5, fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.08)", whiteSpace:"nowrap" }}>{h}</th>
+                      <th key={h} style={{ position:"sticky", top:0, background:"var(--card)" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {data.leads.map(l => (
                     <tr key={l.id}>
-                      <td style={{ padding:"9px 12px", color:"#e2e8f0", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>
-                        {l.email || <span style={{ color:"#475569" }}>anonymous</span>}
-                        {l.marketing_consent && <span title="Opted in to marketing" style={{ marginLeft:6, fontSize:9.5, fontWeight:700, padding:"1px 6px", borderRadius:99, background:"rgba(52,211,153,0.12)", color:"#34d399" }}>OPT-IN</span>}
+                      <td style={{ color:"var(--text)", whiteSpace:"nowrap" }}>
+                        {l.email || <span style={{ color:"var(--muted)" }}>anonymous</span>}
+                        {l.marketing_consent && <span title="Opted in to marketing" className="pill pill-green" style={{ marginLeft:6, fontSize:9.5, padding:"1px 6px" }}>OPT-IN</span>}
                       </td>
-                      <td title={l.url} style={{ padding:"9px 12px", borderBottom:"1px solid rgba(255,255,255,0.05)", maxWidth:240 }}>
+                      <td title={l.url} style={{ maxWidth:240 }}>
                         {/* The address is the useful thing on this row: it is
                             somebody's actual website and the first thing you
                             want to do is look at it. Opened in a new tab with
                             noopener, because it is a stranger's site. */}
                         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                           <a href={l.url} target="_blank" rel="noopener noreferrer"
-                            style={{ flex:1, minWidth:0, color:"#818cf8", textDecoration:"none", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                            style={{ flex:1, minWidth:0, color:"var(--sky)", textDecoration:"none", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                             {l.url.replace(/^https?:\/\/(www\.)?/, "")}
                           </a>
-                          <button onClick={() => addProspect(l)} disabled={prospecting === l.id}
+                          <button type="button" className="btn btn-sm btn-active" onClick={() => addProspect(l)} disabled={prospecting === l.id}
                             title={prospected.includes(l.id) ? "Added. The scan is running now; the result appears in the Prospects tab." : "Add to Prospects: scans the site, looks for a contact and drafts an email"}
-                            style={{ flexShrink:0, minHeight:26, padding:"0 8px", borderRadius:7, border:"1px solid rgba(124,58,237,0.35)", background:"rgba(124,58,237,0.12)", color:"#a78bfa", fontSize:11, fontWeight:600, cursor:"pointer" }}>
+                            style={{ flexShrink:0, minHeight:26, padding:"0 8px", fontSize:11 }}>
                             {prospecting === l.id ? "…" : prospected.includes(l.id) ? "Added" : "Prospect"}
                           </button>
                         </div>
                       </td>
-                      <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>{l.source}</td>
-                      <td style={{ padding:"9px 12px", color:"#94a3b8", borderBottom:"1px solid rgba(255,255,255,0.05)", fontFamily:"JetBrains Mono,monospace" }}>{l.score ?? "-"}</td>
-                      <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>{/* Campaign and source are different facts and were sharing one
+                      <td style={{ color:"var(--muted)", whiteSpace:"nowrap" }}>{l.source}</td>
+                      <td className="num" style={{ color:"var(--text-2)" }}>{l.score ?? "-"}</td>
+                      <td style={{ color:"var(--muted)", whiteSpace:"nowrap" }}>{/* Campaign and source are different facts and were sharing one
                             cell, so "chatgpt.com" (a source: they arrived from
                             ChatGPT) looked like a campaign name we had chosen.
                             Shown separately, and labelled. */}
@@ -184,27 +181,27 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
                           <>
                             {l.utm_campaign && <div title="utm_campaign">{l.utm_campaign}</div>}
                             {l.utm_source && (
-                              <div style={{ fontSize:10.5, color:"#475569" }} title="utm_source: where they came from">
+                              <div style={{ fontSize:10.5, color:"var(--dim)" }} title="utm_source: where they came from">
                                 via {l.utm_source}{l.utm_medium ? ` · ${l.utm_medium}` : ""}
                               </div>
                             )}
                           </>
-                        ) : <span style={{ color:"#475569" }}>direct</span>}</td>
-                      <td style={{ padding:"9px 12px", color:"#64748b", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>
+                        ) : <span style={{ color:"var(--muted)" }}>direct</span>}</td>
+                      <td style={{ color:"var(--muted)", whiteSpace:"nowrap" }}>
                         {/* Date and the time to the second. Several leads
                             arrive within a minute of each other from one
                             person trying a few URLs, and a bare date cannot
                             tell that apart from five separate visitors. */}
                         <div>{new Date(l.submitted_at).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"2-digit" })}</div>
-                        <div style={{ fontSize:10.5, color:"#475569", fontFamily:"JetBrains Mono,monospace" }}
+                        <div className="mono" style={{ fontSize:10.5, color:"var(--dim)" }}
                           title={new Date(l.submitted_at).toISOString()}>
                           {new Date(l.submitted_at).toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false })}
                         </div>
                       </td>
-                      <td style={{ padding:"9px 12px", borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" }}>
+                      <td style={{ whiteSpace:"nowrap" }}>
                         {l.user_id
-                          ? <span style={{ fontSize:10.5, fontWeight:700, padding:"2px 8px", borderRadius:99, background:"rgba(124,58,237,0.15)", color:"#a78bfa" }}>{l.plan || "signed up"}</span>
-                          : <span style={{ color:"#475569" }}>-</span>}
+                          ? <span className="pill pill-purple">{l.plan || "signed up"}</span>
+                          : <span style={{ color:"var(--muted)" }}>-</span>}
                       </td>
                     </tr>
                   ))}
@@ -293,71 +290,68 @@ const MarketingSection = ({ adminFetch, API_URL }) => {
 
   const t = data?.totals;
   const maxMonth = Math.max(1, ...(data?.spendByMonth || []).map(m => m.pence));
+  const roasTone = (r) => (r === null || r === undefined ? "grey" : r >= 1 ? "green" : "red");
 
   return (
     <Section>
-      <SectionHeader
-        title="Marketing"
-        subtitle="Ad spend by campaign, and the signups it can be shown to have produced."
-        right={<>
-          <button style={ghost} onClick={load}>Refresh</button>
-          <button style={btn()} onClick={() => setShow(v => !v)}>{showForm ? "Cancel" : "New campaign"}</button>
-        </>}
-      />
+      <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginBottom:14 }}>
+        <button type="button" className="btn" onClick={load}>Refresh</button>
+        <button type="button" className="btn btn-primary" onClick={() => setShow(v => !v)}>{showForm ? "Cancel" : "New campaign"}</button>
+      </div>
 
       {error && (
-        <div style={{ ...card, borderColor:"rgba(248,113,113,0.3)", background:"rgba(248,113,113,0.08)", color:"#f87171", fontSize:13 }}>{error}</div>
+        <div className="card" style={{ marginBottom:CARD_GAP, borderColor:"rgba(248,113,113,0.3)", background:"rgba(248,113,113,0.08)", color:"var(--red)", fontSize:13 }}>{error}</div>
       )}
 
       {showForm && (
-        <form onSubmit={createCampaign} style={card}>
-          <p style={label}>New campaign</p>
+        <form onSubmit={createCampaign} className="card" style={{ marginBottom:CARD_GAP }}>
+          <p className="label" style={{ marginBottom:10 }}>New campaign</p>
           <div style={{ display:"grid", gap:12, gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))" }}>
             <div>
-              <p style={label}>Name</p>
-              <input style={input} value={form.name} onChange={e => setForm(f => ({ ...f, name:e.target.value }))} placeholder="Spring search push" />
+              <p className="label" style={{ marginBottom:6 }}>Name</p>
+              <input className="field" value={form.name} onChange={e => setForm(f => ({ ...f, name:e.target.value }))} placeholder="Spring search push" />
             </div>
             <div>
-              <p style={label}>Platform</p>
-              <select style={input} value={form.platform} onChange={e => setForm(f => ({ ...f, platform:e.target.value }))}>
+              <p className="label" style={{ marginBottom:6 }}>Platform</p>
+              <select className="field" value={form.platform} onChange={e => setForm(f => ({ ...f, platform:e.target.value }))}>
                 {(data?.platforms || []).map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
               </select>
             </div>
             <div>
-              <p style={label}>Starts</p>
-              <input style={input} type="date" value={form.startedOn} onChange={e => setForm(f => ({ ...f, startedOn:e.target.value }))} />
+              <p className="label" style={{ marginBottom:6 }}>Starts</p>
+              <input className="field" type="date" value={form.startedOn} onChange={e => setForm(f => ({ ...f, startedOn:e.target.value }))} />
             </div>
             <div>
-              <p style={label}>Ends (optional)</p>
-              <input style={input} type="date" value={form.endedOn} onChange={e => setForm(f => ({ ...f, endedOn:e.target.value }))} />
+              <p className="label" style={{ marginBottom:6 }}>Ends (optional)</p>
+              <input className="field" type="date" value={form.endedOn} onChange={e => setForm(f => ({ ...f, endedOn:e.target.value }))} />
             </div>
             <div>
-              <p style={label}>utm_campaign</p>
-              <input style={{ ...input, ...mono }} value={form.utmCampaign} onChange={e => setForm(f => ({ ...f, utmCampaign:e.target.value }))} placeholder="spring26" />
+              <p className="label" style={{ marginBottom:6 }}>utm_campaign</p>
+              <input className="field mono" value={form.utmCampaign} onChange={e => setForm(f => ({ ...f, utmCampaign:e.target.value }))} placeholder="spring26" />
             </div>
             <div>
-              <p style={label}>Signups so far (optional)</p>
-              <input style={input} type="number" min="0" value={form.manualSignups} onChange={e => setForm(f => ({ ...f, manualSignups:e.target.value }))} placeholder="0" />
+              <p className="label" style={{ marginBottom:6 }}>Signups so far (optional)</p>
+              <input className="field" type="number" min="0" value={form.manualSignups} onChange={e => setForm(f => ({ ...f, manualSignups:e.target.value }))} placeholder="0" />
             </div>
           </div>
           <div style={{ marginTop:12 }}>
-            <p style={label}>Details</p>
-            <textarea style={{ ...input, minHeight:70, resize:"vertical" }} value={form.details} onChange={e => setForm(f => ({ ...f, details:e.target.value }))} placeholder="Audience, creative, bid strategy, anything you will want to remember in six months." />
+            <p className="label" style={{ marginBottom:6 }}>Details</p>
+            <textarea className="field" style={{ minHeight:70, resize:"vertical" }} value={form.details} onChange={e => setForm(f => ({ ...f, details:e.target.value }))} placeholder="Audience, creative, bid strategy, anything you will want to remember in six months." />
           </div>
           {/* Said at the point the field is filled in, not buried in a help
               page - this is the one instruction that makes tracking work. */}
-          <p style={{ fontSize:12, color:"#64748b", lineHeight:1.6, marginTop:12 }}>
-            Put <span style={{ ...mono, color:"#e2e8f0" }}>?utm_campaign={form.utmCampaign || "spring26"}&amp;utm_source={form.platform}</span> on the end of the ad's landing page URL.
+          <p style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6, marginTop:12 }}>
+            Put <span className="mono" style={{ color:"var(--text)" }}>?utm_campaign={form.utmCampaign || "spring26"}&amp;utm_source={form.platform}</span> on the end of the ad's landing page URL.
             Signups arriving with it are counted as <strong>tracked</strong> - the only count that is hard evidence.
             Leave it blank for offline campaigns and use the manual figure instead.
           </p>
-          <button type="submit" style={{ ...btn(), marginTop:12 }} disabled={busy === "create"}>
+          <button type="submit" className="btn btn-primary" style={{ marginTop:12 }} disabled={busy === "create"}>
             {busy === "create" ? "Saving…" : "Create campaign"}
           </button>
         </form>
       )}
 
-      {!data && !error && <div style={card}><p style={{ color:"#64748b", fontSize:13 }}>Loading…</p></div>}
+      {!data && !error && <div className="card" style={{ marginBottom:CARD_GAP }}><SkeletonRows rows={5} /></div>}
 
       {data && (
         <>
@@ -367,29 +361,29 @@ const MarketingSection = ({ adminFetch, API_URL }) => {
               indicative (they are parallel entry points, not a sequence);
               signup -> paying is a true subset and its rate can be trusted. */}
           {data.funnel && (
-            <div style={{ ...card, marginBottom:20 }}>
-              <p style={label}>Funnel</p>
+            <div className="card" style={{ marginBottom:CARD_GAP }}>
+              <p className="label">Funnel</p>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(130px, 1fr))", gap:10, marginTop:8 }}>
                 {data.funnel.stages.map((s, i) => (
-                  <div key={s.key} style={{ padding:"12px 14px", borderRadius:10, background:"rgba(124,58,237,0.06)", border:"1px solid rgba(124,58,237,0.2)" }}>
-                    <p style={{ ...label, marginBottom:4 }}>{s.label}</p>
-                    <p style={{ ...mono, fontSize:22, fontWeight:700, color:"#e2e8f0", margin:0 }}>{s.count}</p>
+                  <div key={s.key} style={{ padding:"12px 14px", borderRadius:10, background:"var(--purple-soft)", border:"1px solid rgba(124,58,237,0.2)" }}>
+                    <p className="label" style={{ marginBottom:4 }}>{s.label}</p>
+                    <p style={{ ...mono, fontSize:22, fontWeight:700, color:"var(--text)", margin:0 }}>{s.count}</p>
                     {i > 0 && (
-                      <p style={{ fontSize:11, color: s.indicative ? "#64748b" : "#94a3b8", margin:"4px 0 0" }}>
+                      <p style={{ fontSize:11, color: s.indicative ? "var(--muted)" : "var(--text-2)", margin:"4px 0 0" }}>
                         {s.ratePctFromPrev === null ? "no upstream yet" : `${s.ratePctFromPrev}% of ${data.funnel.stages[i - 1].label.toLowerCase()}`}
                         {s.indicative ? " · indicative" : ""}
                       </p>
                     )}
-                    {i === 0 && <p style={{ fontSize:11, color:"#64748b", margin:"4px 0 0" }}>free-scan emails</p>}
+                    {i === 0 && <p style={{ fontSize:11, color:"var(--muted)", margin:"4px 0 0" }}>free-scan emails</p>}
                   </div>
                 ))}
-                <div style={{ padding:"12px 14px", borderRadius:10, background:"rgba(34,197,94,0.06)", border:"1px solid rgba(34,197,94,0.25)" }}>
-                  <p style={{ ...label, marginBottom:4 }}>Revenue</p>
-                  <p style={{ ...mono, fontSize:22, fontWeight:700, color:"#22c55e", margin:0 }}>{gbp(data.funnel.revenuePence)}</p>
-                  <p style={{ fontSize:11, color:"#64748b", margin:"4px 0 0" }}>Stripe-verified, all time</p>
+                <div style={{ padding:"12px 14px", borderRadius:10, background:"rgba(52,211,153,0.06)", border:"1px solid rgba(52,211,153,0.25)" }}>
+                  <p className="label" style={{ marginBottom:4 }}>Revenue</p>
+                  <p style={{ ...mono, fontSize:22, fontWeight:700, color:"var(--green)", margin:0 }}>{gbp(data.funnel.revenuePence)}</p>
+                  <p style={{ fontSize:11, color:"var(--muted)", margin:"4px 0 0" }}>Stripe-verified, all time</p>
                 </div>
               </div>
-              <p style={{ fontSize:11, color:"#475569", margin:"10px 0 0", lineHeight:1.5 }}>
+              <p style={{ fontSize:11, color:"var(--muted)", margin:"10px 0 0", lineHeight:1.5 }}>
                 Leads and signups are parallel doors in, so that first rate is directional, not causal. Paying counts only people with a successful Stripe charge - plans granted by hand are not revenue.
               </p>
             </div>
@@ -403,62 +397,40 @@ const MarketingSection = ({ adminFetch, API_URL }) => {
               Signups are three figures because they are three different
               claims - and merging them is the one thing this screen must
               never do. */}
-          <div style={{ display:"grid", gap:12, gridTemplateColumns:"repeat(auto-fit, minmax(150px, 1fr))", marginBottom:20 }}>
-            <div style={{ ...card, marginBottom:0 }}>
-              <p style={label}>Total spend</p>
-              <p style={{ ...mono, fontSize:24, fontWeight:700, color:"#e2e8f0", margin:0 }}>{gbp(t.spendPence)}</p>
-              <p style={{ fontSize:11.5, color:"#64748b", margin:"4px 0 0" }}>{t.campaigns} campaign{t.campaigns === 1 ? "" : "s"}, {t.running} running</p>
-            </div>
-            <div style={{ ...card, marginBottom:0 }}>
-              <p style={label}>Tracked signups</p>
-              <p style={{ ...mono, fontSize:24, fontWeight:700, color:"#22c55e", margin:0 }}>{t.signups.tracked}</p>
-              <p style={{ fontSize:11.5, color:"#64748b", margin:"4px 0 0" }}>arrived with a campaign tag</p>
-            </div>
-            <div style={{ ...card, marginBottom:0 }}>
-              <p style={label}>Cost per tracked signup</p>
-              <p style={{ ...mono, fontSize:24, fontWeight:700, color:"#e2e8f0", margin:0 }}>{cps(t.costPerTrackedSignup)}</p>
-              {/* Divided by trackable spend only. Including offline spend that
-                  can never produce a tracked signup would make the channels
-                  that do work look expensive. */}
-              <p style={{ fontSize:11.5, color:"#64748b", margin:"4px 0 0" }}>over {gbp(t.trackablePence)} of taggable spend</p>
-            </div>
+          <div className="kpi-grid" style={{ marginBottom:CARD_GAP }}>
+            <Kpi label="Total spend" value={gbp(t.spendPence)} sub={`${t.campaigns} campaign${t.campaigns === 1 ? "" : "s"}, ${t.running} running`} />
+            <Kpi label="Tracked signups" value={t.signups.tracked} tone="green" sub="arrived with a campaign tag" />
+            {/* Divided by trackable spend only. Including offline spend that
+                can never produce a tracked signup would make the channels
+                that do work look expensive. */}
+            <Kpi label="Cost per tracked signup" value={cps(t.costPerTrackedSignup)} sub={`over ${gbp(t.trackablePence)} of taggable spend`} />
             {/* ROAS over trackable spend, from tracked users' Stripe charges
                 only. Null (a dash) until there is both spend and attributable
                 revenue - never a made-up number from softer evidence. */}
-            <div style={{ ...card, marginBottom:0 }}>
-              <p style={label}>ROAS (tracked)</p>
-              <p style={{ ...mono, fontSize:24, fontWeight:700, color: t.revenue?.roas === null || t.revenue?.roas === undefined ? "#64748b" : t.revenue.roas >= 1 ? "#22c55e" : "#f87171", margin:0 }}>
-                {t.revenue?.roas === null || t.revenue?.roas === undefined ? "-" : `${t.revenue.roas}x`}
-              </p>
-              <p style={{ fontSize:11.5, color:"#64748b", margin:"4px 0 0" }}>
-                {gbp(t.revenue?.trackedPence || 0)} back from {t.revenue?.trackedPaying || 0} paying
-              </p>
-            </div>
-            <div style={{ ...card, marginBottom:0 }}>
-              <p style={label}>Self-reported / manual</p>
-              <p style={{ ...mono, fontSize:24, fontWeight:700, color:"#94a3b8", margin:0 }}>{t.signups.claimed} / {t.signups.manual}</p>
-              <p style={{ fontSize:11.5, color:"#64748b", margin:"4px 0 0" }}>softer evidence, kept separate</p>
-            </div>
+            <Kpi label="ROAS (tracked)" tone={roasTone(t.revenue?.roas)}
+              value={t.revenue?.roas === null || t.revenue?.roas === undefined ? "-" : `${t.revenue.roas}x`}
+              sub={`${gbp(t.revenue?.trackedPence || 0)} back from ${t.revenue?.trackedPaying || 0} paying`} />
+            <Kpi label="Self-reported / manual" value={`${t.signups.claimed} / ${t.signups.manual}`} tone="grey" sub="softer evidence, kept separate" />
           </div>
 
           {t.untrackablePence > 0 && (
-            <p style={{ fontSize:12, color:"#f59e0b", lineHeight:1.6, marginTop:-8, marginBottom:20 }}>
+            <p style={{ fontSize:12, color:"var(--gold)", lineHeight:1.6, marginTop:-8, marginBottom:CARD_GAP }}>
               {gbp(t.untrackablePence)} of spend is on campaigns with no utm_campaign, so it can never appear in the tracked figure.
               {t.untrackablePence > t.trackablePence && " That is most of the budget - read the tracked number as a corner of the picture, not the whole of it."}
             </p>
           )}
 
           {data.spendByMonth.length > 1 && (
-            <div style={card}>
-              <p style={label}>Spend by month</p>
+            <div className="card" style={{ marginBottom:CARD_GAP }}>
+              <p className="label">Spend by month</p>
               <div style={{ display:"flex", alignItems:"flex-end", gap:6, height:110, marginTop:10 }}>
                 {data.spendByMonth.map(m => (
                   <div key={m.month} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:6, minWidth:0 }} title={`${shortMonth(m.month)}: ${gbp(m.pence)}`}>
                     {/* A month with no spend still gets a slot, so a pause in
                         advertising looks like a pause rather than like
                         continuous activity. */}
-                    <div style={{ width:"100%", height:Math.max(2, Math.round((m.pence / maxMonth) * 80)), background: m.pence ? "#7C3AED" : "rgba(255,255,255,0.08)", borderRadius:"4px 4px 0 0" }} />
-                    <span style={{ fontSize:10, color:"#64748b", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", maxWidth:"100%" }}>{shortMonth(m.month)}</span>
+                    <div style={{ width:"100%", height:Math.max(2, Math.round((m.pence / maxMonth) * 80)), background: m.pence ? "var(--purple)" : "rgba(255,255,255,0.08)", borderRadius:"4px 4px 0 0" }} />
+                    <span style={{ fontSize:10, color:"var(--muted)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", maxWidth:"100%" }}>{shortMonth(m.month)}</span>
                   </div>
                 ))}
               </div>
@@ -466,48 +438,46 @@ const MarketingSection = ({ adminFetch, API_URL }) => {
           )}
 
           {!!data.orphanUtms.length && (
-            <div style={{ ...card, borderColor:"rgba(245,158,11,0.3)" }}>
-              <p style={label}>Signups tagged with an unknown campaign</p>
-              <p style={{ fontSize:12.5, color:"#94a3b8", lineHeight:1.6, margin:"0 0 10px" }}>
+            <div className="card" style={{ marginBottom:CARD_GAP, borderColor:"rgba(245,158,11,0.3)" }}>
+              <p className="label" style={{ marginBottom:6 }}>Signups tagged with an unknown campaign</p>
+              <p style={{ fontSize:12.5, color:"var(--text-2)", lineHeight:1.6, margin:"0 0 10px" }}>
                 These people arrived with a utm_campaign that matches no campaign here - usually a typo in the ad, or a campaign never logged.
                 Their signups are currently credited to nothing.
               </p>
               {data.orphanUtms.map(o => (
-                <div key={o.utm} style={{ display:"flex", justifyContent:"space-between", gap:12, padding:"6px 0", borderTop:"1px solid rgba(255,255,255,0.05)" }}>
-                  <span style={{ ...mono, fontSize:12.5, color:"#e2e8f0" }}>{o.utm}</span>
-                  <span style={{ ...mono, fontSize:12.5, color:"#f59e0b" }}>{o.signups} signup{o.signups === 1 ? "" : "s"}</span>
+                <div key={o.utm} style={{ display:"flex", justifyContent:"space-between", gap:12, padding:"6px 0", borderTop:"1px solid var(--border)" }}>
+                  <span style={{ ...mono, fontSize:12.5, color:"var(--text)" }}>{o.utm}</span>
+                  <span style={{ ...mono, fontSize:12.5, color:"var(--gold)" }}>{o.signups} signup{o.signups === 1 ? "" : "s"}</span>
                 </div>
               ))}
             </div>
           )}
 
           {!data.campaigns.length && (
-            <div style={{ ...card, textAlign:"center", padding:32 }}>
-              <p style={{ fontSize:14, color:"#94a3b8", margin:0 }}>No campaigns logged yet.</p>
-              <p style={{ fontSize:12.5, color:"#64748b", margin:"8px 0 16px", lineHeight:1.6 }}>
-                Log one for anything you spend money on to get people here - ads, sponsorships, a newsletter placement.
-              </p>
-              <button style={btn()} onClick={() => setShow(true)}>New campaign</button>
+            <div className="card" style={{ marginBottom:CARD_GAP }}>
+              <EmptyState title="No campaigns logged yet"
+                text="Log one for anything you spend money on to get people here - ads, sponsorships, a newsletter placement."
+                action={<button type="button" className="btn btn-primary" onClick={() => setShow(true)}>New campaign</button>} />
             </div>
           )}
 
           {data.campaigns.map(c => (
-            <div key={c.id} style={card}>
+            <div key={c.id} className="card" style={{ marginBottom:CARD_GAP }}>
               <div style={{ display:"flex", gap:12, alignItems:"flex-start", flexWrap:"wrap", justifyContent:"space-between" }}>
                 <div style={{ minWidth:0, flex:1 }}>
                   <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
-                    <h4 style={{ fontSize:15, fontWeight:700, color:"#e2e8f0", margin:0 }}>{c.name}</h4>
+                    <h4 className="card-title">{c.name}</h4>
                     <StatusPill status={c.status} />
-                    <span style={{ fontSize:12, color:"#64748b" }}>{c.platformLabel}</span>
+                    <span style={{ fontSize:12, color:"var(--muted)" }}>{c.platformLabel}</span>
                   </div>
                   {c.utm_campaign
-                    ? <p style={{ ...mono, fontSize:11.5, color:"#7C3AED", margin:"6px 0 0" }}>utm_campaign={c.utm_campaign}</p>
-                    : <p style={{ fontSize:11.5, color:"#64748b", margin:"6px 0 0" }}>No UTM - signups here can only be self-reported or hand-counted</p>}
-                  {c.details && <p style={{ fontSize:12.5, color:"#94a3b8", margin:"8px 0 0", lineHeight:1.6, whiteSpace:"pre-wrap" }}>{c.details}</p>}
+                    ? <p style={{ ...mono, fontSize:11.5, color:"var(--purple-text)", margin:"6px 0 0" }}>utm_campaign={c.utm_campaign}</p>
+                    : <p style={{ fontSize:11.5, color:"var(--muted)", margin:"6px 0 0" }}>No UTM - signups here can only be self-reported or hand-counted</p>}
+                  {c.details && <p style={{ fontSize:12.5, color:"var(--text-2)", margin:"8px 0 0", lineHeight:1.6, whiteSpace:"pre-wrap" }}>{c.details}</p>}
                 </div>
                 <div style={{ textAlign:"right" }}>
-                  <p style={{ ...mono, fontSize:20, fontWeight:700, color:"#e2e8f0", margin:0 }}>{gbp(c.spendPence)}</p>
-                  <p style={{ fontSize:11, color:"#64748b", margin:"2px 0 0" }}>
+                  <p style={{ ...mono, fontSize:20, fontWeight:700, color:"var(--text)", margin:0 }}>{gbp(c.spendPence)}</p>
+                  <p style={{ fontSize:11, color:"var(--muted)", margin:"2px 0 0" }}>
                     {c.spendRows ? `${c.spendRows} entr${c.spendRows === 1 ? "y" : "ies"}` : "no spend logged"}
                   </p>
                 </div>
@@ -527,15 +497,15 @@ const MarketingSection = ({ adminFetch, API_URL }) => {
               <div style={{ marginTop:14 }}>
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(115px, 1fr))", gap:10 }}>
                   {[
-                    { k:"tracked", title:"Tracked", why:"arrived with the tag", colour:"#22c55e" },
-                    { k:"claimed", title:"Self-reported", why:"platform-wide, in dates", colour:"#94a3b8" },
-                    { k:"manual",  title:"Manual", why:"typed in by hand", colour:"#94a3b8" },
+                    { k:"tracked", title:"Tracked", why:"arrived with the tag", colour:"var(--green)", ring:"rgba(52,211,153,0.35)" },
+                    { k:"claimed", title:"Self-reported", why:"platform-wide, in dates", colour:"var(--text-2)", ring:"rgba(255,255,255,0.25)" },
+                    { k:"manual",  title:"Manual", why:"typed in by hand", colour:"var(--text-2)", ring:"rgba(255,255,255,0.25)" },
                   ].map(x => (
-                    <div key={x.k} style={{ padding:"10px 12px", borderRadius:10, background:"rgba(255,255,255,0.02)", border:`1px solid ${c.best === x.k ? `${x.colour}55` : "rgba(255,255,255,0.06)"}` }}>
-                      <p style={{ ...label, marginBottom:4 }}>{x.title}</p>
+                    <div key={x.k} style={{ padding:"10px 12px", borderRadius:10, background:"rgba(255,255,255,0.02)", border:`1px solid ${c.best === x.k ? x.ring : "var(--border)"}` }}>
+                      <p className="label" style={{ marginBottom:4 }}>{x.title}</p>
                       <p style={{ ...mono, fontSize:18, fontWeight:700, color:x.colour, margin:0 }}>{c.signups[x.k]}</p>
-                      <p style={{ ...mono, fontSize:12, color:"#e2e8f0", margin:"4px 0 0" }}>{cps(c.costPerSignup[x.k])}<span style={{ ...label, marginBottom:0, marginLeft:4 }}>each</span></p>
-                      <p style={{ fontSize:10.5, color:"#475569", margin:"4px 0 0", lineHeight:1.4 }}>{x.why}</p>
+                      <p style={{ ...mono, fontSize:12, color:"var(--text)", margin:"4px 0 0" }}>{cps(c.costPerSignup[x.k])}<span className="label" style={{ marginLeft:4 }}>each</span></p>
+                      <p style={{ fontSize:10.5, color:"var(--muted)", margin:"4px 0 0", lineHeight:1.4 }}>{x.why}</p>
                     </div>
                   ))}
                 </div>
@@ -547,64 +517,64 @@ const MarketingSection = ({ adminFetch, API_URL }) => {
                     because invented money on a budget screen is worse than a
                     dash. */}
                 {c.utm_campaign && (
-                  <div style={{ display:"flex", gap:16, flexWrap:"wrap", alignItems:"baseline", marginTop:10, padding:"10px 12px", borderRadius:10, background:"rgba(34,197,94,0.04)", border:"1px solid rgba(34,197,94,0.15)" }}>
-                    <span style={{ ...label, marginBottom:0 }}>Returns</span>
-                    <span style={{ ...mono, fontSize:13, color:"#22c55e" }}>{gbp(c.revenue?.trackedPence || 0)} revenue</span>
-                    <span style={{ ...mono, fontSize:13, color:"#e2e8f0" }}>{c.revenue?.trackedPaying || 0} paying</span>
-                    <span style={{ ...mono, fontSize:13, color: c.revenue?.roas === null || c.revenue?.roas === undefined ? "#64748b" : c.revenue.roas >= 1 ? "#22c55e" : "#f87171" }}>
+                  <div style={{ display:"flex", gap:16, flexWrap:"wrap", alignItems:"baseline", marginTop:10, padding:"10px 12px", borderRadius:10, background:"rgba(52,211,153,0.04)", border:"1px solid rgba(52,211,153,0.15)" }}>
+                    <span className="label">Returns</span>
+                    <span style={{ ...mono, fontSize:13, color:"var(--green)" }}>{gbp(c.revenue?.trackedPence || 0)} revenue</span>
+                    <span style={{ ...mono, fontSize:13, color:"var(--text)" }}>{c.revenue?.trackedPaying || 0} paying</span>
+                    <span style={{ ...mono, fontSize:13, color: c.revenue?.roas === null || c.revenue?.roas === undefined ? "var(--muted)" : c.revenue.roas >= 1 ? "var(--green)" : "var(--red)" }}>
                       ROAS {c.revenue?.roas === null || c.revenue?.roas === undefined ? "-" : `${c.revenue.roas}x`}
                     </span>
-                    <span style={{ ...mono, fontSize:13, color: c.revenue?.roiPct === null || c.revenue?.roiPct === undefined ? "#64748b" : c.revenue.roiPct >= 0 ? "#22c55e" : "#f87171" }}>
+                    <span style={{ ...mono, fontSize:13, color: c.revenue?.roiPct === null || c.revenue?.roiPct === undefined ? "var(--muted)" : c.revenue.roiPct >= 0 ? "var(--green)" : "var(--red)" }}>
                       ROI {c.revenue?.roiPct === null || c.revenue?.roiPct === undefined ? "-" : `${c.revenue.roiPct > 0 ? "+" : ""}${c.revenue.roiPct}%`}
                     </span>
-                    <span style={{ fontSize:10.5, color:"#475569" }}>from tracked signups' Stripe charges</span>
+                    <span style={{ fontSize:10.5, color:"var(--muted)" }}>from tracked signups' Stripe charges</span>
                   </div>
                 )}
               </div>
 
               <div style={{ display:"flex", gap:8, marginTop:12, flexWrap:"wrap" }}>
-                <button style={ghost} onClick={() => { const next = expanded === c.id ? null : c.id; setExpanded(next); if (next) loadSignups(c.id); }}>
+                <button type="button" className="btn btn-sm" onClick={() => { const next = expanded === c.id ? null : c.id; setExpanded(next); if (next) loadSignups(c.id); }}>
                   {expanded === c.id ? "Hide" : "Spend & signups"}
                 </button>
-                <button style={ghost} onClick={() => patch(c.id, { archived: !c.archived })} disabled={busy === `patch-${c.id}`}>
+                <button type="button" className="btn btn-sm" onClick={() => patch(c.id, { archived: !c.archived })} disabled={busy === `patch-${c.id}`}>
                   {c.archived ? "Unarchive" : "Archive"}
                 </button>
               </div>
 
               {expanded === c.id && (
-                <div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid rgba(255,255,255,0.07)" }}>
-                  <p style={label}>Add spend</p>
+                <div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid var(--border)" }}>
+                  <p className="label" style={{ marginBottom:6 }}>Add spend</p>
                   <div style={{ display:"grid", gap:8, gridTemplateColumns:"repeat(auto-fit, minmax(130px, 1fr))", alignItems:"end" }}>
-                    <input style={input} type="date" value={spendForm[c.id]?.spentOn || ""} onChange={e => setSpendForm(s => ({ ...s, [c.id]: { ...s[c.id], spentOn:e.target.value } }))} />
-                    <input style={input} placeholder="Amount, e.g. 250" value={spendForm[c.id]?.amount || ""} onChange={e => setSpendForm(s => ({ ...s, [c.id]: { ...s[c.id], amount:e.target.value } }))} />
-                    <input style={input} placeholder="Note (optional)" value={spendForm[c.id]?.note || ""} onChange={e => setSpendForm(s => ({ ...s, [c.id]: { ...s[c.id], note:e.target.value } }))} />
-                    <button style={btn()} onClick={() => addSpend(c.id)} disabled={busy === `spend-${c.id}`}>
+                    <input className="field" type="date" value={spendForm[c.id]?.spentOn || ""} onChange={e => setSpendForm(s => ({ ...s, [c.id]: { ...s[c.id], spentOn:e.target.value } }))} />
+                    <input className="field" placeholder="Amount, e.g. 250" value={spendForm[c.id]?.amount || ""} onChange={e => setSpendForm(s => ({ ...s, [c.id]: { ...s[c.id], amount:e.target.value } }))} />
+                    <input className="field" placeholder="Note (optional)" value={spendForm[c.id]?.note || ""} onChange={e => setSpendForm(s => ({ ...s, [c.id]: { ...s[c.id], note:e.target.value } }))} />
+                    <button type="button" className="btn btn-primary" onClick={() => addSpend(c.id)} disabled={busy === `spend-${c.id}`}>
                       {busy === `spend-${c.id}` ? "Saving…" : "Add"}
                     </button>
                   </div>
 
                   {c.firstSpendOn && (
-                    <p style={{ fontSize:11.5, color:"#64748b", margin:"10px 0 0" }}>
+                    <p style={{ fontSize:11.5, color:"var(--muted)", margin:"10px 0 0" }}>
                       Spend recorded from {c.firstSpendOn} to {c.lastSpendOn}.
                     </p>
                   )}
 
                   {signups[c.id] && (
                     <div style={{ marginTop:14 }}>
-                      <p style={label}>Who signed up</p>
+                      <p className="label" style={{ marginBottom:6 }}>Who signed up</p>
                       {!signups[c.id].tracked.length && !signups[c.id].claimed.length && (
-                        <p style={{ fontSize:12.5, color:"#64748b", lineHeight:1.6 }}>Nobody yet, by either measure.</p>
+                        <p style={{ fontSize:12.5, color:"var(--muted)", lineHeight:1.6 }}>Nobody yet, by either measure.</p>
                       )}
                       {signups[c.id].tracked.map(u => (
-                        <div key={`t${u.id}`} style={{ display:"flex", justifyContent:"space-between", gap:10, padding:"6px 0", borderTop:"1px solid rgba(255,255,255,0.05)" }}>
-                          <span style={{ fontSize:12.5, color:"#e2e8f0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</span>
-                          <span style={{ fontSize:11.5, color:"#22c55e", whiteSpace:"nowrap" }}>tracked · {new Date(u.created_at).toLocaleDateString("en-GB")}</span>
+                        <div key={`t${u.id}`} style={{ display:"flex", justifyContent:"space-between", gap:10, padding:"6px 0", borderTop:"1px solid var(--border)" }}>
+                          <span style={{ fontSize:12.5, color:"var(--text)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</span>
+                          <span style={{ fontSize:11.5, color:"var(--green)", whiteSpace:"nowrap" }}>tracked · {new Date(u.created_at).toLocaleDateString("en-GB")}</span>
                         </div>
                       ))}
                       {signups[c.id].claimed.map(u => (
-                        <div key={`c${u.id}`} style={{ display:"flex", justifyContent:"space-between", gap:10, padding:"6px 0", borderTop:"1px solid rgba(255,255,255,0.05)" }}>
-                          <span style={{ fontSize:12.5, color:"#94a3b8", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</span>
-                          <span style={{ fontSize:11.5, color:"#64748b", whiteSpace:"nowrap" }}>said "{u.referral_source}"</span>
+                        <div key={`c${u.id}`} style={{ display:"flex", justifyContent:"space-between", gap:10, padding:"6px 0", borderTop:"1px solid var(--border)" }}>
+                          <span style={{ fontSize:12.5, color:"var(--text-2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{u.email}</span>
+                          <span style={{ fontSize:11.5, color:"var(--muted)", whiteSpace:"nowrap" }}>said "{u.referral_source}"</span>
                         </div>
                       ))}
                     </div>
@@ -617,7 +587,7 @@ const MarketingSection = ({ adminFetch, API_URL }) => {
           {/* The caveat that stops a zero being misread. Placed at the bottom
               rather than the top: it matters when someone is puzzled by a
               number, not before they have seen one. */}
-          <p style={{ fontSize:11.5, color:"#475569", lineHeight:1.6, marginTop:8 }}>{data.trackingNote}</p>
+          <p style={{ fontSize:11.5, color:"var(--muted)", lineHeight:1.6, marginTop:8 }}>{data.trackingNote}</p>
         </>
       )}
     </Section>

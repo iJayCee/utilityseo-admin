@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { Kpi } from './Shell.jsx';
 
 const API = import.meta.env.VITE_API_URL || 'https://utilityseo-production.up.railway.app/api';
 
@@ -279,70 +280,56 @@ export default function LoadTestPanel() {
   };
 
   const c = {
-    bg: '#0D0D14',
-    card: '#13131F',
-    border: 'rgba(255,255,255,0.07)',
-    purple: '#7C3AED',
-    purpleLight: '#a78bfa',
-    gold: '#F59E0B',
-    green: '#22c55e',
-    red: '#f87171',
-    amber: '#fbbf24',
-    text: '#e2e8f0',
-    muted: '#64748b',
-    dim: '#334155',
-  };
-
-  const cardStyle = {
-    background: c.card,
-    border: `1px solid ${c.border}`,
-    borderRadius: 14,
-    padding: '18px 20px',
-    marginBottom: 16,
+    purple: 'var(--purple)',
+    purpleLight: 'var(--purple-text)',
+    gold: 'var(--gold)',
+    green: 'var(--green)',
+    red: 'var(--red)',
+    amber: 'var(--gold)',
+    text: 'var(--text)',
+    muted: 'var(--muted)',
+    dim: 'var(--dim)',
   };
 
   const logColor = (type) => ({
     ok: c.green, error: c.red, warn: c.amber, info: c.muted,
   })[type] || c.muted;
 
-  const insightIcon = (type) => ({ ok: '✓', error: '✗', warn: '', info: '→' })[type] || '→';
+  const insightIcon = (type) => ({ ok: '✓', error: '✗', warn: '▲', info: '→' })[type] || '→';
   const insightColor = (type) => ({ ok: c.green, error: c.red, warn: c.amber, info: c.purpleLight })[type] || c.muted;
+  // The tinted insight boxes need rgba, and CSS variables cannot take an alpha suffix.
+  const insightBg = (type) => ({ ok: 'rgba(52,211,153,0.06)', error: 'rgba(248,113,113,0.06)', warn: 'rgba(245,158,11,0.06)', info: 'rgba(124,58,237,0.06)' })[type] || 'rgba(255,255,255,0.03)';
+  const insightBorder = (type) => ({ ok: 'rgba(52,211,153,0.2)', error: 'rgba(248,113,113,0.2)', warn: 'rgba(245,158,11,0.2)', info: 'rgba(124,58,237,0.2)' })[type] || 'var(--border)';
+
+  // Summary tiles: the tone names Kpi understands.
+  const tone = (ok) => (ok ? 'green' : 'red');
 
   return (
-    <div style={{ background: c.bg, minHeight: '100vh', color: c.text, fontFamily: 'Sora, sans-serif', padding: '28px 24px', boxSizing: 'border-box' }}>
+    <div style={{ width: '100%' }}>
 
-      {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 6 }}>
-          Load Test
-        </h1>
-        <p style={{ fontSize: 13, color: c.muted }}>Simulate traffic against the production backend. Measures latency, error rates and capacity headroom.</p>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, marginBottom: 16 }}>
 
         {/* Action selector */}
-        <div style={cardStyle}>
-          <p style={{ fontSize: 12, fontWeight: 700, color: c.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Select actions to simulate</p>
+        <div className="card">
+          <p className="label" style={{ marginBottom: 12 }}>Select actions to simulate</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {ACTIONS.map(a => {
               const sel = selectedActions.has(a.id);
               return (
-                <div key={a.id} onClick={() => toggleAction(a.id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, border: `1px solid ${sel ? c.purple + '60' : c.border}`, background: sel ? 'rgba(124,58,237,0.08)' : 'transparent', cursor: 'pointer', transition: 'all 0.12s' }}>
+                <div key={a.id} onClick={() => toggleAction(a.id)} role="checkbox" aria-checked={sel} tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleAction(a.id); } }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, border: `1px solid ${sel ? 'rgba(124,58,237,0.4)' : 'var(--border)'}`, background: sel ? 'var(--purple-soft)' : 'transparent', cursor: 'pointer', transition: 'all 0.12s' }}>
                   <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${sel ? c.purple : c.dim}`, background: sel ? c.purple : 'transparent', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {sel && <span style={{ fontSize: 10, color: '#fff', fontWeight: 900 }}>✓</span>}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                       <p style={{ fontSize: 12, fontWeight: 600, color: sel ? c.text : c.muted, margin: 0 }}>{a.label}</p>
-                      <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 4,
-                        background: a.testable ? 'rgba(34,197,94,0.12)' : 'rgba(100,116,139,0.15)',
-                        color: a.testable ? c.green : c.dim }}>
+                      <span className={`pill ${a.testable ? 'pill-green' : 'pill-grey'}`} style={{ fontSize: 9, padding: '1px 6px' }}>
                         {a.testable ? 'TESTABLE' : '401 only'}
                       </span>
                     </div>
-                    <p style={{ fontSize: 10, color: c.dim }}>{a.desc}</p>
+                    <p style={{ fontSize: 10.5, color: c.muted }}>{a.desc}</p>
                   </div>
                 </div>
               );
@@ -352,24 +339,23 @@ export default function LoadTestPanel() {
 
         {/* Config + controls */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={cardStyle}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: c.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Request rate</p>
+          <div className="card">
+            <p className="label" style={{ marginBottom: 12 }}>Request rate</p>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {FREQ_OPTIONS.map(f => (
-                <button key={f.rps} onClick={() => setRps(f.rps)}
-                  style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${rps === f.rps ? c.purple : c.border}`, background: rps === f.rps ? 'rgba(124,58,237,0.15)' : 'transparent', color: rps === f.rps ? c.purpleLight : c.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Sora,sans-serif' }}>
+                <button key={f.rps} type="button" className={`btn btn-sm${rps === f.rps ? ' btn-active' : ''}`} onClick={() => setRps(f.rps)}>
                   {f.label}
                 </button>
               ))}
             </div>
           </div>
 
-          <div style={cardStyle}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: c.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Duration</p>
+          <div className="card">
+            <p className="label" style={{ marginBottom: 12 }}>Duration</p>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {DURATION_OPTIONS.map(d => (
-                <button key={d.secs} onClick={() => setDuration(d.secs)}
-                  style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${duration === d.secs ? c.gold : c.border}`, background: duration === d.secs ? 'rgba(245,158,11,0.12)' : 'transparent', color: duration === d.secs ? c.gold : c.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Sora,sans-serif' }}>
+                <button key={d.secs} type="button" className={`btn btn-sm${duration === d.secs ? ' btn-active' : ''}`} onClick={() => setDuration(d.secs)}
+                  style={duration === d.secs ? { color: c.gold, borderColor: c.gold, background: 'rgba(245,158,11,0.12)' } : undefined}>
                   {d.label}
                 </button>
               ))}
@@ -377,10 +363,9 @@ export default function LoadTestPanel() {
           </div>
 
           {/* Start / Stop */}
-          <div style={{ ...cardStyle, marginBottom: 0 }}>
+          <div className="card">
             {status === 'idle' && (
-              <button onClick={startTest} disabled={selectedActions.size === 0}
-                style={{ width: '100%', padding: '13px 0', borderRadius: 10, border: 'none', background: selectedActions.size === 0 ? 'rgba(124,58,237,0.3)' : c.purple, color: '#fff', fontSize: 14, fontWeight: 800, cursor: selectedActions.size === 0 ? 'not-allowed' : 'pointer', fontFamily: 'Sora,sans-serif', letterSpacing: '-0.01em' }}>
+              <button type="button" className="btn btn-primary" onClick={startTest} disabled={selectedActions.size === 0} style={{ width: '100%', minHeight: 44 }}>
                 Start Load Test
               </button>
             )}
@@ -390,18 +375,16 @@ export default function LoadTestPanel() {
                   <span style={{ fontSize: 12, color: c.green, fontWeight: 700 }}>● Running - {elapsed}s / {duration}s</span>
                   <span style={{ fontSize: 12, color: c.muted }}>{progress}%</span>
                 </div>
-                <div style={{ height: 6, background: c.border, borderRadius: 99, overflow: 'hidden', marginBottom: 12 }}>
+                <div style={{ height: 6, background: 'var(--border)', borderRadius: 99, overflow: 'hidden', marginBottom: 12 }}>
                   <div style={{ height: '100%', width: `${progress}%`, background: `linear-gradient(90deg, ${c.purple}, ${c.purpleLight})`, borderRadius: 99, transition: 'width 0.25s' }} />
                 </div>
-                <button onClick={stopTest}
-                  style={{ width: '100%', padding: '10px 0', borderRadius: 10, border: `1px solid rgba(248,113,113,0.4)`, background: 'rgba(248,113,113,0.1)', color: c.red, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Sora,sans-serif' }}>
+                <button type="button" className="btn btn-danger" onClick={stopTest} style={{ width: '100%' }}>
                   ■ Stop Test
                 </button>
               </div>
             )}
             {status === 'done' && (
-              <button onClick={reset}
-                style={{ width: '100%', padding: '13px 0', borderRadius: 10, border: `1px solid ${c.border}`, background: 'transparent', color: c.muted, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Sora,sans-serif' }}>
+              <button type="button" className="btn" onClick={reset} style={{ width: '100%', minHeight: 44 }}>
                 ↺ Reset
               </button>
             )}
@@ -411,11 +394,11 @@ export default function LoadTestPanel() {
 
       {/* Live log */}
       {(status === 'running' || (status === 'done' && log.length > 0)) && (
-        <div style={cardStyle}>
-          <p style={{ fontSize: 12, fontWeight: 700, color: c.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+        <div className="card" style={{ marginBottom: 16 }}>
+          <p className="label" style={{ marginBottom: 10 }}>
             Live log {status === 'running' && <span style={{ color: c.green }}>● live</span>}
           </p>
-          <div style={{ height: 180, overflowY: 'auto', fontFamily: 'JetBrains Mono, monospace', fontSize: 11, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <div className="mono" style={{ height: 180, overflowY: 'auto', fontSize: 11, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {log.slice(0, 80).map((entry, i) => (
               <div key={i} style={{ color: logColor(entry.type), lineHeight: 1.6, opacity: i > 40 ? 0.5 : 1 }}>
                 {entry.msg}
@@ -429,34 +412,27 @@ export default function LoadTestPanel() {
       {results && (
         <>
           {/* Summary stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10, marginBottom: 16 }}>
-            {[
-              { label: 'Total requests', value: results.totalReqs, color: c.purpleLight },
-              { label: 'Errors', value: results.totalErrors, color: results.totalErrors > 0 ? c.red : c.green },
-              { label: 'Rate limited', value: results.totalRateLimited || 0, color: results.totalRateLimited > 0 ? c.amber : c.green },
-              { label: 'Error rate', value: results.errorRate + '%', color: Number(results.errorRate) > 5 ? c.red : c.green },
-              { label: 'Actual RPS', value: results.actualRps, color: c.gold },
-              { label: 'Avg latency', value: results.avgMs + 'ms', color: results.avgMs > 1000 ? c.amber : c.green },
-              { label: 'P95 latency', value: results.p95 + 'ms', color: results.p95 > 2000 ? c.red : results.p95 > 1000 ? c.amber : c.green },
-              { label: 'P99 latency', value: results.p99 + 'ms', color: results.p99 > 3000 ? c.red : c.amber },
-              { label: 'Max latency', value: results.maxMs + 'ms', color: c.muted },
-            ].map(s => (
-              <div key={s.label} style={{ background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: '12px 14px' }}>
-                <p style={{ fontSize: 10, color: c.dim, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{s.label}</p>
-                <p style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.value}</p>
-              </div>
-            ))}
+          <div className="kpi-grid" style={{ marginBottom: 16 }}>
+            <Kpi label="Total requests" value={results.totalReqs} tone="purple" />
+            <Kpi label="Errors" value={results.totalErrors} tone={tone(results.totalErrors === 0)} />
+            <Kpi label="Rate limited" value={results.totalRateLimited || 0} tone={results.totalRateLimited > 0 ? 'gold' : 'green'} />
+            <Kpi label="Error rate" value={results.errorRate + '%'} tone={tone(Number(results.errorRate) <= 5)} />
+            <Kpi label="Actual RPS" value={results.actualRps} tone="gold" />
+            <Kpi label="Avg latency" value={results.avgMs + 'ms'} tone={results.avgMs > 1000 ? 'gold' : 'green'} />
+            <Kpi label="P95 latency" value={results.p95 + 'ms'} tone={results.p95 > 2000 ? 'red' : results.p95 > 1000 ? 'gold' : 'green'} />
+            <Kpi label="P99 latency" value={results.p99 + 'ms'} tone={results.p99 > 3000 ? 'red' : 'gold'} />
+            <Kpi label="Max latency" value={results.maxMs + 'ms'} tone="grey" />
           </div>
 
           {/* Per-action breakdown */}
-          <div style={cardStyle}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: c.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Per-action breakdown</p>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+          <div className="card" style={{ marginBottom: 16 }}>
+            <p className="label" style={{ marginBottom: 12 }}>Per-action breakdown</p>
+            <div className="scroll-x">
+              <table className="tbl" style={{ fontSize: 12 }}>
                 <thead>
-                  <tr style={{ borderBottom: `1px solid ${c.border}` }}>
+                  <tr>
                     {['Action', 'Requests', 'Errors', 'Rate Ltd', 'Avg ms', 'P95 ms', 'Status'].map(h => (
-                      <th key={h} style={{ padding: '6px 10px', textAlign: 'left', color: c.dim, fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                      <th key={h}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -465,15 +441,15 @@ export default function LoadTestPanel() {
                     const errPct = a.count > 0 ? ((a.errors / a.count) * 100).toFixed(0) : 0;
                     const ok = a.errors === 0 && a.avgMs < 1500;
                     return (
-                      <tr key={a.id} style={{ borderBottom: `1px solid ${c.border}` }}>
-                        <td style={{ padding: '8px 10px', color: c.text, fontWeight: 600 }}>{a.label}</td>
-                        <td style={{ padding: '8px 10px', color: c.muted }}>{a.count}</td>
-                        <td style={{ padding: '8px 10px', color: a.errors > 0 ? c.red : c.green }}>{a.errors} {a.errors > 0 ? `(${errPct}%)` : ''}</td>
-                        <td style={{ padding: '8px 10px', color: (a.rateLimited||0) > 0 ? c.amber : c.muted }}>{a.rateLimited||0}</td>
-                        <td style={{ padding: '8px 10px', color: a.avgMs > 1500 ? c.amber : c.text }}>{a.avgMs}ms</td>
-                        <td style={{ padding: '8px 10px', color: a.p95 > 2000 ? c.red : c.text }}>{a.p95}ms</td>
-                        <td style={{ padding: '8px 10px' }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: ok ? 'rgba(34,197,94,0.12)' : 'rgba(248,113,113,0.12)', color: ok ? c.green : c.red }}>
+                      <tr key={a.id}>
+                        <td style={{ color: c.text, fontWeight: 600 }}>{a.label}</td>
+                        <td className="num" style={{ color: c.muted }}>{a.count}</td>
+                        <td className="num" style={{ color: a.errors > 0 ? c.red : c.green }}>{a.errors} {a.errors > 0 ? `(${errPct}%)` : ''}</td>
+                        <td className="num" style={{ color: (a.rateLimited||0) > 0 ? c.amber : c.muted }}>{a.rateLimited||0}</td>
+                        <td className="num" style={{ color: a.avgMs > 1500 ? c.amber : c.text }}>{a.avgMs}ms</td>
+                        <td className="num" style={{ color: a.p95 > 2000 ? c.red : c.text }}>{a.p95}ms</td>
+                        <td>
+                          <span className={`pill ${ok ? 'pill-green' : 'pill-red'}`}>
                             {ok ? '● Healthy' : 'Check'}
                           </span>
                         </td>
@@ -486,11 +462,11 @@ export default function LoadTestPanel() {
           </div>
 
           {/* Insights */}
-          <div style={cardStyle}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: c.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>What we learned</p>
+          <div className="card" style={{ marginBottom: 16 }}>
+            <p className="label" style={{ marginBottom: 12 }}>What we learned</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {results.insights.map((ins, i) => (
-                <div key={i} style={{ display: 'flex', gap: 10, padding: '10px 14px', borderRadius: 10, background: `${insightColor(ins.type)}0f`, border: `1px solid ${insightColor(ins.type)}30` }}>
+                <div key={i} style={{ display: 'flex', gap: 10, padding: '10px 14px', borderRadius: 10, background: insightBg(ins.type), border: `1px solid ${insightBorder(ins.type)}` }}>
                   <span style={{ fontSize: 14, color: insightColor(ins.type), fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{insightIcon(ins.type)}</span>
                   <p style={{ fontSize: 13, color: c.text, lineHeight: 1.6 }}>{ins.msg}</p>
                 </div>

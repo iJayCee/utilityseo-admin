@@ -1,21 +1,17 @@
-// CostsSection - extracted verbatim from App.jsx (admin split). Behaviour is
-// byte-identical to the inline version; props carry the App-level state and
-// handlers it used in place. Restyle happens separately.
+// CostsSection - what the pay-as-you-go APIs cost at different user counts,
+// with the measured AI spend above the projection. Props carry the App-level
+// state and handlers. Built from the shell's shared parts; the shell's top bar
+// carries the title.
+import { Kpi, KpiSkeleton } from "../Shell.jsx";
+
 const CostsSection = ({ costData, costError, costInputs, costLoading, loadCostForecast, search, setCostInputs, users }) => (
           <div style={{ width:"100%" }}>
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
-              <div>
-                <h2 style={{ fontSize:20, fontWeight:800, color:"#e2e8f0", margin:0 }}>Cost forecast</h2>
-                <p style={{ fontSize:13, color:"#64748b", margin:"4px 0 0" }}>What the pay-as-you-go APIs cost at different user counts. Adjust the assumptions to match reality.</p>
-              </div>
-              <button onClick={loadCostForecast}
-                style={{ padding:"9px 20px", background:"#7C3AED", border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
-                ↻ Reset
-              </button>
+            <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginBottom:14 }}>
+              <button type="button" className="btn btn-primary" onClick={loadCostForecast}>↻ Reset</button>
             </div>
 
-            {costError && <div style={{ background:"rgba(248,113,113,0.1)", border:"1px solid rgba(248,113,113,0.3)", borderRadius:10, padding:"12px 16px", marginBottom:16, color:"#f87171", fontSize:13 }}>{costError}</div>}
-            {costLoading && <div style={{ textAlign:"center", padding:"60px 20px", color:"#64748b", fontSize:14 }}>Loading cost model…</div>}
+            {costError && <div style={{ background:"rgba(248,113,113,0.1)", border:"1px solid rgba(248,113,113,0.3)", borderRadius:10, padding:"12px 16px", marginBottom:16, color:"var(--red)", fontSize:13 }}>{costError}</div>}
+            {(costLoading || (!costData && !costError)) && <KpiSkeleton n={3} />}
 
             {costData && costInputs && !costLoading && (() => {
               const ci = costInputs;
@@ -43,13 +39,13 @@ const CostsSection = ({ costData, costError, costInputs, costLoading, loadCostFo
               const marginPct = sub > 0 ? Math.round(((sub - perUserGbp) / sub) * 100) : null;
               const tiers = [...new Set([costData.signals.users || 1, 5, 10, 25, 50, 100, 250, 500])].filter(n => n > 0).sort((a, b) => a - b);
 
+              const fieldLabel = { display:"flex", flexDirection:"column", gap:4, fontSize:11.5, color:"var(--text-2)", fontWeight:600 };
               const Field = ({ label, k, suffix, width = 90 }) => (
-                <label style={{ display:"flex", flexDirection:"column", gap:4, fontSize:11.5, color:"#94a3b8", fontWeight:600 }}>
+                <label style={fieldLabel}>
                   {label}
                   <span style={{ display:"flex", alignItems:"center", gap:6 }}>
-                    <input type="number" value={ci[k]} onChange={set(k)}
-                      style={{ width, background:"#0f172a", border:"1px solid #334155", borderRadius:8, color:"#e2e8f0", fontSize:13, padding:"7px 9px", fontFamily:"JetBrains Mono,monospace" }} />
-                    {suffix && <span style={{ fontSize:11, color:"#64748b" }}>{suffix}</span>}
+                    <input type="number" className="field mono" value={ci[k]} onChange={set(k)} style={{ width, fontSize:13, padding:"7px 9px", minHeight:36 }} />
+                    {suffix && <span style={{ fontSize:11, color:"var(--muted)" }}>{suffix}</span>}
                   </span>
                 </label>
               );
@@ -63,39 +59,32 @@ const CostsSection = ({ costData, costError, costInputs, costLoading, loadCostFo
                 <>
                   {/* MEASURED spend - real token usage from llm_usage */}
                   {usage && usage.available && (
-                    <div className="glass" style={{ borderRadius:14, padding:"18px 20px", marginBottom:18, borderLeft:"3px solid #34d399" }}>
+                    <div className="card" style={{ marginBottom:18, borderLeft:"3px solid var(--green)" }}>
                       <div style={{ display:"flex", alignItems:"baseline", justifyContent:"space-between", flexWrap:"wrap", gap:8, marginBottom:14 }}>
-                        <div style={{ fontSize:11, fontWeight:700, color:"#34d399", textTransform:"uppercase", letterSpacing:"0.05em" }}>Measured AI spend · last {usage.days} days</div>
-                        <div style={{ fontSize:11, color:"#475569" }}>{(usage.total?.calls || 0).toLocaleString()} calls logged</div>
+                        <p className="label" style={{ color:"var(--green)" }}>Measured AI spend · last {usage.days} days</p>
+                        <span style={{ fontSize:11, color:"var(--muted)" }}>{(usage.total?.calls || 0).toLocaleString()} calls logged</span>
                       </div>
                       {(usage.total?.calls || 0) === 0 ? (
-                        <p style={{ fontSize:13, color:"#64748b", margin:0 }}>No AI calls logged yet in this window. Metering starts recording from the deploy that added it - run any AI feature (or wait for the weekly brand-tracking cron) and real numbers will appear here.</p>
+                        <p style={{ fontSize:13, color:"var(--muted)", margin:0 }}>No AI calls logged yet in this window. Metering starts recording from the deploy that added it - run any AI feature (or wait for the weekly brand-tracking cron) and real numbers will appear here.</p>
                       ) : (
                         <>
-                          <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:14 }}>
-                            {[
-                              ["Last 30 days", usdM(usage.total?.cost), "#34d399"],
-                              ["Month to date", usdM(usage.monthToDate?.cost), "#e2e8f0"],
-                              ["Per paying customer", usage.payingCustomers > 0 ? usdM((usage.total?.cost || 0) / usage.payingCustomers) : "-", "#e2e8f0"],
-                              ["Tokens (in/out)", `${Math.round((usage.total?.in_tok || 0) / 1000)}k / ${Math.round((usage.total?.out_tok || 0) / 1000)}k`, "#94a3b8"],
-                            ].map(([l, v, c]) => (
-                              <div key={l} style={{ background:"rgba(255,255,255,0.03)", borderRadius:10, padding:"12px 14px", flex:"1 1 130px", minWidth:130 }}>
-                                <div style={{ fontSize:10.5, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.04em", marginBottom:5 }}>{l}</div>
-                                <div style={{ fontSize:20, fontWeight:800, color:c, fontFamily:"JetBrains Mono,monospace" }}>{v}</div>
-                              </div>
-                            ))}
+                          <div className="kpi-grid" style={{ marginBottom:14 }}>
+                            <Kpi label="Last 30 days" value={usdM(usage.total?.cost)} tone="green" />
+                            <Kpi label="Month to date" value={usdM(usage.monthToDate?.cost)} />
+                            <Kpi label="Per paying customer" value={usage.payingCustomers > 0 ? usdM((usage.total?.cost || 0) / usage.payingCustomers) : "-"} />
+                            <Kpi label="Tokens (in/out)" value={`${Math.round((usage.total?.in_tok || 0) / 1000)}k / ${Math.round((usage.total?.out_tok || 0) / 1000)}k`} tone="grey" />
                           </div>
-                          <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>By feature</div>
+                          <p className="label" style={{ marginBottom:8 }}>By feature</p>
                           {(usage.byFeature || []).slice(0, 8).map(f => {
                             const pct = usage.total?.cost > 0 ? (f.cost / usage.total.cost) * 100 : 0;
                             return (
                               <div key={f.feature} style={{ marginBottom:8 }}>
                                 <div style={{ display:"flex", justifyContent:"space-between", fontSize:12.5, marginBottom:3 }}>
-                                  <span style={{ color:"#cbd5e1" }}>{FEATURE_LABEL[f.feature] || f.feature} <span style={{ color:"#475569" }}>· {f.calls.toLocaleString()} calls</span></span>
-                                  <span style={{ color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace", fontWeight:700 }}>{usdM(f.cost)}</span>
+                                  <span style={{ color:"var(--text)" }}>{FEATURE_LABEL[f.feature] || f.feature} <span style={{ color:"var(--muted)" }}>· {f.calls.toLocaleString()} calls</span></span>
+                                  <span className="mono" style={{ color:"var(--text)", fontWeight:700 }}>{usdM(f.cost)}</span>
                                 </div>
                                 <div style={{ height:5, background:"rgba(255,255,255,0.06)", borderRadius:3, overflow:"hidden" }}>
-                                  <div style={{ height:"100%", width:`${Math.max(1, pct)}%`, background:"#34d399", borderRadius:3 }} />
+                                  <div style={{ height:"100%", width:`${Math.max(1, pct)}%`, background:"var(--green)", borderRadius:3 }} />
                                 </div>
                               </div>
                             );
@@ -105,17 +94,16 @@ const CostsSection = ({ costData, costError, costInputs, costLoading, loadCostFo
                     </div>
                   )}
 
-                  <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", margin:"4px 0 10px" }}>Projection (estimate) - adjust the assumptions below</div>
+                  <p className="label" style={{ margin:"4px 0 10px" }}>Projection (estimate) - adjust the assumptions below</p>
 
                   {/* Assumptions */}
-                  <div className="glass" style={{ borderRadius:14, padding:"18px 20px", marginBottom:18 }}>
-                    <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:14 }}>Assumptions (per active user)</div>
+                  <div className="card" style={{ marginBottom:18 }}>
+                    <p className="label" style={{ marginBottom:14 }}>Assumptions (per active user)</p>
                     <div style={{ display:"flex", gap:18, flexWrap:"wrap", alignItems:"flex-end" }}>
                       <Field label="Keywords tracked" k="keywordsPerUser" />
-                      <label style={{ display:"flex", flexDirection:"column", gap:4, fontSize:11.5, color:"#94a3b8", fontWeight:600 }}>
+                      <label style={fieldLabel}>
                         Rank refresh
-                        <select value={ci.rankRefreshCadence} onChange={set("rankRefreshCadence")}
-                          style={{ background:"#0f172a", border:"1px solid #334155", borderRadius:8, color:"#e2e8f0", fontSize:13, padding:"7px 9px" }}>
+                        <select className="field" value={ci.rankRefreshCadence} onChange={set("rankRefreshCadence")} style={{ width:"auto", fontSize:13, padding:"7px 9px", minHeight:36 }}>
                           <option value="daily">Daily</option>
                           <option value="every3days">Every 3 days</option>
                           <option value="weekly">Weekly</option>
@@ -125,21 +113,21 @@ const CostsSection = ({ costData, costError, costInputs, costLoading, loadCostFo
                       <Field label="Backlink refreshes/mo" k="backlinkRefreshesPerUserMonth" width={70} />
                       <Field label="Avg subscription" k="avgSubscriptionGBP" suffix="£/mo" width={70} />
                     </div>
-                    <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", margin:"16px 0 10px" }}>AI-backed features</div>
+                    <p className="label" style={{ margin:"16px 0 10px" }}>AI-backed features</p>
                     <div style={{ display:"flex", gap:18, flexWrap:"wrap", alignItems:"flex-end" }}>
                       <Field label="% tracking a brand" k="pctUsersBrandTracking" suffix="%" width={70} />
-                      <label style={{ display:"flex", flexDirection:"column", gap:4, fontSize:11.5, color:"#94a3b8", fontWeight:600 }}>
-                        <span title="8 prompts x up to 4 AI platforms x weekly = ~140. Automatic cron.">Brand checks/mo <span style={{ color:"#f59e0b" }}>ⓘ</span></span>
+                      <label style={fieldLabel}>
+                        <span title="8 prompts x up to 4 AI platforms x weekly = ~140. Automatic cron.">Brand checks/mo <span style={{ color:"var(--gold)" }}>(i)</span></span>
                         <span style={{ display:"flex", alignItems:"center", gap:6 }}>
-                          <input type="number" value={ci.brandChecksPerUserMonth} onChange={set("brandChecksPerUserMonth")}
-                            style={{ width:80, background:"#0f172a", border:"1px solid #334155", borderRadius:8, color:"#e2e8f0", fontSize:13, padding:"7px 9px", fontFamily:"JetBrains Mono,monospace" }} />
+                          <input type="number" className="field mono" value={ci.brandChecksPerUserMonth} onChange={set("brandChecksPerUserMonth")}
+                            style={{ width:80, fontSize:13, padding:"7px 9px", minHeight:36 }} />
                         </span>
                       </label>
                       <Field label="Blog posts/mo" k="blogPostsPerUserMonth" width={70} />
                       <Field label="Other AI actions/mo" k="aiActionsPerUserMonth" width={70} />
                     </div>
                     <details style={{ marginTop:14 }}>
-                      <summary style={{ fontSize:12, color:"#64748b", cursor:"pointer" }}>Advanced: unit costs (USD)</summary>
+                      <summary style={{ fontSize:12, color:"var(--muted)", cursor:"pointer" }}>Advanced: unit costs (USD)</summary>
                       <div style={{ display:"flex", gap:18, flexWrap:"wrap", marginTop:12, alignItems:"flex-end" }}>
                         <Field label="SERP / search" k="serpCost" width={90} />
                         <Field label="Backlink / refresh" k="backlinkCost" width={90} />
@@ -152,22 +140,15 @@ const CostsSection = ({ costData, costError, costInputs, costLoading, loadCostFo
                   </div>
 
                   {/* Per-user result */}
-                  <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:18 }}>
-                    {[
-                      ["Cost / user / month", money(perUserGbp), "#f59e0b"],
-                      ["Subscription / user", money(sub), "#e2e8f0"],
-                      ["Gross margin", marginPct == null ? "-" : marginPct + "%", marginPct >= 80 ? "#34d399" : marginPct >= 50 ? "#fbbf24" : "#f87171"],
-                    ].map(([l, v, c]) => (
-                      <div key={l} className="glass" style={{ borderRadius:14, padding:"16px 18px", flex:"1 1 160px", minWidth:160 }}>
-                        <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:6 }}>{l}</div>
-                        <div style={{ fontSize:24, fontWeight:800, color:c, fontFamily:"JetBrains Mono,monospace" }}>{v}</div>
-                      </div>
-                    ))}
+                  <div className="kpi-grid" style={{ marginBottom:18 }}>
+                    <Kpi label="Cost / user / month" value={money(perUserGbp)} tone="gold" />
+                    <Kpi label="Subscription / user" value={money(sub)} />
+                    <Kpi label="Gross margin" value={marginPct == null ? "-" : marginPct + "%"} tone={marginPct >= 80 ? "green" : marginPct >= 50 ? "gold" : "red"} />
                   </div>
 
                   {/* Per-user breakdown by API */}
-                  <div className="glass" style={{ borderRadius:14, padding:"16px 18px", marginBottom:18 }}>
-                    <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:12 }}>Per-user monthly cost by API</div>
+                  <div className="card" style={{ marginBottom:18 }}>
+                    <p className="label" style={{ marginBottom:12 }}>Per-user monthly cost by API</p>
                     {[
                       ["Rank tracking (SERP)", pu.serp, `${Math.round(pu.searches).toLocaleString()} searches`],
                       ["Backlinks", pu.backlinks, `${num(ci.backlinkRefreshesPerUserMonth,0)} refreshes`],
@@ -179,11 +160,11 @@ const CostsSection = ({ costData, costError, costInputs, costLoading, loadCostFo
                       return (
                         <div key={label} style={{ marginBottom:10 }}>
                           <div style={{ display:"flex", justifyContent:"space-between", fontSize:12.5, marginBottom:4 }}>
-                            <span style={{ color:"#cbd5e1" }}>{label} <span style={{ color:"#475569" }}>· {sub2}</span></span>
-                            <span style={{ color:"#e2e8f0", fontFamily:"JetBrains Mono,monospace", fontWeight:700 }}>{money(toGbp(usd))}</span>
+                            <span style={{ color:"var(--text)" }}>{label} <span style={{ color:"var(--muted)" }}>· {sub2}</span></span>
+                            <span className="mono" style={{ color:"var(--text)", fontWeight:700 }}>{money(toGbp(usd))}</span>
                           </div>
                           <div style={{ height:5, background:"rgba(255,255,255,0.06)", borderRadius:3, overflow:"hidden" }}>
-                            <div style={{ height:"100%", width:`${Math.max(1, pct)}%`, background:"#a78bfa", borderRadius:3 }} />
+                            <div style={{ height:"100%", width:`${Math.max(1, pct)}%`, background:"var(--purple-text)", borderRadius:3 }} />
                           </div>
                         </div>
                       );
@@ -191,40 +172,42 @@ const CostsSection = ({ costData, costError, costInputs, costLoading, loadCostFo
                   </div>
 
                   {/* Projection table across user tiers */}
-                  <div className="glass" style={{ borderRadius:14, padding:"16px 18px", overflowX:"auto" }}>
-                    <div style={{ fontSize:11, fontWeight:700, color:"#475569", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:12 }}>Total monthly cost by user count</div>
-                    <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13, minWidth:520 }}>
-                      <thead>
-                        <tr style={{ color:"#64748b", textAlign:"right", fontSize:11, textTransform:"uppercase" }}>
-                          <th style={{ textAlign:"left", padding:"6px 8px" }}>Users</th>
-                          <th style={{ padding:"6px 8px" }}>Rank tracking</th>
-                          <th style={{ padding:"6px 8px" }}>Backlinks</th>
-                          <th style={{ padding:"6px 8px" }} title="Brand tracking + blog + other AI">AI (all)</th>
-                          <th style={{ padding:"6px 8px", color:"#94a3b8" }}>Total / mo</th>
-                          <th style={{ padding:"6px 8px" }}>vs revenue</th>
-                        </tr>
-                      </thead>
-                      <tbody style={{ fontFamily:"JetBrains Mono,monospace" }}>
-                        {tiers.map(n => {
-                          const rev = sub * n;
-                          const total = toGbp(pu.total) * n;
-                          const isCurrent = n === (costData.signals.users || 1);
-                          return (
-                            <tr key={n} style={{ textAlign:"right", borderTop:"1px solid rgba(255,255,255,0.05)", background:isCurrent ? "rgba(124,58,237,0.08)" : "transparent" }}>
-                              <td style={{ textAlign:"left", padding:"8px", color:"#e2e8f0", fontWeight:700 }}>{n.toLocaleString()}{isCurrent && <span style={{ fontSize:10, color:"#a78bfa", marginLeft:6 }}>now</span>}</td>
-                              <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.serp) * n)}</td>
-                              <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.backlinks) * n)}</td>
-                              <td style={{ padding:"8px", color:"#94a3b8" }}>{money(toGbp(pu.ai) * n)}</td>
-                              <td style={{ padding:"8px", color:"#f59e0b", fontWeight:800 }}>{money(total)}</td>
-                              <td style={{ padding:"8px", color: rev > 0 && total / rev < 0.2 ? "#34d399" : "#94a3b8" }}>{rev > 0 ? Math.round((total / rev) * 100) + "% of rev" : "-"}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                  <div className="card">
+                    <p className="label" style={{ marginBottom:12 }}>Total monthly cost by user count</p>
+                    <div className="scroll-x">
+                      <table className="tbl" style={{ minWidth:520 }}>
+                        <thead>
+                          <tr>
+                            <th>Users</th>
+                            <th style={{ textAlign:"right" }}>Rank tracking</th>
+                            <th style={{ textAlign:"right" }}>Backlinks</th>
+                            <th style={{ textAlign:"right" }} title="Brand tracking + blog + other AI">AI (all)</th>
+                            <th style={{ textAlign:"right", color:"var(--text-2)" }}>Total / mo</th>
+                            <th style={{ textAlign:"right" }}>vs revenue</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {tiers.map(n => {
+                            const rev = sub * n;
+                            const total = toGbp(pu.total) * n;
+                            const isCurrent = n === (costData.signals.users || 1);
+                            return (
+                              <tr key={n} style={{ background:isCurrent ? "rgba(124,58,237,0.08)" : "transparent" }}>
+                                <td className="mono" style={{ color:"var(--text)", fontWeight:700 }}>{n.toLocaleString()}{isCurrent && <span style={{ fontSize:10, color:"var(--purple-text)", marginLeft:6 }}>now</span>}</td>
+                                <td className="num" style={{ color:"var(--text-2)" }}>{money(toGbp(pu.serp) * n)}</td>
+                                <td className="num" style={{ color:"var(--text-2)" }}>{money(toGbp(pu.backlinks) * n)}</td>
+                                <td className="num" style={{ color:"var(--text-2)" }}>{money(toGbp(pu.ai) * n)}</td>
+                                <td className="num" style={{ color:"var(--gold)", fontWeight:800 }}>{money(total)}</td>
+                                <td className="num" style={{ color: rev > 0 && total / rev < 0.2 ? "var(--green)" : "var(--text-2)" }}>{rev > 0 ? Math.round((total / rev) * 100) + "% of rev" : "-"}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
 
-                  <p style={{ fontSize:11, color:"#475569", marginTop:16, lineHeight:1.5 }}>
+                  <p style={{ fontSize:11, color:"var(--muted)", marginTop:16, lineHeight:1.5 }}>
                     Brand tracking runs automatically on a weekly cron across ~4 AI platforms (Perplexity is itself paid), so it costs whether or not users log in - the easiest line to forget. AI features already run on your existing keys and there is no live token metering yet, so all figures are estimates from the code, not measured spend. Unit costs approximate (early 2026) - re-check with vendors. "vs revenue" is total API cost as a share of subscription revenue.
                   </p>
                 </>

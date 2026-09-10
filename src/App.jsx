@@ -873,6 +873,12 @@ const AdminPanel = () => {
       ]);
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Failed to load");
+      // Checked before it is used. This read d.model.serp.unitCost inside a
+      // state updater, so a response without a model threw inside React's
+      // update and blanked the whole admin, sidebar included; no boundary can
+      // catch that. A payload that does not fit is an error on this screen.
+      const m = d.model;
+      if (!m?.serp || !m.backlinks || !m.brand || !m.blog || !m.llm) throw new Error("The cost forecast came back in a shape this screen does not understand.");
       // Measured spend (may be unavailable on older backends).
       let usage = null;
       try { if (usageRes && usageRes.ok) usage = await usageRes.json(); } catch {}
@@ -880,11 +886,11 @@ const AdminPanel = () => {
       // Seed the editable inputs from the model defaults + unit costs (first load only).
       setCostInputs(prev => prev || {
         ...d.defaults,
-        serpCost: d.model.serp.unitCost,
-        backlinkCost: d.model.backlinks.unitCost,
-        brandCost: d.model.brand.unitCost,
-        blogCost: d.model.blog.unitCost,
-        llmCost: d.model.llm.unitCost,
+        serpCost: m.serp.unitCost,
+        backlinkCost: m.backlinks.unitCost,
+        brandCost: m.brand.unitCost,
+        blogCost: m.blog.unitCost,
+        llmCost: m.llm.unitCost,
       });
     } catch (err) { setCostError(err.message); }
     setCostLoading(false);

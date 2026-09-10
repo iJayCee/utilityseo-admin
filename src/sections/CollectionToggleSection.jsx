@@ -7,11 +7,6 @@
 // The secret is shown exactly once, on creation or rotation, because only its
 // hash is stored. There is no "reveal" button because there is nothing to reveal.
 import { useState, useEffect } from "react";
-import { card, label } from "../shared.jsx";
-
-const input = { padding:"10px 14px", background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.12)", borderRadius:10, color:"#e2e8f0", fontSize:13, fontFamily:"Sora,sans-serif" };
-const btn = (bg = "#7C3AED") => ({ padding:"9px 18px", background:bg, border:"none", borderRadius:10, color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"Sora,sans-serif" });
-const mono = { fontFamily:"JetBrains Mono,monospace" };
 
 const readJson = async (res) => {
   const text = await res.text();
@@ -85,88 +80,77 @@ const CollectionToggleSection = ({ adminFetch, API_URL }) => {
 
   return (
     <div style={{ width: "100%" }}>
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: "#e2e8f0", margin: 0 }}>Collection toggle</h2>
-        <p style={{ fontSize: 13, color: "#64748b", margin: "4px 0 0", maxWidth: 700, lineHeight: 1.6 }}>
-          A kill switch an external tool polls before each scheduled run. Holds no customer data and is not
-          attached to any project or account. Switching it off stops that tool collecting; it cannot start it.
-        </p>
-      </div>
-
-      {error && <div style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 10, padding: "12px 16px", marginBottom: 16, color: "#f87171", fontSize: 13 }}>{error}</div>}
+      {error && <div style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", borderRadius: 10, padding: "12px 16px", marginBottom: 16, color: "var(--red)", fontSize: 13 }}>{error}</div>}
 
       {freshSecret && (
-        <div style={{ ...card, background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.35)" }}>
-          <div style={{ ...label, color: "#fbbf24" }}>
+        <div className="card" style={{ background: "rgba(251,191,36,0.08)", borderColor: "rgba(251,191,36,0.35)", marginBottom: 16 }}>
+          <p className="label" style={{ color: "var(--gold)" }}>
             {freshSecret.rotated ? "New secret for" : "Secret for"} {freshSecret.name} - shown once
-          </div>
-          <p style={{ ...mono, fontSize: 13, color: "#fcd34d", wordBreak: "break-all", margin: "6px 0 10px",
+          </p>
+          <p className="mono" style={{ fontSize: 13, color: "#fcd34d", wordBreak: "break-all", margin: "6px 0 10px",
                       background: "rgba(0,0,0,0.35)", padding: "10px 12px", borderRadius: 8 }}>
             {freshSecret.secret}
           </p>
           <p style={{ fontSize: 12, color: "#fcd34d", margin: "0 0 10px", lineHeight: 1.6 }}>
             Copy this now. Only a hash is stored, so it cannot be shown again - rotate if it is lost.
             {freshSecret.rotated ? " The previous secret stopped working immediately." : ""}
-            {" "}Send it as <span style={mono}>Authorization: Bearer &lt;secret&gt;</span>, never in a URL.
+            {" "}Send it as <span className="mono">Authorization: Bearer &lt;secret&gt;</span>, never in a URL.
           </p>
-          <button onClick={() => setFreshSecret(null)} style={btn("#334155")}>I have copied it</button>
+          <button type="button" className="btn btn-sm" onClick={() => setFreshSecret(null)}>I have copied it</button>
         </div>
       )}
 
       {toggles.map(t => (
-        <div key={t.id} style={card}>
+        <div key={t.id} className="card" style={{ marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 10 }}>
-            <span style={{ fontSize: 16, fontWeight: 800, color: "#e2e8f0" }}>{t.name}</span>
-            <span style={{ padding: "3px 12px", borderRadius: 99, fontSize: 11, fontWeight: 700,
-                           background: t.stopped ? "rgba(239,68,68,0.15)" : "rgba(34,197,94,0.15)",
-                           border: `1px solid ${t.stopped ? "rgba(239,68,68,0.45)" : "rgba(34,197,94,0.45)"}`,
-                           color: t.stopped ? "#f87171" : "#4ade80" }}>
+            <span className="card-title" style={{ fontSize: 16 }}>{t.name}</span>
+            <span className={`pill ${t.stopped ? "pill-red" : "pill-green"}`}>
               {t.stopped ? "STOPPED" : "COLLECTING"}
             </span>
             <span style={{ flex: 1 }} />
-            <button onClick={() => rotate(t)} disabled={busy === `rot-${t.id}`} style={btn("#334155")}>Rotate secret</button>
+            <button type="button" className="btn btn-sm" onClick={() => rotate(t)} disabled={busy === `rot-${t.id}`}>Rotate secret</button>
           </div>
 
-          <p style={{ fontSize: 12, color: "#94a3b8", margin: "0 0 12px" }}>
-            Last changed by <strong style={{ color: "#cbd5e1" }}>{t.changed_by || "unknown"}</strong>
+          <p style={{ fontSize: 12, color: "var(--text-2)", margin: "0 0 12px" }}>
+            Last changed by <strong style={{ color: "var(--text)" }}>{t.changed_by || "unknown"}</strong>
             {" on "}{new Date(t.changed_at).toLocaleString("en-GB")}
             {t.reason ? ` - "${t.reason}"` : ""}
           </p>
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
-            <input value={reasons[t.id] ?? ""} onChange={e => setReasons({ ...reasons, [t.id]: e.target.value })}
+            <input className="field" value={reasons[t.id] ?? ""} onChange={e => setReasons({ ...reasons, [t.id]: e.target.value })}
               placeholder="Reason (optional, returned to the polling tool)"
-              style={{ ...input, flex: 1, minWidth: 240 }} />
+              style={{ flex: 1, minWidth: 240, width: "auto" }} />
             {t.stopped
-              ? <button onClick={() => setStopped(t, false)} disabled={busy === `set-${t.id}`} style={btn("#22c55e")}>Resume collection</button>
-              : <button onClick={() => setStopped(t, true)} disabled={busy === `set-${t.id}`} style={btn("#ef4444")}>Stop collection</button>}
+              ? <button type="button" className="btn btn-primary" onClick={() => setStopped(t, false)} disabled={busy === `set-${t.id}`}>Resume collection</button>
+              : <button type="button" className="btn btn-danger" onClick={() => setStopped(t, true)} disabled={busy === `set-${t.id}`}>Stop collection</button>}
           </div>
 
-          <div style={label}>History</div>
+          <p className="label" style={{ marginBottom: 6 }}>History</p>
           {(t.history || []).length === 0
-            ? <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>No changes recorded.</p>
+            ? <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>No changes recorded.</p>
             : (t.history || []).map((h, i) => (
-              <div key={i} style={{ display: "flex", gap: 12, padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", fontSize: 12, flexWrap: "wrap" }}>
-                <span style={{ ...mono, color: "#a78bfa", minWidth: 110 }}>{h.action}</span>
-                <span style={{ color: "#94a3b8", flex: 1, minWidth: 150 }}>
+              <div key={i} style={{ display: "flex", gap: 12, padding: "6px 0", borderBottom: "1px solid var(--border)", fontSize: 12, flexWrap: "wrap" }}>
+                <span className="mono" style={{ color: "var(--purple-text)", minWidth: 110 }}>{h.action}</span>
+                <span style={{ color: "var(--text-2)", flex: 1, minWidth: 150 }}>
                   {h.new_stopped === null ? "-" : `${stateWord(h.old_stopped)} → ${stateWord(h.new_stopped)}`}
                   {h.reason ? ` · "${h.reason}"` : ""}
                 </span>
-                <span style={{ color: "#cbd5e1" }}>{h.actor}</span>
-                <span style={{ color: "#64748b" }}>{new Date(h.at).toLocaleString("en-GB")}</span>
+                <span style={{ color: "var(--text)" }}>{h.actor}</span>
+                <span style={{ color: "var(--muted)" }}>{new Date(h.at).toLocaleString("en-GB")}</span>
               </div>
             ))}
         </div>
       ))}
 
-      <div style={card}>
-        <div style={label}>Create a toggle</div>
+      <div className="card">
+        <p className="label">Create a toggle</p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 8 }}>
-          <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Name"
-            style={{ ...input, flex: 1, minWidth: 220 }} />
-          <button onClick={create} disabled={busy === "create"} style={btn()}>Create</button>
+          <input className="field" value={newName} onChange={e => setNewName(e.target.value)} placeholder="Name"
+            style={{ flex: 1, minWidth: 220, width: "auto" }} />
+          <button type="button" className="btn btn-primary" onClick={create} disabled={busy === "create"}>Create</button>
         </div>
-        <p style={{ fontSize: 11.5, color: "#64748b", margin: "10px 0 0", lineHeight: 1.55 }}>
+        <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "10px 0 0", lineHeight: 1.55 }}>
           A new toggle starts in the COLLECTING state, so creating one can never halt a running job.
         </p>
       </div>
