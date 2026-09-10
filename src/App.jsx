@@ -710,7 +710,7 @@ const AdminPanel = () => {
 
   const loadPromos = async () => {
     setLoadingPromos(true);
-    try { const res = await adminFetch(`${API_URL}/admin/promo-codes`); const data = await res.json(); setPromos(data); }
+    try { const res = await adminFetch(`${API_URL}/admin/promo-codes`); const data = await res.json(); if (!Array.isArray(data)) throw new Error(data?.error || 'Promo codes came back in a shape this screen does not understand.'); setPromos(data); }
     catch { showToast("Failed to load promo codes", true); }
     finally { setLoadingPromos(false); }
   };
@@ -771,6 +771,9 @@ const AdminPanel = () => {
       const res = await adminFetch(`${API_URL}/admin/prospect-flow`);
       const d = await res.json();
       if (!res.ok) throw new Error(d.error || "Failed to load");
+      // The screen maps over users; a payload without them is an error here,
+      // not a crash.
+      if (!Array.isArray(d?.users)) throw new Error("The prospect flow came back in a shape this screen does not understand.");
       setPfData(d);
     } catch (err) { setPfError(err.message); }
     setPfLoading(false);
