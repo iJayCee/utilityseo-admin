@@ -80,7 +80,13 @@ export const LeadsPanel = ({ adminFetch, API_URL }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: l.url, email: l.email || undefined, leadId: l.id, research: true }),
       });
-      if (r.ok) setProspected(p => [...p, l.id]);
+      if (r.ok) {
+        setProspected(p => [...p, l.id]);
+        // The scan runs in the background, so the row would sit there saying
+        // "Added" and nothing else. Reload once it has had time to finish and
+        // the address it found appears in the row that asked for it.
+        setTimeout(() => load().catch(() => {}), 12000);
+      }
     } catch { /* the Prospects tab is the place that reports its own errors */ }
     finally { setProspecting(null); }
   };
@@ -355,8 +361,21 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
                             style={{ flex:1, minWidth:0, color:"var(--sky)", textDecoration:"none", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                             {l.url.replace(/^https?:\/\/(www\.)?/, "")}
                           </a>
+                          {/* What the scan found. A role address is the one
+                              worth writing to, so it is the one shown. */}
+                          {l.prospect_email && (
+                            <a href={`mailto:${l.prospect_email}`} className="mono"
+                               title={`Found on their site by the prospect scan${l.prospect_kind === "role" ? "" : " (looks like a personal mailbox)"}`}
+                               style={{ fontSize: 11, color: "var(--accent)", textDecoration: "none" }}>
+                              {l.prospect_email}
+                            </a>
+                          )}
+                          {!l.prospect_email && l.prospect_scanned && (
+                            <span title="The scan read their site and found no address on it"
+                                  style={{ fontSize: 11, color: "var(--muted)" }}>No address found</span>
+                          )}
                           {!bin && <button type="button" className="btn btn-sm btn-active" onClick={() => addProspect(l)} disabled={prospecting === l.id}
-                            title={prospected.includes(l.id) ? "Added. The scan is running now; the result appears in the Prospects tab." : "Add to Prospects: scans the site, looks for a contact and drafts an email"}
+                            title={prospected.includes(l.id) ? "Added. The scan is reading their site now; any address it finds appears here." : "Add to Prospects: reads their home and contact pages for an email address, scans the site and drafts an email"}
                             style={{ flexShrink:0, minHeight:26, padding:"0 8px", fontSize:11 }}>
                             {prospecting === l.id ? "…" : prospected.includes(l.id) ? "Added" : "Prospect"}
                           </button>}
