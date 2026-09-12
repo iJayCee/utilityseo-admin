@@ -1,0 +1,74 @@
+// The lead bin, from the admin screen's side.
+//
+// Deleting a lead is the one destructive thing on this panel, and it sits one
+// cell away from a link that opens somebody's website. So what is checked
+// here is mostly about the slip: that it asks first, that it says the delete
+// can be undone, and that the way back exists and is only offered when there
+// is something to go back for.
+import { test, describe } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const SRC = readFileSync(join(here, '../src/sections/MarketingSection.jsx'), 'utf8');
+
+describe('deleting a lead', () => {
+  test('it asks first, and says where the lead goes', () => {
+    assert.match(SRC, /window\.confirm\(/, 'a one-click delete in a long list needs a confirm');
+    // The number of days comes from the server, so the screen cannot promise
+    // a week while the job deletes after three days.
+    assert.match(SRC, /after \$\{binDays\} days/);
+    assert.match(SRC, /You can put it back until then/);
+  });
+
+  test('it goes through DELETE, not a hard-delete endpoint of its own', () => {
+    assert.match(SRC, /marketing\/leads\/\$\{l\.id\}`, \{ method: "DELETE" \}/);
+  });
+
+  test('the list and its counts are reloaded afterwards', () => {
+    // Splicing the row out locally would leave the totals above the table
+    // counting the lead that was just deleted, which reads as a failed click.
+    const fn = SRC.slice(SRC.indexOf('const remove = async'), SRC.indexOf('const restore = async'));
+    assert.match(fn, /await load\(\)/);
+  });
+
+  test('a failure says so rather than looking like it worked', () => {
+    const fn = SRC.slice(SRC.indexOf('const remove = async'), SRC.indexOf('const restore = async'));
+    assert.match(fn, /setErr\(/);
+    assert.match(SRC, /role="alert"/);
+  });
+});
+
+describe('the bin itself', () => {
+  test('restoring exists and posts to restore', () => {
+    assert.match(SRC, /marketing\/leads\/\$\{l\.id\}\/restore`, \{ method: "POST" \}/);
+  });
+
+  test('it is only offered when there is something in it', () => {
+    // Or the normal view carries a button to an empty room.
+    assert.match(SRC, /\(bin \|\| c\.binned > 0\) &&/);
+  });
+
+  test('the bin view says when each lead goes, from the server count', () => {
+    // Not worked out in the browser: the screen and the nightly job must not
+    // be able to disagree about which day a lead disappears.
+    assert.match(SRC, /l\.bin_days_left/);
+    assert.doesNotMatch(SRC, /deleted_at[\s\S]{0,80}86400000/, 'do not recompute the countdown here');
+  });
+
+  test('a deleted lead is not offered to Prospects', () => {
+    // It would scan a site for a lead that is on its way out.
+    assert.match(SRC, /\{!bin && <button type="button" className="btn btn-sm btn-active" onClick=\{\(\) => addProspect/);
+  });
+
+  test('who deleted it is shown', () => {
+    assert.match(SRC, /by \{l\.deleted_by\}/);
+  });
+
+  test('no em-dashes in any of the new copy', () => {
+    const shown = SRC.replace(/\/\/.*$/gm, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
+    assert.doesNotMatch(shown, /[–—]/);
+  });
+});

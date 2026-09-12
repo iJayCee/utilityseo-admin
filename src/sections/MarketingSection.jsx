@@ -87,18 +87,60 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
   const [consentedOnly, setConsentedOnly] = useState(false);
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
+  // The bin is the same list with one filter flipped, so it is a view of this
+  // panel rather than a second screen somewhere else.
+  const [bin, setBin] = useState(false);
+  const [acting, setActing] = useState(null);
+  const [err, setErr] = useState("");
 
-  const load = async () => {
-    setBusy(true);
+  const load = async (asBin = bin) => {
+    setBusy(true); setErr("");
     try {
       const qs = new URLSearchParams({ limit: "200" });
       if (search.trim()) qs.set("search", search.trim());
       if (consentedOnly) qs.set("consented", "1");
+      if (asBin) qs.set("bin", "1");
       const r = await adminFetch(`${API_URL}/admin/marketing/leads?${qs}`);
       setData(await r.json());
     } catch { setData({ leads: [], counts: {} }); }
     setBusy(false);
   };
+
+  const binDays = data?.binDays ?? 7;
+
+  // Deleting asks first. It is one click in a long list and the click beside
+  // it opens somebody's website, so the confirm is the thing standing between
+  // a slip and a lost lead. It says where the lead goes, because a delete
+  // that can be undone is a different decision from one that cannot.
+  const remove = async (l) => {
+    const who = l.email || l.url || `lead ${l.id}`;
+    if (!window.confirm(`Delete ${who}?
+
+It goes to the bin and is deleted for good after ${binDays} days. You can put it back until then.`)) return;
+    setActing(l.id); setErr("");
+    try {
+      const r = await adminFetch(`${API_URL}/admin/marketing/leads/${l.id}`, { method: "DELETE" });
+      if (!r.ok) throw new Error("failed");
+      // Reloaded rather than spliced out of the list: the counts above the
+      // table move too, and a total that still counts what you just deleted
+      // makes the delete look like it did nothing.
+      await load();
+    } catch { setErr("Could not delete that lead. Try again."); }
+    finally { setActing(null); }
+  };
+
+  const restore = async (l) => {
+    setActing(l.id); setErr("");
+    try {
+      const r = await adminFetch(`${API_URL}/admin/marketing/leads/${l.id}/restore`, { method: "POST" });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "failed");
+      await load();
+    } catch (e) { setErr(e.message || "Could not restore that lead."); }
+    finally { setActing(null); }
+  };
+
+  const showBin = (on) => { setBin(on); setData(null); load(on); };
 
   useEffect(() => { if (open && !data) load(); /* eslint-disable-next-line */ }, [open]);
 
@@ -110,7 +152,9 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
           <div className="card-title" style={{ fontSize:14 }}>Leads</div>
           <div className="card-sub">
             {data
-              ? `${c.total} total · ${c.consented} opted in to marketing · ${c.anonymous} with no email · ${c.last7} in the last 7 days`
+              ? (bin
+                ? `${c.binned || 0} in the bin · deleted for good ${binDays} days after you delete them`
+                : `${c.total} total · ${c.consented} opted in to marketing · ${c.anonymous} with no email · ${c.last7} in the last 7 days`)
               : "Everyone who ran a free scan or asked for a report."}
           </div>
         </div>
@@ -130,20 +174,33 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
               <input type="checkbox" checked={consentedOnly} onChange={e => setConsentedOnly(e.target.checked)} />
               Opted in only
             </label>
-            <button type="button" className="btn btn-primary btn-sm" onClick={load} disabled={busy}>
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => load()} disabled={busy}>
               {busy ? "Loading…" : "Search"}
             </button>
+            {/* Only offered once there is something in it, so the normal view
+                is not carrying a button to an empty room. */}
+            {(bin || c.binned > 0) && (
+              <button type="button" className={`btn btn-sm${bin ? " btn-active" : ""}`} onClick={() => showBin(!bin)} disabled={busy}>
+                {bin ? "Back to leads" : `Bin (${c.binned})`}
+              </button>
+            )}
           </div>
 
+          {err && <div style={{ fontSize:12, color:"var(--red)", margin:"0 0 10px" }} role="alert">{err}</div>}
+
           {!data ? (busy ? <SkeletonRows rows={4} /> : null) : data.leads.length === 0 ? (
-            <EmptyState title="No leads match that" text="Try a shorter search, or clear the opted-in filter." />
+            bin
+              ? <EmptyState title="The bin is empty" text={`Leads you delete wait here for ${binDays} days, then they are deleted for good.`} />
+              : <EmptyState title="No leads match that" text="Try a shorter search, or clear the opted-in filter." />
           ) : (
             <div className="scroll-x" style={{ maxHeight:460, overflowY:"auto", border:"1px solid var(--border)", borderRadius:10 }}>
               <table className="tbl" style={{ fontSize:12 }}>
                 <thead>
                   <tr>
-                    {["Email","Site","Source","Score","Campaign","When","Account"].map(h => (
-                      <th key={h} style={{ position:"sticky", top:0, background:"var(--card)" }}>{h}</th>
+                    {(bin
+                      ? ["Email","Site","Source","Score","Campaign","Deleted","Goes in",""]
+                      : ["Email","Site","Source","Score","Campaign","When","Account",""]).map(h => (
+                      <th key={h || "actions"} style={{ position:"sticky", top:0, background:"var(--card)" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -164,11 +221,11 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
                             style={{ flex:1, minWidth:0, color:"var(--sky)", textDecoration:"none", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                             {l.url.replace(/^https?:\/\/(www\.)?/, "")}
                           </a>
-                          <button type="button" className="btn btn-sm btn-active" onClick={() => addProspect(l)} disabled={prospecting === l.id}
+                          {!bin && <button type="button" className="btn btn-sm btn-active" onClick={() => addProspect(l)} disabled={prospecting === l.id}
                             title={prospected.includes(l.id) ? "Added. The scan is running now; the result appears in the Prospects tab." : "Add to Prospects: scans the site, looks for a contact and drafts an email"}
                             style={{ flexShrink:0, minHeight:26, padding:"0 8px", fontSize:11 }}>
                             {prospecting === l.id ? "…" : prospected.includes(l.id) ? "Added" : "Prospect"}
-                          </button>
+                          </button>}
                         </div>
                       </td>
                       <td style={{ color:"var(--muted)", whiteSpace:"nowrap" }}>{l.source}</td>
@@ -191,17 +248,52 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
                         {/* Date and the time to the second. Several leads
                             arrive within a minute of each other from one
                             person trying a few URLs, and a bare date cannot
-                            tell that apart from five separate visitors. */}
-                        <div>{new Date(l.submitted_at).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"2-digit" })}</div>
-                        <div className="mono" style={{ fontSize:10.5, color:"var(--dim)" }}
-                          title={new Date(l.submitted_at).toISOString()}>
-                          {new Date(l.submitted_at).toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false })}
-                        </div>
+                            tell that apart from five separate visitors. In the
+                            bin it is the deletion that is being dated. */}
+                        {(() => {
+                          const when = new Date(bin ? l.deleted_at : l.submitted_at);
+                          return (
+                            <>
+                              <div>{when.toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"2-digit" })}</div>
+                              <div className="mono" style={{ fontSize:10.5, color:"var(--dim)" }} title={when.toISOString()}>
+                                {when.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false })}
+                              </div>
+                            </>
+                          );
+                        })()}
                       </td>
-                      <td style={{ whiteSpace:"nowrap" }}>
-                        {l.user_id
-                          ? <span className="pill pill-purple">{l.plan || "signed up"}</span>
-                          : <span style={{ color:"var(--muted)" }}>-</span>}
+                      {bin ? (
+                        <td style={{ whiteSpace:"nowrap" }}>
+                          {/* Counted in whole days by the server, so the
+                              screen does not do date arithmetic and get a
+                              different answer from the job that deletes it. */}
+                          <span className={l.bin_days_left <= 1 ? "pill pill-red" : "pill"} style={{ fontSize:10.5 }}>
+                            {l.bin_days_left === 0 ? "tonight" : l.bin_days_left === 1 ? "1 day" : `${l.bin_days_left} days`}
+                          </span>
+                          {l.deleted_by && (
+                            <div style={{ fontSize:10.5, color:"var(--dim)" }} title="Who deleted it">by {l.deleted_by}</div>
+                          )}
+                        </td>
+                      ) : (
+                        <td style={{ whiteSpace:"nowrap" }}>
+                          {l.user_id
+                            ? <span className="pill pill-purple">{l.plan || "signed up"}</span>
+                            : <span style={{ color:"var(--muted)" }}>-</span>}
+                        </td>
+                      )}
+                      <td style={{ whiteSpace:"nowrap", textAlign:"right" }}>
+                        {bin ? (
+                          <button type="button" className="btn btn-sm" onClick={() => restore(l)} disabled={acting === l.id}
+                            title="Put this lead back on the list">
+                            {acting === l.id ? "…" : "Restore"}
+                          </button>
+                        ) : (
+                          <button type="button" className="btn btn-sm" onClick={() => remove(l)} disabled={acting === l.id}
+                            title={`Delete this lead. It waits in the bin for ${binDays} days first.`}
+                            style={{ color:"var(--red)" }}>
+                            {acting === l.id ? "…" : "Delete"}
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
