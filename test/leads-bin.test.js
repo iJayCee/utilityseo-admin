@@ -124,3 +124,41 @@ describe('exporting leads', () => {
     assert.match(SRC, /aria-label=\{`Select \$\{l\.email \|\| l\.url\}`\}/);
   });
 });
+
+describe('deleting what is ticked', () => {
+  test('the button says how many, and only appears when something is ticked', () => {
+    assert.match(SRC, /picked\.size > 0 && \(/);
+    assert.match(SRC, /`Delete \$\{picked\.size\}`/);
+    assert.match(SRC, /`Restore \$\{picked\.size\}`/);
+  });
+
+  test('deleting asks first and says where they go', () => {
+    const fn = SRC.slice(SRC.indexOf('const bulk = async'), SRC.indexOf('// The buttons sit') + 1 || undefined);
+    assert.match(SRC, /window\.confirm\([\s\S]{0,200}Delete \$\{picked\.size\}/);
+    assert.match(SRC, /deleted for good after \$\{binDays\} days/);
+    assert.ok(fn.length, 'the bulk function is missing');
+  });
+
+  test('restoring does not ask, because it is the undo', () => {
+    // Confirming an undo makes it feel as risky as the thing it undoes.
+    assert.match(SRC, /if \(action === "delete" && !window\.confirm/);
+  });
+
+  test('it is one request, not one per row', () => {
+    // Forty single deletes means forty half-finished decisions when the tenth
+    // one fails.
+    assert.match(SRC, /leads\/bulk`, \{\s*\n?\s*method: "POST"/);
+    assert.match(SRC, /ids: \[\.\.\.picked\], action/);
+  });
+
+  test('a partial result is reported rather than smoothed over', () => {
+    assert.match(SRC, /d\.moved < d\.asked/);
+    assert.match(SRC, /already \$\{action === "restore" \? "back on the list" : "in the bin"\}/);
+  });
+
+  test('the bin view offers restore and the list view offers delete, never both', () => {
+    const block = SRC.slice(SRC.indexOf('{picked.size > 0 && ('), SRC.indexOf('onClick={exportCsv}'));
+    assert.match(block, /bin\s*\n?\s*\?/, 'it has to branch on which view is showing');
+    assert.ok(block.indexOf('Restore') < block.indexOf('Delete'), 'bin branch first');
+  });
+});

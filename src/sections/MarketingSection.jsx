@@ -152,6 +152,42 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
 
   const showBin = (on) => { setBin(on); setData(null); load(on); };
 
+  // Delete or restore everything ticked, in one go.
+  //
+  // Deleting asks first, the same way one row does, and says how many and
+  // where they are going. Restoring does not ask: putting something back is
+  // the undo, and asking the customer to confirm an undo is how you make the
+  // undo feel as risky as the thing it undoes.
+  const bulk = async (action) => {
+    if (!picked.size || acting) return;
+    if (action === "delete" && !window.confirm(
+      `Delete ${picked.size} lead${picked.size === 1 ? "" : "s"}?\n\n`
+      + `They go to the bin and are deleted for good after ${binDays} days. You can put them back until then.`
+    )) return;
+
+    setActing("bulk"); setErr("");
+    try {
+      const r = await adminFetch(`${API_URL}/admin/marketing/leads/bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [...picked], action }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "failed");
+      // Asked for forty, moved thirty eight: two were already where they were
+      // being sent. Worth saying, because the count on screen will not match
+      // what they ticked.
+      if (d.moved < d.asked) {
+        setErr(`${d.moved} of ${d.asked} were ${action === "restore" ? "restored" : "deleted"}. The rest were already ${action === "restore" ? "back on the list" : "in the bin"}.`);
+      }
+      await load();
+    } catch (e) {
+      setErr(e.message === "failed" ? `Could not ${action} those leads. Try again.` : e.message);
+    } finally {
+      setActing(null);
+    }
+  };
+
   // Export what the screen is showing, or what is ticked.
   //
   // Ticked rows win over the filters: picking rows and then having a filter
@@ -251,6 +287,18 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
             <button type="button" className="btn btn-primary btn-sm" onClick={() => load()} disabled={busy}>
               {busy ? "Loading…" : "Search"}
             </button>
+            {picked.size > 0 && (
+              bin
+                ? <button type="button" className="btn btn-sm" onClick={() => bulk("restore")} disabled={acting === "bulk"}
+                    title="Put these leads back on the list">
+                    {acting === "bulk" ? "Restoring…" : `Restore ${picked.size}`}
+                  </button>
+                : <button type="button" className="btn btn-sm" onClick={() => bulk("delete")} disabled={acting === "bulk"}
+                    title={`Delete these leads. They wait in the bin for ${binDays} days first.`}
+                    style={{ color: "var(--red)" }}>
+                    {acting === "bulk" ? "Deleting…" : `Delete ${picked.size}`}
+                  </button>
+            )}
             <button type="button" className="btn btn-sm" onClick={exportCsv} disabled={busy || !rows.length}
               title="Downloads a CSV. Ticked rows if you have ticked any, otherwise whatever this list is showing.">
               {exportLabel}
