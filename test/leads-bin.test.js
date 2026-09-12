@@ -72,3 +72,55 @@ describe('the bin itself', () => {
     assert.doesNotMatch(shown, /[–—]/);
   });
 });
+
+describe('exporting leads', () => {
+  test('the button says what it will actually do', () => {
+    // "Export" alone is ambiguous next to a filter and a set of ticks, and
+    // guessing wrong means a file with the wrong rows in it that nobody
+    // checks.
+    assert.match(SRC, /Export \$\{picked\.size\} selected/);
+    assert.match(SRC, /Export the bin/);
+    assert.match(SRC, /Export these \$\{rows\.length\}/);
+    assert.match(SRC, /Export all \$\{c\.total/);
+  });
+
+  test('ticked rows win over the filters', () => {
+    const fn = SRC.slice(SRC.indexOf('const exportCsv'), SRC.indexOf('const downloadCsv'));
+    assert.match(fn, /if \(picked\.size\) \{[\s\S]{0,120}qs\.set\("ids"/);
+    // The filters only go on when nothing is ticked.
+    assert.match(fn, /\} else \{[\s\S]{0,300}consented[\s\S]{0,120}bin/);
+  });
+
+  test('it goes through adminFetch, so the password stays in a header', () => {
+    // A plain link or window.open would be simpler and cannot carry the
+    // admin headers. Moving them to the query string to make a link work
+    // would write the password into every log on the way.
+    const fn = SRC.slice(SRC.indexOf('const downloadCsv'), SRC.indexOf('const rows ='));
+    assert.match(fn, /await adminFetch\(url\)/);
+    // Comments stripped first: the comment above this code names the header
+    // in order to explain why it must not move, and a test that reads that as
+    // code fails on its own explanation.
+    const code = SRC.replace(/\/\/.*$/gm, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
+    assert.doesNotMatch(code, /window\.open\(/);
+    assert.doesNotMatch(code, /x-admin-password/);
+  });
+
+  test('the object URL is released, but not before the download starts', () => {
+    assert.match(SRC, /setTimeout\(\(\) => URL\.revokeObjectURL\(href\), 1000\)/);
+  });
+
+  test('a reload clears the ticks, because the rows have changed', () => {
+    const fn = SRC.slice(SRC.indexOf('const load = async'), SRC.indexOf('const binDays'));
+    assert.match(fn, /setPicked\(new Set\(\)\)/);
+  });
+
+  test('tick all covers the rows on screen and can be undone', () => {
+    assert.match(SRC, /const allPicked = rows\.length > 0 && rows\.every/);
+    assert.match(SRC, /setPicked\(allPicked \? new Set\(\) : new Set\(rows\.map/);
+  });
+
+  test('every checkbox is labelled for a screen reader', () => {
+    assert.match(SRC, /aria-label="Tick all"/);
+    assert.match(SRC, /aria-label=\{`Select \$\{l\.email \|\| l\.url\}`\}/);
+  });
+});

@@ -59,7 +59,10 @@ const EMPTY_FORM = { name:"", platform:"google_ads", details:"", utmCampaign:"",
 // number, and was never followed up. Signed-up leads are marked, because
 // "120 leads" and "9 of them became accounts" are different facts and only
 // the second tells you whether any of this is working.
-const LeadsPanel = ({ adminFetch, API_URL }) => {
+// Exported so it can be rendered on its own. The section around it pulls in
+// campaign spend, the funnel and the platform breakdown, and none of that has
+// anything to do with the lead list.
+export const LeadsPanel = ({ adminFetch, API_URL }) => {
   // Send a lead to the Prospects pipeline: same URL, same flow as one typed
   // in by hand. The lead id travels with it so the two rows stay connected.
   //
@@ -92,6 +95,9 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
   const [bin, setBin] = useState(false);
   const [acting, setActing] = useState(null);
   const [err, setErr] = useState("");
+  // Ticked rows, by id. A Set because the only questions asked of it are
+  // "is this one in" and "how many".
+  const [picked, setPicked] = useState(() => new Set());
 
   const load = async (asBin = bin) => {
     setBusy(true); setErr("");
@@ -102,6 +108,10 @@ const LeadsPanel = ({ adminFetch, API_URL }) => {
       if (asBin) qs.set("bin", "1");
       const r = await adminFetch(`${API_URL}/admin/marketing/leads?${qs}`);
       setData(await r.json());
+      // The list has changed underneath the ticks, so they cannot mean what
+      // they meant. Clearing is the honest option; keeping them would export
+      // rows that are no longer on screen.
+      setPicked(new Set());
     } catch { setData({ leads: [], counts: {} }); }
     setBusy(false);
   };
@@ -142,9 +152,73 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
 
   const showBin = (on) => { setBin(on); setData(null); load(on); };
 
+  // Export what the screen is showing, or what is ticked.
+  //
+  // Ticked rows win over the filters: picking rows and then having a filter
+  // drop some of them would be the opposite of what ticking a box means. The
+  // server does the selecting, so an export is never limited to the two
+  // hundred rows this screen happens to have loaded.
+  const exportCsv = () => {
+    const qs = new URLSearchParams();
+    if (picked.size) {
+      qs.set("ids", [...picked].join(","));
+    } else {
+      if (search.trim()) qs.set("search", search.trim());
+      if (consentedOnly) qs.set("consented", "1");
+      if (bin) qs.set("bin", "1");
+    }
+    downloadCsv(`${API_URL}/admin/marketing/leads.csv?${qs}`);
+  };
+
+  // Fetched with the admin headers, then handed to the browser as a file.
+  //
+  // A plain link would be simpler and cannot work: admin auth travels in
+  // x-admin-email and x-admin-password headers, and moving them to the query
+  // string to make a link work would write the password into every log
+  // between here and the server.
+  const downloadCsv = async (url) => {
+    setErr("");
+    try {
+      const r = await adminFetch(url);
+      if (!r.ok) throw new Error("failed");
+      const blob = await r.blob();
+      const name = /filename="([^"]+)"/.exec(r.headers.get("content-disposition") || "")?.[1] || "leads.csv";
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href; a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      // Freed on the next tick: revoking immediately cancels the download in
+      // some browsers.
+      setTimeout(() => URL.revokeObjectURL(href), 1000);
+    } catch {
+      setErr("Could not build that export. Try again.");
+    }
+  };
+
+  // Declared before anything that reads it. It used to sit just above the
+  // return, which put it after the export label in the component body: the
+  // label read `c` in the temporal dead zone and the whole panel crashed to
+  // a blank card, with the build perfectly green.
+  const c = data?.counts || {};
+  const rows = data?.leads || [];
+  const allPicked = rows.length > 0 && rows.every(l => picked.has(l.id));
+  const toggleAll = () => setPicked(allPicked ? new Set() : new Set(rows.map(l => l.id)));
+  const toggleOne = (id) => setPicked(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  // What the button will actually do, said in the button.
+  const exportLabel = picked.size
+    ? `Export ${picked.size} selected`
+    : bin
+      ? `Export the bin (${c.binned || 0})`
+      : (search.trim() || consentedOnly)
+        ? `Export these ${rows.length}`
+        : `Export all ${c.total ?? rows.length}`;
+
   useEffect(() => { if (open && !data) load(); /* eslint-disable-next-line */ }, [open]);
 
-  const c = data?.counts || {};
   return (
     <div className="card" style={{ marginTop:16, marginBottom:CARD_GAP }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap" }}>
@@ -177,6 +251,10 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
             <button type="button" className="btn btn-primary btn-sm" onClick={() => load()} disabled={busy}>
               {busy ? "Loading…" : "Search"}
             </button>
+            <button type="button" className="btn btn-sm" onClick={exportCsv} disabled={busy || !rows.length}
+              title="Downloads a CSV. Ticked rows if you have ticked any, otherwise whatever this list is showing.">
+              {exportLabel}
+            </button>
             {/* Only offered once there is something in it, so the normal view
                 is not carrying a button to an empty room. */}
             {(bin || c.binned > 0) && (
@@ -197,6 +275,10 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
               <table className="tbl" style={{ fontSize:12 }}>
                 <thead>
                   <tr>
+                    <th style={{ position:"sticky", top:0, background:"var(--card)", width:28 }}>
+                      <input type="checkbox" checked={allPicked} onChange={toggleAll}
+                        title={allPicked ? "Untick all" : "Tick all on this page"} aria-label="Tick all" />
+                    </th>
                     {(bin
                       ? ["Email","Site","Source","Score","Campaign","Deleted","Goes in",""]
                       : ["Email","Site","Source","Score","Campaign","When","Account",""]).map(h => (
@@ -207,6 +289,10 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
                 <tbody>
                   {data.leads.map(l => (
                     <tr key={l.id}>
+                      <td style={{ width:28 }}>
+                        <input type="checkbox" checked={picked.has(l.id)} onChange={() => toggleOne(l.id)}
+                          aria-label={`Select ${l.email || l.url}`} />
+                      </td>
                       <td style={{ color:"var(--text)", whiteSpace:"nowrap" }}>
                         {l.email || <span style={{ color:"var(--muted)" }}>anonymous</span>}
                         {l.marketing_consent && <span title="Opted in to marketing" className="pill pill-green" style={{ marginLeft:6, fontSize:9.5, padding:"1px 6px" }}>OPT-IN</span>}
