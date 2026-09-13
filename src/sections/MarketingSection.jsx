@@ -105,15 +105,32 @@ export const LeadsPanel = ({ adminFetch, API_URL }) => {
   // "is this one in" and "how many".
   const [picked, setPicked] = useState(() => new Set());
 
-  const load = async (asBin = bin) => {
+  // Which tray is on screen. "none" is the working list: everything not yet
+  // filed. It is the default, so a batch you have dealt with leaves the list
+  // and the list fills back up, which is the whole point of filing.
+  const [folder, setFolder] = useState("none");
+  const [folders, setFolders] = useState([]);
+  const loadFolders = async () => {
+    try {
+      const r = await adminFetch(`${API_URL}/admin/marketing/lead-folders`);
+      const d = await r.json();
+      if (r.ok) setFolders(d.folders || []);
+    } catch { /* the list still works without them */ }
+  };
+
+  const load = async (asBin = bin, asFolder = folder) => {
     setBusy(true); setErr("");
     try {
       const qs = new URLSearchParams({ limit: "200" });
       if (search.trim()) qs.set("search", search.trim());
       if (consentedOnly) qs.set("consented", "1");
       if (asBin) qs.set("bin", "1");
+      // The bin is its own view and cuts across folders: a lead you deleted
+      // should be findable there whichever tray it was in.
+      else if (asFolder && asFolder !== "all") qs.set("folder", asFolder);
       const r = await adminFetch(`${API_URL}/admin/marketing/leads?${qs}`);
       setData(await r.json());
+      loadFolders();
       // The list has changed underneath the ticks, so they cannot mean what
       // they meant. Clearing is the honest option; keeping them would export
       // rows that are no longer on screen.
@@ -200,6 +217,37 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
   // drop some of them would be the opposite of what ticking a box means. The
   // server does the selecting, so an export is never limited to the two
   // hundred rows this screen happens to have loaded.
+  // Move the ticked leads into a tray, or back out of one.
+  //
+  // Filing is not deleting and is not offered as though it were: the leads
+  // keep everything they had, they are still in the export, and emptying the
+  // folder puts them back on the list.
+  const file = async (name) => {
+    if (!picked.size || acting) return;
+    setActing("file"); setErr("");
+    try {
+      const r = await adminFetch(`${API_URL}/admin/marketing/leads/folder`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [...picked], folder: name }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "failed");
+      await load();
+    } catch (e) {
+      setErr(e.message === "failed" ? "Could not move those leads. Try again." : e.message);
+    } finally { setActing(null); }
+  };
+
+  const fileToNew = async () => {
+    const name = window.prompt(
+      `Move ${picked.size} lead${picked.size === 1 ? "" : "s"} into a folder.\n\n`
+      + "They stay exactly as they are and come off this list, so it can fill back up. "
+      + "Type the name of a folder, new or existing.",
+      `Exported ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`);
+    if (name && name.trim()) await file(name.trim());
+  };
+
   const exportCsv = () => {
     const qs = new URLSearchParams();
     if (picked.size) {
@@ -208,6 +256,10 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
       if (search.trim()) qs.set("search", search.trim());
       if (consentedOnly) qs.set("consented", "1");
       if (bin) qs.set("bin", "1");
+      // The file has to be the list on screen. Without this, exporting while
+      // looking at one folder hands you every lead there is, and nobody
+      // checks the row count of a file they just downloaded.
+      else if (folder && folder !== "all") qs.set("folder", folder);
     }
     downloadCsv(`${API_URL}/admin/marketing/leads.csv?${qs}`);
   };
@@ -293,6 +345,16 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
             <button type="button" className="btn btn-primary btn-sm" onClick={() => load()} disabled={busy}>
               {busy ? "Loading…" : "Search"}
             </button>
+            {!bin && (
+              <select className="field" value={folder} disabled={busy}
+                onChange={e => { setFolder(e.target.value); setData(null); load(bin, e.target.value); }}
+                title="Which leads to show. Filed leads are still here, just out of the way."
+                style={{ width:"auto", minWidth:150, fontSize:12 }}>
+                <option value="none">Not in a folder</option>
+                <option value="all">All leads</option>
+                {folders.map(f => <option key={f.id} value={String(f.id)}>{f.name} ({f.leads})</option>)}
+              </select>
+            )}
             {picked.size > 0 && (
               bin
                 ? <button type="button" className="btn btn-sm" onClick={() => bulk("restore")} disabled={acting === "bulk"}
@@ -303,6 +365,17 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
                     title={`Delete these leads. They wait in the bin for ${binDays} days first.`}
                     style={{ color: "var(--red)" }}>
                     {acting === "bulk" ? "Deleting…" : `Delete ${picked.size}`}
+                  </button>
+            )}
+            {picked.size > 0 && !bin && (
+              folder !== "none" && folder !== "all"
+                ? <button type="button" className="btn btn-sm" onClick={() => file(null)} disabled={acting === "file"}
+                    title="Put these back on the working list">
+                    {acting === "file" ? "Moving…" : `Take ${picked.size} out`}
+                  </button>
+                : <button type="button" className="btn btn-sm" onClick={fileToNew} disabled={acting === "file"}
+                    title="Move these into a folder so they come off this list. Nothing is deleted.">
+                    {acting === "file" ? "Moving…" : `Move ${picked.size} to folder`}
                   </button>
             )}
             <button type="button" className="btn btn-sm" onClick={exportCsv} disabled={busy || !rows.length}
@@ -348,8 +421,27 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
                           aria-label={`Select ${l.email || l.url}`} />
                       </td>
                       <td style={{ color:"var(--text)", whiteSpace:"nowrap" }}>
-                        {l.email || <span style={{ color:"var(--muted)" }}>anonymous</span>}
+                        {/* A lead who gave us their address, then the one the
+                            prospect scan found on their site, then nothing.
+                            The found one is marked, because an address we went
+                            and got is a different thing from one somebody
+                            typed in: nobody opted in to it, and a reply is not
+                            expected. Gold rather than plain text so it cannot
+                            be read at a glance as theirs. */}
+                        {l.email
+                          ? l.email
+                          : l.prospect_email
+                            ? <a href={`mailto:${l.prospect_email}`} className="pill pill-gold"
+                                 title="Found on their website by the prospect scan. They did not give us this, so it is not a marketing opt-in."
+                                 style={{ fontSize:11, textDecoration:"none" }}>
+                                {l.prospect_email}
+                              </a>
+                            : <span style={{ color:"var(--muted)" }}>anonymous</span>}
                         {l.marketing_consent && <span title="Opted in to marketing" className="pill pill-green" style={{ marginLeft:6, fontSize:9.5, padding:"1px 6px" }}>OPT-IN</span>}
+                        {l.folder_name && folder === "all" && (
+                          <span title={`Filed in "${l.folder_name}"`} className="pill pill-grey"
+                                style={{ marginLeft:6, fontSize:9.5, padding:"1px 6px" }}>{l.folder_name}</span>
+                        )}
                       </td>
                       <td title={l.url} style={{ maxWidth:240 }}>
                         {/* The address is the useful thing on this row: it is
@@ -361,15 +453,11 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
                             style={{ flex:1, minWidth:0, color:"var(--sky)", textDecoration:"none", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                             {l.url.replace(/^https?:\/\/(www\.)?/, "")}
                           </a>
-                          {/* What the scan found. A role address is the one
-                              worth writing to, so it is the one shown. */}
-                          {l.prospect_email && (
-                            <a href={`mailto:${l.prospect_email}`} className="mono"
-                               title={`Found on their site by the prospect scan${l.prospect_kind === "role" ? "" : " (looks like a personal mailbox)"}`}
-                               style={{ fontSize: 11, color: "var(--accent)", textDecoration: "none" }}>
-                              {l.prospect_email}
-                            </a>
-                          )}
+                          {/* The found address lives in the Email column, where
+                              an address belongs. What is left to say here is
+                              the case that column cannot show: a scan that ran
+                              and came back with nothing, which is a different
+                              thing from one still running. */}
                           {!l.prospect_email && l.prospect_scanned && (
                             <span title="The scan read their site and found no address on it"
                                   style={{ fontSize: 11, color: "var(--muted)" }}>No address found</span>
