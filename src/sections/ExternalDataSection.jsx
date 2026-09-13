@@ -16,15 +16,22 @@ const StatusPill = ({ service }) => {
   // Partial is its own state deliberately. A Stripe key without its webhook
   // secret takes payments and never hears about them - showing that as green
   // would hide the single most expensive failure on this page.
+  // Deferred is its own state too, and it beats MISSING. A service we chose
+  // not to set up yet is a decision, not a fault, and a page that paints
+  // decisions red is a page nobody reads after the first week.
   const s = service.retired
     ? { cls:"pill-grey",   text:"NOT USED" }
     : service.partial
       ? { cls:"pill-gold",  text:"PARTIAL" }
       : service.configured
         ? { cls:"pill-green", text:"CONFIGURED" }
-        : service.critical
-          ? { cls:"pill-red",   text:"MISSING" }
-          : { cls:"pill-grey",  text:"NOT SET" };
+        : service.deferred
+          ? (service.deferred.due
+              ? { cls:"pill-purple", text:"READY TO SET UP" }
+              : { cls:"pill-grey",   text:"LATER" })
+          : service.critical
+            ? { cls:"pill-red",   text:"MISSING" }
+            : { cls:"pill-grey",  text:"NOT SET" };
   return <span className={`pill ${s.cls}`} style={{ fontSize:10 }}>{s.text}</span>;
 };
 
@@ -62,6 +69,27 @@ const ServiceRow = ({ s }) => (
     <div style={{ fontSize:11.5, color:"var(--muted)", marginTop:6, lineHeight:1.55 }}>
       <span style={{ color:"var(--dim)" }}>If it stops: </span>{s.whenMissing}
     </div>
+
+    {/* Why it is not set up, and what to do when it should be. Written down
+        here so the decision gets re-read rather than re-argued every time
+        somebody scrolls past a row with no key. */}
+    {s.deferred && (
+      <div style={{ marginTop:8, padding:"9px 12px", borderRadius:8,
+                    background: s.deferred.due ? "rgba(124,58,237,0.1)" : "rgba(255,255,255,0.03)",
+                    border: `1px solid ${s.deferred.due ? "rgba(124,58,237,0.35)" : "var(--border)"}` }}>
+        <div style={{ fontSize:11.5, fontWeight:700, color: s.deferred.due ? "var(--purple-text)" : "var(--text-2)" }}>
+          {s.deferred.due
+            ? `Waiting on ${s.deferred.label} - that has happened.`
+            : `Waiting on ${s.deferred.label}.`}
+        </div>
+        <div style={{ fontSize:11.5, color:"var(--muted)", marginTop:4, lineHeight:1.55 }}>{s.deferred.why}</div>
+        {s.deferred.then && (
+          <div style={{ fontSize:11.5, color:"var(--text-2)", marginTop:5, lineHeight:1.55 }}>
+            <span style={{ color:"var(--dim)" }}>When it is time: </span>{s.deferred.then}
+          </div>
+        )}
+      </div>
+    )}
 
     {s.env.length > 0 && (
       <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginTop:8 }}>
@@ -158,10 +186,20 @@ const ExternalDataSection = ({ adminFetch, API_URL }) => {
             </div>
           )}
 
+          {counts.deferredDue > 0 && (
+            // The point of writing down what we were waiting for: it comes
+            // back on its own instead of sitting in a note nobody reopens.
+            <div style={{ background:"rgba(124,58,237,0.1)", border:"1px solid rgba(124,58,237,0.35)", borderRadius:12, padding:"14px 18px", marginBottom:20, color:"var(--purple-text)", fontSize:13, lineHeight:1.6 }}>
+              <strong>{counts.deferredDue} {counts.deferredDue === 1 ? "service is" : "services are"} ready to set up.</strong>{" "}
+              What each one was waiting for has happened. They are marked READY TO SET UP below.
+            </div>
+          )}
+
           <div className="kpi-grid" style={{ marginBottom:20 }}>
             <Kpi label="Services" value={counts.total} />
             <Kpi label="Configured" value={counts.configured} tone="green" />
             <Kpi label="Not set" value={counts.missing} tone={counts.missing > 0 ? "gold" : "grey"} />
+            {counts.deferredDue > 0 && <Kpi label="Ready to set up" value={counts.deferredDue} tone="purple" />}
           </div>
 
           {Object.entries(data.categories).map(([key, label]) => {
@@ -170,7 +208,13 @@ const ExternalDataSection = ({ adminFetch, API_URL }) => {
             // Anything not configured sorts first inside its group: this page
             // is read when something is wrong, and the broken rows should not
             // be the ones you have to scroll for.
-            const sorted = [...inGroup].sort((a, b) => (a.configured === b.configured ? 0 : a.configured ? 1 : -1));
+            //
+            // A deferral is the exception, and sorts LAST - below the working
+            // services - because it is not something to fix now. Unless its
+            // moment has come, at which point it is exactly that and goes to
+            // the top with everything else needing attention.
+            const rank = (x) => (x.deferred && !x.deferred.due ? 2 : x.configured ? 1 : 0);
+            const sorted = [...inGroup].sort((a, b) => rank(a) - rank(b));
             return (
               <div key={key} className="card" style={{ marginBottom:16 }}>
                 <p className="label" style={{ marginBottom:2 }}>{label}</p>
