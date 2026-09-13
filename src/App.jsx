@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import BackupsSection from "./sections/BackupsSection";
 import ExternalDataSection from "./sections/ExternalDataSection";
+import WarningsPanel from "./sections/WarningsPanel";
 import DemoAccessSection from "./sections/DemoAccessSection";
 import ProspectsSection from "./sections/ProspectsSection";
 import PromosSection from "./sections/PromosSection.jsx";
@@ -1080,6 +1081,10 @@ const AdminPanel = () => {
 
         {activeTab === "overview" && (
           <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+            {/* Above the numbers, and loaded on its own: the balance lookup
+                goes out over the wire, and the rest of the front page should
+                not wait on a provider being slow. */}
+            <WarningsPanel adminFetch={adminFetch} API_URL={API_URL} onGo={handleTabSwitch} />
             {overview === null && <KpiSkeleton n={6} />}
             {overview?.error && (
               <div className="card"><EmptyState title="Could not load the overview" text="The server did not answer. Try again in a moment."

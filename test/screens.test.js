@@ -70,6 +70,7 @@ const PROPS = {
   AuditSection:           selfContained,
   BackupsSection:         { bkBusy: false, bkData: null, bkError: null, bkLoading: false, bkMsg: '', loadBackups: noop, restoreBackup: noop, restoreConfirm: null, runBackupNow: noop, setRestoreConfirm: noop },
   BalancesPanel:          selfContained,
+  WarningsPanel:          { ...selfContained, onGo: noop },
   CapacitySection:        { capData: null, capError: null, capLoading: false, loadCapacity: noop },
   CollectionToggleSection: selfContained,
   CostsSection:           { costData: null, costError: null, costInputs: {}, costLoading: false, loadCostForecast: noop, search: '', setCostInputs: noop, users: [] },
