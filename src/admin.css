@@ -60,6 +60,15 @@ a { color: var(--purple-text); }
 .btn-danger:hover { background: rgba(248,113,113,0.18); }
 .btn-sm { min-height: 32px; padding: 5px 11px; font-size: 12px; border-radius: 8px; }
 .btn-active { background: var(--purple-soft); border-color: var(--purple); color: var(--purple-text); }
+/* A text button that sits inside a table cell: no chrome, because a border
+   there would read as a second column. Still a real button, so it keeps its
+   focus ring and its keyboard behaviour. */
+.btn-bare {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font: inherit; text-decoration: underline; text-underline-offset: 2px;
+}
+.btn-bare:hover { color: var(--text); }
+.btn-bare:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; border-radius: 3px; }
 
 .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
 .card-title { font-size: 15px; font-weight: 700; color: var(--text); }

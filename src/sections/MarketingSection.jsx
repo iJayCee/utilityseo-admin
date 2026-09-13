@@ -217,6 +217,37 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
   // drop some of them would be the opposite of what ticking a box means. The
   // server does the selecting, so an export is never limited to the two
   // hundred rows this screen happens to have loaded.
+  // Typing an address onto a row.
+  //
+  // editing holds the lead id being edited, so only one row is ever an input.
+  const [editing, setEditing] = useState(null);
+  const [draft, setDraft] = useState("");
+  const startEdit = (l) => {
+    setEditing(l.id);
+    setDraft(l.contact_email || l.prospect_email || "");
+    setErr("");
+  };
+  const saveContact = async (id) => {
+    setActing("contact"); setErr("");
+    try {
+      const r = await adminFetch(`${API_URL}/admin/marketing/leads/${id}/contact`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: draft.trim() }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Could not save that address.");
+      // Patch the row in place rather than reloading the list: a reload here
+      // would clear the ticks and scroll back to the top, which is a lot to
+      // lose for one typed address.
+      setData(prev => prev && ({ ...prev, leads: prev.leads.map(l =>
+        l.id === id ? { ...l, contact_email: d.lead.contact_email } : l) }));
+      setEditing(null);
+    } catch (e) {
+      setErr(e.message);
+    } finally { setActing(null); }
+  };
+
   // Move the ticked leads into a tray, or back out of one.
   //
   // Filing is not deleting and is not offered as though it were: the leads
@@ -430,13 +461,42 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
                             be read at a glance as theirs. */}
                         {l.email
                           ? l.email
-                          : l.prospect_email
-                            ? <a href={`mailto:${l.prospect_email}`} className="pill pill-gold"
-                                 title="Found on their website by the prospect scan. They did not give us this, so it is not a marketing opt-in."
-                                 style={{ fontSize:11, textDecoration:"none" }}>
-                                {l.prospect_email}
-                              </a>
-                            : <span style={{ color:"var(--muted)" }}>anonymous</span>}
+                          : editing === l.id
+                            ? <span style={{ display:"inline-flex", gap:4, alignItems:"center" }}>
+                                <input className="field" type="email" value={draft} autoFocus
+                                  onChange={e => setDraft(e.target.value)}
+                                  onKeyDown={e => {
+                                    if (e.key === "Enter") saveContact(l.id);
+                                    if (e.key === "Escape") setEditing(null);
+                                  }}
+                                  placeholder="name@theirsite.com"
+                                  aria-label={`Email address for ${l.url}`}
+                                  style={{ width:190, fontSize:11.5, padding:"3px 8px" }} />
+                                <button type="button" className="btn btn-sm btn-active"
+                                  onClick={() => saveContact(l.id)} disabled={acting === "contact"}>
+                                  {acting === "contact" ? "…" : "Save"}
+                                </button>
+                                <button type="button" className="btn btn-sm" onClick={() => setEditing(null)}>Cancel</button>
+                              </span>
+                            : (l.contact_email || l.prospect_email)
+                              ? <span style={{ display:"inline-flex", gap:4, alignItems:"center" }}>
+                                  <a href={`mailto:${l.contact_email || l.prospect_email}`} className="pill pill-gold"
+                                     title={l.contact_email
+                                       ? `Added here${l.contact_added_by ? ` by ${l.contact_added_by}` : ""}. They did not give us this, so it is not a marketing opt-in.`
+                                       : "Found on their website by the prospect scan. They did not give us this, so it is not a marketing opt-in."}
+                                     style={{ fontSize:11, textDecoration:"none" }}>
+                                    {l.contact_email || l.prospect_email}
+                                  </a>
+                                  <button type="button" onClick={() => startEdit(l)}
+                                    title="Change this address" className="btn-bare"
+                                    style={{ fontSize:10.5, color:"var(--muted)" }}>Edit</button>
+                                </span>
+                              : <span style={{ display:"inline-flex", gap:6, alignItems:"center" }}>
+                                  <span style={{ color:"var(--muted)" }}>anonymous</span>
+                                  <button type="button" onClick={() => startEdit(l)}
+                                    title="Type in an address for this lead. It is kept separately from an address somebody gives us, because nobody opted in to this one."
+                                    className="btn-bare" style={{ fontSize:10.5, color:"var(--accent)" }}>Add email</button>
+                                </span>}
                         {l.marketing_consent && <span title="Opted in to marketing" className="pill pill-green" style={{ marginLeft:6, fontSize:9.5, padding:"1px 6px" }}>OPT-IN</span>}
                         {l.folder_name && folder === "all" && (
                           <span title={`Filed in "${l.folder_name}"`} className="pill pill-grey"
