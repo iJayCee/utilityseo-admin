@@ -46,9 +46,14 @@ describe('the bin itself', () => {
     assert.match(SRC, /marketing\/leads\/\$\{l\.id\}\/restore`, \{ method: "POST" \}/);
   });
 
-  test('it is only offered when there is something in it', () => {
-    // Or the normal view carries a button to an empty room.
-    assert.match(SRC, /\(bin \|\| c\.binned > 0\) &&/);
+  test('the bin is a tab, always there, carrying its own count', () => {
+    // It used to be a button that appeared only when the bin had something in
+    // it, so the normal view was not carrying a button to an empty room. It is
+    // a tray now, alongside New and Folders, and a tray you cannot see is
+    // worse than an empty one: the count on the tab is what says it is empty,
+    // without having to go and look.
+    assert.match(SRC, /id:"bin", label:"Bin", count:c\.binned \|\| 0/);
+    assert.match(SRC, /\{t\.label\}\{data \? ` \(\$\{t\.count\}\)` : ""\}/);
   });
 
   test('the bin view says when each lead goes, from the server count', () => {
@@ -160,5 +165,99 @@ describe('deleting what is ticked', () => {
     const block = SRC.slice(SRC.indexOf('{picked.size > 0 && ('), SRC.indexOf('onClick={exportCsv}'));
     assert.match(block, /bin\s*\n?\s*\?/, 'it has to branch on which view is showing');
     assert.ok(block.indexOf('Restore') < block.indexOf('Delete'), 'bin branch first');
+  });
+});
+
+// Three trays, the way a mail client has three.
+//
+// This replaced a dropdown that filtered one list. The difference matters:
+// a filter reads as a temporary narrowing of what you are looking at, and a
+// tab reads as a place things are. Moving a lead somewhere only makes sense
+// if there is a somewhere.
+describe('New, Folders and Bin are places, not filters', () => {
+  test('there is one source of truth for which tray is open', () => {
+    // Held as a separate `bin` boolean and `folder` string, the two can
+    // disagree - the bin showing a folder filter, a folder showing deleted
+    // rows - and a screen with two answers to "where am I" eventually shows
+    // both at once.
+    assert.match(SRC, /const \[view, setView\] = useState\("new"\)/);
+    assert.match(SRC, /const bin = view === "bin";/);
+    assert.match(SRC, /const folder = view === "new" \? "none"/);
+    assert.doesNotMatch(SRC, /const \[bin, setBin\]/);
+    assert.doesNotMatch(SRC, /const \[folder, setFolder\]/);
+  });
+
+  test('changing tab always loads what that tab shows', () => {
+    // Setting the view without loading leaves the old tray's rows under the
+    // new tray's name, which is the worst of both.
+    const go = SRC.slice(SRC.indexOf('const go = (nextView'), SRC.indexOf('const removeFolder'));
+    assert.match(go, /setView\(nextView\)/);
+    assert.match(go, /setOpenFolder\(nextFolder\)/);
+    assert.match(go, /load\(nextView === "bin", asFolder\)/);
+    // And the ticks go: they were ticks on rows that are no longer on screen.
+    assert.match(go, /setPicked\(new Set\(\)\)/);
+  });
+
+  test('all three tabs are always offered, each with its count', () => {
+    for (const id of ['"new"', '"folders"', '"bin"']) {
+      assert.ok(SRC.includes(`id:${id}`), `no ${id} tab`);
+    }
+    assert.match(SRC, /\{t\.label\}\{data \? ` \(\$\{t\.count\}\)` : ""\}/);
+  });
+
+  test('the counts come from one place, so tab and chips agree', () => {
+    // Filed is summed from the folder list rather than counted separately on
+    // the server. Two counts of the same thing eventually differ, and the tab
+    // saying 12 above chips adding to 11 is the kind of thing that makes a
+    // screen untrustworthy.
+    assert.match(SRC, /const filedCount = folders\.reduce\(\(n, f\) => n \+ \(f\.leads \|\| 0\), 0\)/);
+    assert.match(SRC, /const newCount = Math\.max\(0, \(data\?\.counts\?\.total \|\| 0\) - filedCount\)/);
+  });
+});
+
+describe('inside Folders', () => {
+  test('it opens on everything filed, before asking you to pick one', () => {
+    // The tab answers "what have I moved" first. Landing on an empty folder
+    // picker would be a question where an answer was wanted.
+    assert.match(SRC, /view === "folders" \? \(openFolder \? String\(openFolder\.id\) : "any"\)/);
+    assert.match(SRC, /All folders/);
+  });
+
+  test('each folder is a chip that opens it', () => {
+    assert.match(SRC, /onClick=\{\(\) => go\("folders", f\)\}/);
+    assert.match(SRC, /\{f\.name\} \(\{f\.leads\}\)/);
+  });
+
+  test('a lead shows which folder it is in, but only where that is not obvious', () => {
+    // Inside one folder every row is in that folder, so the pill would be
+    // noise. Across all of them it is the only thing that says where a row
+    // lives. Keyed to the old dropdown value this stopped rendering at all.
+    assert.match(SRC, /l\.folder_name && view === "folders" && !openFolder/);
+  });
+
+  test('no folders yet says what to do about it', () => {
+    assert.match(SRC, /No folders yet\. Tick some leads on New and press Move to folder\./);
+  });
+
+  test('deleting a folder keeps the leads, and says so before it does it', () => {
+    // Deleting a tray must never be a way to lose what was in it.
+    const fn = SRC.slice(SRC.indexOf('const removeFolder'), SRC.indexOf('// The header line') + 1 || undefined);
+    assert.match(SRC, /are not deleted\. They go back to New\./);
+    assert.match(SRC, /method: "DELETE"/);
+  });
+
+  test('the move button flips to putting things back', () => {
+    // On Folders the useful action is the opposite one, and offering "move to
+    // folder" on something already in a folder is a button with no meaning.
+    assert.match(SRC, /Move \$\{picked\.size\} back to New/);
+    assert.match(SRC, /view === "folders"\s*\n\s*\? <button[^>]*onClick=\{\(\) => file\(null\)\}/);
+  });
+});
+
+describe('the export follows the tab', () => {
+  test('whatever tray is open is what the file holds', () => {
+    const exp = SRC.slice(SRC.indexOf('const exportCsv'), SRC.indexOf('const downloadCsv'));
+    assert.match(exp, /qs\.set\("folder", folder\)/);
+    assert.doesNotMatch(exp, /"all"/, 'the old dropdown value is gone');
   });
 });

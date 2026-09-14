@@ -96,9 +96,17 @@ export const LeadsPanel = ({ adminFetch, API_URL }) => {
   const [consentedOnly, setConsentedOnly] = useState(false);
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
-  // The bin is the same list with one filter flipped, so it is a view of this
-  // panel rather than a second screen somewhere else.
-  const [bin, setBin] = useState(false);
+  // Which tray is open. Three, the way a mail client has three: what has just
+  // come in, what has been filed, and what has been thrown out.
+  //
+  // `bin` and `folder` are derived from this rather than kept beside it. Held
+  // separately they can disagree - the bin showing a folder filter, a folder
+  // showing deleted rows - and every screen that has ever had two sources of
+  // truth for "where am I" has eventually shown both at once.
+  const [view, setView] = useState("new");
+  // Which folder is open inside the Folders tab. Null is the whole of it.
+  const [openFolder, setOpenFolder] = useState(null);
+  const bin = view === "bin";
   const [acting, setActing] = useState(null);
   const [err, setErr] = useState("");
   // Ticked rows, by id. A Set because the only questions asked of it are
@@ -108,7 +116,9 @@ export const LeadsPanel = ({ adminFetch, API_URL }) => {
   // Which tray is on screen. "none" is the working list: everything not yet
   // filed. It is the default, so a batch you have dealt with leaves the list
   // and the list fills back up, which is the whole point of filing.
-  const [folder, setFolder] = useState("none");
+  const folder = view === "new" ? "none"
+    : view === "folders" ? (openFolder ? String(openFolder.id) : "any")
+      : "none";
   const [folders, setFolders] = useState([]);
   const loadFolders = async () => {
     try {
@@ -141,6 +151,11 @@ export const LeadsPanel = ({ adminFetch, API_URL }) => {
   };
 
   const binDays = data?.binDays ?? 7;
+  // What each tab holds. Filed comes from the folder list rather than a second
+  // count on the server, so the tab and the folder chips beneath it cannot
+  // disagree about how many are in there.
+  const filedCount = folders.reduce((n, f) => n + (f.leads || 0), 0);
+  const newCount = Math.max(0, (data?.counts?.total || 0) - filedCount);
 
   // Deleting asks first. It is one click in a long list and the click beside
   // it opens somebody's website, so the confirm is the thing standing between
@@ -174,7 +189,34 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
     finally { setActing(null); }
   };
 
-  const showBin = (on) => { setBin(on); setData(null); load(on); };
+  // One way in to every tab, so nothing can change the view without also
+  // loading what that view is meant to show.
+  const go = (nextView, nextFolder = null) => {
+    setView(nextView);
+    setOpenFolder(nextFolder);
+    setPicked(new Set());
+    setData(null);
+    const asFolder = nextView === "new" ? "none"
+      : nextView === "folders" ? (nextFolder ? String(nextFolder.id) : "any")
+        : "none";
+    load(nextView === "bin", asFolder);
+  };
+
+  // Delete the tray, keep what was in it. The leads go back to New rather
+  // than into the bin with it, which is the only behaviour that cannot lose
+  // anything by accident.
+  const removeFolder = async (f) => {
+    if (!window.confirm(`Delete the folder "${f.name}"?\n\n`
+      + `The ${f.leads} lead${f.leads === 1 ? "" : "s"} in it are not deleted. They go back to New.`)) return;
+    setActing("folder"); setErr("");
+    try {
+      const r = await adminFetch(`${API_URL}/admin/marketing/lead-folders/${f.id}`, { method: "DELETE" });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "failed");
+      go("folders", null);
+    } catch (e) {
+      setErr(e.message === "failed" ? "Could not delete that folder. Try again." : e.message);
+    } finally { setActing(null); }
+  };
 
   // Delete or restore everything ticked, in one go.
   //
@@ -322,7 +364,7 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
       // The file has to be the list on screen. Without this, exporting while
       // looking at one folder hands you every lead there is, and nobody
       // checks the row count of a file they just downloaded.
-      else if (folder && folder !== "all") qs.set("folder", folder);
+      else if (folder) qs.set("folder", folder);
       if (hideChecked) qs.set("hideChecked", "1");
     }
     downloadCsv(`${API_URL}/admin/marketing/leads.csv?${qs}`);
@@ -383,11 +425,13 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
         <div>
           <div className="card-title" style={{ fontSize:14 }}>Leads</div>
           <div className="card-sub">
-            {data
-              ? (bin
-                ? `${c.binned || 0} in the bin · deleted for good ${binDays} days after you delete them`
-                : `${c.total} total · ${c.consented} opted in to marketing · ${c.anonymous} with no email · ${c.last7} in the last 7 days`)
-              : "Everyone who ran a free scan or asked for a report."}
+            {!data ? "Everyone who ran a free scan or asked for a report."
+              : bin ? `${c.binned || 0} in the bin · deleted for good ${binDays} days after you delete them`
+                : view === "folders"
+                  ? (openFolder
+                    ? `${openFolder.name} · ${openFolder.leads} lead${openFolder.leads === 1 ? "" : "s"} filed here`
+                    : `${filedCount} filed across ${folders.length} folder${folders.length === 1 ? "" : "s"}`)
+                  : `${c.total} total · ${c.consented} opted in to marketing · ${c.anonymous} with no email · ${c.last7} in the last 7 days`}
           </div>
         </div>
         <button type="button" className="btn btn-sm" onClick={() => setOpen(o => !o)}>
@@ -397,6 +441,53 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
 
       {open && (
         <>
+          {/* Three trays, named for what is in them. A dropdown said the same
+              thing and read as a filter on one list; these are places. */}
+          <div style={{ display:"flex", gap:6, alignItems:"center", margin:"14px 0 0", flexWrap:"wrap" }}>
+            {[
+              { id:"new", label:"New", count:newCount, title:"Leads nobody has filed yet. The working list." },
+              { id:"folders", label:"Folders", count:filedCount, title:"Everything you have moved into a folder. Still here, just out of the way." },
+              { id:"bin", label:"Bin", count:c.binned || 0, title:`Deleted leads. Gone for good after ${binDays} days.` },
+            ].map(t => (
+              <button key={t.id} type="button" disabled={busy}
+                className={`btn btn-sm${view === t.id ? " btn-active" : ""}`}
+                onClick={() => go(t.id)} title={t.title}>
+                {t.label}{data ? ` (${t.count})` : ""}
+              </button>
+            ))}
+          </div>
+
+          {/* Inside Folders: the folders themselves. All of them first, so the
+              tab answers "what have I moved" before it asks you to pick. */}
+          {view === "folders" && data && (
+            <div style={{ display:"flex", gap:6, alignItems:"center", margin:"10px 0 0", flexWrap:"wrap" }}>
+              <button type="button" className={`btn btn-sm${!openFolder ? " btn-active" : ""}`}
+                onClick={() => go("folders", null)} disabled={busy}>
+                All folders
+              </button>
+              {folders.map(f => (
+                <button key={f.id} type="button" disabled={busy}
+                  className={`btn btn-sm${openFolder?.id === f.id ? " btn-active" : ""}`}
+                  onClick={() => go("folders", f)}>
+                  {f.name} ({f.leads})
+                </button>
+              ))}
+              {folders.length === 0 && (
+                <span style={{ fontSize:12, color:"var(--muted)" }}>
+                  No folders yet. Tick some leads on New and press Move to folder.
+                </span>
+              )}
+              {openFolder && (
+                <button type="button" className="btn-bare" onClick={() => removeFolder(openFolder)}
+                  disabled={acting === "folder"}
+                  title="Delete this folder. The leads in it go back to New."
+                  style={{ fontSize:11, color:"var(--red)", marginLeft:4 }}>
+                  Delete folder
+                </button>
+              )}
+            </div>
+          )}
+
           <div style={{ display:"flex", gap:8, alignItems:"center", margin:"14px 0 10px", flexWrap:"wrap" }}>
             <input className="field" value={search} onChange={e => setSearch(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") load(); }}
@@ -417,16 +508,7 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
             <button type="button" className="btn btn-primary btn-sm" onClick={() => load()} disabled={busy}>
               {busy ? "Loading…" : "Search"}
             </button>
-            {!bin && (
-              <select className="field" value={folder} disabled={busy}
-                onChange={e => { setFolder(e.target.value); setData(null); load(bin, e.target.value); }}
-                title="Which leads to show. Filed leads are still here, just out of the way."
-                style={{ width:"auto", minWidth:150, fontSize:12 }}>
-                <option value="none">Not in a folder</option>
-                <option value="all">All leads</option>
-                {folders.map(f => <option key={f.id} value={String(f.id)}>{f.name} ({f.leads})</option>)}
-              </select>
-            )}
+
             {picked.size > 0 && (
               bin
                 ? <button type="button" className="btn btn-sm" onClick={() => bulk("restore")} disabled={acting === "bulk"}
@@ -440,10 +522,10 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
                   </button>
             )}
             {picked.size > 0 && !bin && (
-              folder !== "none" && folder !== "all"
+              view === "folders"
                 ? <button type="button" className="btn btn-sm" onClick={() => file(null)} disabled={acting === "file"}
-                    title="Put these back on the working list">
-                    {acting === "file" ? "Moving…" : `Take ${picked.size} out`}
+                    title="Put these back on New">
+                    {acting === "file" ? "Moving…" : `Move ${picked.size} back to New`}
                   </button>
                 : <button type="button" className="btn btn-sm" onClick={fileToNew} disabled={acting === "file"}
                     title="Move these into a folder so they come off this list. Nothing is deleted.">
@@ -460,13 +542,7 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
               title="Downloads a CSV. Ticked rows if you have ticked any, otherwise whatever this list is showing.">
               {exportLabel}
             </button>
-            {/* Only offered once there is something in it, so the normal view
-                is not carrying a button to an empty room. */}
-            {(bin || c.binned > 0) && (
-              <button type="button" className={`btn btn-sm${bin ? " btn-active" : ""}`} onClick={() => showBin(!bin)} disabled={busy}>
-                {bin ? "Back to leads" : `Bin (${c.binned})`}
-              </button>
-            )}
+
           </div>
 
           {err && <div style={{ fontSize:12, color:"var(--red)", margin:"0 0 10px" }} role="alert">{err}</div>}
@@ -474,7 +550,10 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
           {!data ? (busy ? <SkeletonRows rows={4} /> : null) : data.leads.length === 0 ? (
             bin
               ? <EmptyState title="The bin is empty" text={`Leads you delete wait here for ${binDays} days, then they are deleted for good.`} />
-              : <EmptyState title="No leads match that" text="Try a shorter search, or clear the opted-in filter." />
+              : view === "folders"
+                ? <EmptyState title={openFolder ? `Nothing in ${openFolder.name}` : "Nothing filed yet"}
+                    text="Tick leads on the New tab and press Move to folder. They come off New and land here." />
+                : <EmptyState title="No leads match that" text="Try a shorter search, or clear the opted-in filter." />
           ) : (
             <div className="scroll-x" style={{ maxHeight:460, overflowY:"auto", border:"1px solid var(--border)", borderRadius:10 }}>
               <table className="tbl" style={{ fontSize:12 }}>
@@ -564,7 +643,7 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
                                       className="btn-bare" style={{ fontSize:10.5, color:"var(--muted)" }}>No email</button>
                                   </span>}
                         {l.marketing_consent && <span title="Opted in to marketing" className="pill pill-green" style={{ marginLeft:6, fontSize:9.5, padding:"1px 6px" }}>OPT-IN</span>}
-                        {l.folder_name && folder === "all" && (
+                        {l.folder_name && view === "folders" && !openFolder && (
                           <span title={`Filed in "${l.folder_name}"`} className="pill pill-grey"
                                 style={{ marginLeft:6, fontSize:9.5, padding:"1px 6px" }}>{l.folder_name}</span>
                         )}
