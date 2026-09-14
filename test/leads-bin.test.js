@@ -236,7 +236,8 @@ describe('inside Folders', () => {
   });
 
   test('no folders yet says what to do about it', () => {
-    assert.match(SRC, /No folders yet\. Tick some leads on New and press Move to folder\./);
+    // Two ways in now: make an empty one, or fill one by moving leads into it.
+    assert.match(SRC, /No folders yet\. Make one, or tick leads on New and press Move to folder\./);
   });
 
   test('deleting a folder keeps the leads, and says so before it does it', () => {
@@ -259,5 +260,32 @@ describe('the export follows the tab', () => {
     const exp = SRC.slice(SRC.indexOf('const exportCsv'), SRC.indexOf('const downloadCsv'));
     assert.match(exp, /qs\.set\("folder", folder\)/);
     assert.doesNotMatch(exp, /"all"/, 'the old dropdown value is gone');
+  });
+});
+
+describe('making a folder before there is anything to put in it', () => {
+  test('there is a button for it, on the tab where folders live', () => {
+    // A folder used to exist only once a lead had been moved into it, so you
+    // could not set up where things go before starting to sort - which is the
+    // order anybody actually works in.
+    assert.match(SRC, /const addFolder = async \(\) => \{/);
+    assert.match(SRC, /New folder/);
+    assert.match(SRC, /method: "POST",\s*\n\s*headers: \{ "Content-Type": "application\/json" \},\s*\n\s*body: JSON\.stringify\(\{ name: name\.trim\(\) \}\)/);
+  });
+
+  test('an empty name is not a folder, and cancelling is not an error', () => {
+    // window.prompt returns null on Cancel and "" on an empty OK. Both mean
+    // no, and neither should reach the server.
+    assert.match(SRC, /if \(name == null \|\| !name\.trim\(\)\) return;/);
+  });
+
+  test('it opens the folder it just made', () => {
+    // Naming a folder is something you do in order to use it.
+    assert.match(SRC, /go\("folders", \{ \.\.\.d\.folder, leads: 0 \}\)/);
+    assert.match(SRC, /await loadFolders\(\);/);
+  });
+
+  test('the empty state now offers both ways in', () => {
+    assert.match(SRC, /No folders yet\. Make one, or tick leads on New and press Move to folder\./);
   });
 });

@@ -202,6 +202,34 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
     load(nextView === "bin", asFolder);
   };
 
+  // Make an empty folder, and open it.
+  //
+  // Setting up where things go before sorting anything is the order people
+  // actually work in, and until now a folder only existed once a lead had
+  // been moved into it.
+  const addFolder = async () => {
+    const name = window.prompt(
+      "Name the folder.\n\nIt starts empty. Tick leads on New and press Move to folder to fill it.",
+      "");
+    if (name == null || !name.trim()) return;
+    setActing("folder"); setErr("");
+    try {
+      const r = await adminFetch(`${API_URL}/admin/marketing/lead-folders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim() }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "failed");
+      await loadFolders();
+      // Straight into it, because naming a folder is something you do in
+      // order to use it.
+      go("folders", { ...d.folder, leads: 0 });
+    } catch (e) {
+      setErr(e.message === "failed" ? "Could not create that folder. Try again." : e.message);
+    } finally { setActing(null); }
+  };
+
   // Delete the tray, keep what was in it. The leads go back to New rather
   // than into the bin with it, which is the only behaviour that cannot lose
   // anything by accident.
@@ -472,9 +500,13 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
                   {f.name} ({f.leads})
                 </button>
               ))}
+              <button type="button" className="btn btn-sm" onClick={addFolder}
+                disabled={acting === "folder"} title="Make an empty folder to sort into">
+                {acting === "folder" ? "Working…" : "New folder"}
+              </button>
               {folders.length === 0 && (
                 <span style={{ fontSize:12, color:"var(--muted)" }}>
-                  No folders yet. Tick some leads on New and press Move to folder.
+                  No folders yet. Make one, or tick leads on New and press Move to folder.
                 </span>
               )}
               {openFolder && (
