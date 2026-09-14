@@ -118,7 +118,7 @@ export const LeadsPanel = ({ adminFetch, API_URL }) => {
     } catch { /* the list still works without them */ }
   };
 
-  const load = async (asBin = bin, asFolder = folder) => {
+  const load = async (asBin = bin, asFolder = folder, asHide = hideChecked) => {
     setBusy(true); setErr("");
     try {
       const qs = new URLSearchParams({ limit: "200" });
@@ -128,6 +128,7 @@ export const LeadsPanel = ({ adminFetch, API_URL }) => {
       // The bin is its own view and cuts across folders: a lead you deleted
       // should be findable there whichever tray it was in.
       else if (asFolder && asFolder !== "all") qs.set("folder", asFolder);
+      if (!asBin && asHide) qs.set("hideChecked", "1");
       const r = await adminFetch(`${API_URL}/admin/marketing/leads?${qs}`);
       setData(await r.json());
       loadFolders();
@@ -248,6 +249,37 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
     } finally { setActing(null); }
   };
 
+  // Rows already checked for an address, out of the way. Its own filter
+  // rather than a folder option: being checked and being filed are two
+  // different facts and a lead can be both.
+  const [hideChecked, setHideChecked] = useState(false);
+
+  // "I looked at this site and there is no address to find."
+  //
+  // Reversible, and it deletes nothing. A site with no address in March may
+  // well have one now, and the lead is still a lead either way.
+  const noEmail = async (ids, checked = true) => {
+    if (!ids.length || acting) return;
+    setActing("noemail"); setErr("");
+    try {
+      const r = await adminFetch(`${API_URL}/admin/marketing/leads/no-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, checked }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "failed");
+      // Patched in place rather than reloaded: a reload would clear the ticks
+      // and jump to the top, and marking a run of dead ends is exactly when
+      // you are working down a list.
+      const now = new Date().toISOString();
+      setData(prev => prev && ({ ...prev, leads: prev.leads.map(l =>
+        ids.includes(l.id) ? { ...l, no_email_at: checked ? now : null } : l) }));
+    } catch (e) {
+      setErr(e.message === "failed" ? "Could not mark those leads. Try again." : e.message);
+    } finally { setActing(null); }
+  };
+
   // Move the ticked leads into a tray, or back out of one.
   //
   // Filing is not deleting and is not offered as though it were: the leads
@@ -291,6 +323,7 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
       // looking at one folder hands you every lead there is, and nobody
       // checks the row count of a file they just downloaded.
       else if (folder && folder !== "all") qs.set("folder", folder);
+      if (hideChecked) qs.set("hideChecked", "1");
     }
     downloadCsv(`${API_URL}/admin/marketing/leads.csv?${qs}`);
   };
@@ -373,6 +406,14 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
               <input type="checkbox" checked={consentedOnly} onChange={e => setConsentedOnly(e.target.checked)} />
               Opted in only
             </label>
+            {!bin && (
+              <label style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"var(--text-2)", cursor:"pointer" }}
+                     title="Hide the ones you have already looked at and found no address for. They are still here.">
+                <input type="checkbox" checked={hideChecked}
+                  onChange={e => { setHideChecked(e.target.checked); setData(null); load(bin, folder, e.target.checked); }} />
+                Hide checked
+              </label>
+            )}
             <button type="button" className="btn btn-primary btn-sm" onClick={() => load()} disabled={busy}>
               {busy ? "Loading…" : "Search"}
             </button>
@@ -408,6 +449,12 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
                     title="Move these into a folder so they come off this list. Nothing is deleted.">
                     {acting === "file" ? "Moving…" : `Move ${picked.size} to folder`}
                   </button>
+            )}
+            {picked.size > 0 && !bin && (
+              <button type="button" className="btn btn-sm" onClick={() => noEmail([...picked])} disabled={acting === "noemail"}
+                title="Mark these as looked at with no address to find. Nothing is deleted.">
+                {acting === "noemail" ? "Marking…" : `No email for ${picked.size}`}
+              </button>
             )}
             <button type="button" className="btn btn-sm" onClick={exportCsv} disabled={busy || !rows.length}
               title="Downloads a CSV. Ticked rows if you have ticked any, otherwise whatever this list is showing.">
@@ -491,12 +538,31 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
                                     title="Change this address" className="btn-bare"
                                     style={{ fontSize:10.5, color:"var(--muted)" }}>Edit</button>
                                 </span>
-                              : <span style={{ display:"inline-flex", gap:6, alignItems:"center" }}>
-                                  <span style={{ color:"var(--muted)" }}>anonymous</span>
-                                  <button type="button" onClick={() => startEdit(l)}
-                                    title="Type in an address for this lead. It is kept separately from an address somebody gives us, because nobody opted in to this one."
-                                    className="btn-bare" style={{ fontSize:10.5, color:"var(--accent)" }}>Add email</button>
-                                </span>}
+                              : l.no_email_at
+                                // Checked, and there was nothing. Said in
+                                // words rather than left as a blank cell,
+                                // which is indistinguishable from a row
+                                // nobody has opened yet.
+                                ? <span style={{ display:"inline-flex", gap:6, alignItems:"center" }}>
+                                    <span className="pill pill-grey" style={{ fontSize:10 }}
+                                      title={`Checked${l.no_email_by ? ` by ${l.no_email_by}` : ""} - no address found on their site`}>
+                                      No email found
+                                    </span>
+                                    <button type="button" onClick={() => startEdit(l)}
+                                      className="btn-bare" style={{ fontSize:10.5, color:"var(--accent)" }}>Add email</button>
+                                    <button type="button" onClick={() => noEmail([l.id], false)}
+                                      title="Put it back on the list as unchecked"
+                                      className="btn-bare" style={{ fontSize:10.5, color:"var(--muted)" }}>Undo</button>
+                                  </span>
+                                : <span style={{ display:"inline-flex", gap:6, alignItems:"center" }}>
+                                    <span style={{ color:"var(--muted)" }}>anonymous</span>
+                                    <button type="button" onClick={() => startEdit(l)}
+                                      title="Type in an address for this lead. It is kept separately from an address somebody gives us, because nobody opted in to this one."
+                                      className="btn-bare" style={{ fontSize:10.5, color:"var(--accent)" }}>Add email</button>
+                                    <button type="button" onClick={() => noEmail([l.id])} disabled={acting === "noemail"}
+                                      title="I looked and there is no address to find. Nothing is deleted."
+                                      className="btn-bare" style={{ fontSize:10.5, color:"var(--muted)" }}>No email</button>
+                                  </span>}
                         {l.marketing_consent && <span title="Opted in to marketing" className="pill pill-green" style={{ marginLeft:6, fontSize:9.5, padding:"1px 6px" }}>OPT-IN</span>}
                         {l.folder_name && folder === "all" && (
                           <span title={`Filed in "${l.folder_name}"`} className="pill pill-grey"
