@@ -207,21 +207,24 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
   // Setting up where things go before sorting anything is the order people
   // actually work in, and until now a folder only existed once a lead had
   // been moved into it.
+  // The name lives in the page, not in a browser dialog. A dialog cannot be
+  // styled, cannot be corrected without retyping, and steals the keyboard
+  // from a screen you are working down.
+  const [folderDraft, setFolderDraft] = useState(null);
   const addFolder = async () => {
-    const name = window.prompt(
-      "Name the folder.\n\nIt starts empty. Tick leads on New and press Move to folder to fill it.",
-      "");
-    if (name == null || !name.trim()) return;
+    const name = String(folderDraft || "").trim();
+    if (!name) return;
     setActing("folder"); setErr("");
     try {
       const r = await adminFetch(`${API_URL}/admin/marketing/lead-folders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({ name }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "failed");
       await loadFolders();
+      setFolderDraft(null);
       // Straight into it, because naming a folder is something you do in
       // order to use it.
       go("folders", { ...d.folder, leads: 0 });
@@ -372,15 +375,28 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
     } finally { setActing(null); }
   };
 
-  const fileToNew = async () => {
-    const name = window.prompt(
-      `Move ${picked.size} lead${picked.size === 1 ? "" : "s"} into a folder.\n\n`
-      + "They stay exactly as they are and come off this list, so it can fill back up. "
-      + "Type the name of a folder, new or existing.",
-      `Exported ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`);
-    if (name && name.trim()) await file(name.trim());
+  // Where the ticked leads are going. Null means the panel is shut.
+  //
+  // A prompt asked for a folder by TYPING ITS NAME while the folders were on
+  // screen a few pixels away, which is a strange thing to ask of anybody. This
+  // lists them.
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+
+  const moveTo = async (name) => {
+    setMoveOpen(false);
+    setNewName("");
+    await file(name);
   };
 
+  // Create and move in one go. ensureFolder makes it if it is new and hands
+  // back the existing one if it is not, so typing a name that is already in
+  // the list above does the same thing as clicking it.
+  const createAndMove = async () => {
+    const n = newName.trim();
+    if (!n) return;
+    await moveTo(n);
+  };
   const exportCsv = () => {
     const qs = new URLSearchParams();
     if (picked.size) {
@@ -500,13 +516,32 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
                   {f.name} ({f.leads})
                 </button>
               ))}
-              <button type="button" className="btn btn-sm" onClick={addFolder}
-                disabled={acting === "folder"} title="Make an empty folder to sort into">
-                {acting === "folder" ? "Working…" : "New folder"}
-              </button>
-              {folders.length === 0 && (
+              {folderDraft === null ? (
+                <button type="button" className="btn btn-sm" onClick={() => setFolderDraft("")}
+                  disabled={acting === "folder"} title="Make an empty folder to sort into">
+                  New folder
+                </button>
+              ) : (
+                <span style={{ display:"inline-flex", gap:6, alignItems:"center" }}>
+                  <input className="field" autoFocus value={folderDraft}
+                    onChange={e => setFolderDraft(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter") addFolder();
+                      if (e.key === "Escape") setFolderDraft(null);
+                    }}
+                    placeholder="Folder name…" aria-label="New folder name"
+                    style={{ width:"auto", minWidth:170, fontSize:12 }} />
+                  <button type="button" className="btn btn-sm btn-active" onClick={addFolder}
+                    disabled={!folderDraft.trim() || acting === "folder"}>
+                    {acting === "folder" ? "Making…" : "Create"}
+                  </button>
+                  <button type="button" className="btn-bare" onClick={() => setFolderDraft(null)}
+                    style={{ fontSize:11.5, color:"var(--muted)" }}>Cancel</button>
+                </span>
+              )}
+              {folders.length === 0 && folderDraft === null && (
                 <span style={{ fontSize:12, color:"var(--muted)" }}>
-                  No folders yet. Make one, or tick leads on New and press Move to folder.
+                  No folders yet. Make one, or tick leads on New and press Move to.
                 </span>
               )}
               {openFolder && (
@@ -554,15 +589,11 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
                   </button>
             )}
             {picked.size > 0 && !bin && (
-              view === "folders"
-                ? <button type="button" className="btn btn-sm" onClick={() => file(null)} disabled={acting === "file"}
-                    title="Put these back on New">
-                    {acting === "file" ? "Moving…" : `Move ${picked.size} back to New`}
-                  </button>
-                : <button type="button" className="btn btn-sm" onClick={fileToNew} disabled={acting === "file"}
-                    title="Move these into a folder so they come off this list. Nothing is deleted.">
-                    {acting === "file" ? "Moving…" : `Move ${picked.size} to folder`}
-                  </button>
+              <button type="button" className={`btn btn-sm${moveOpen ? " btn-active" : ""}`}
+                onClick={() => setMoveOpen(o => !o)} disabled={acting === "file"}
+                title="Move these into a folder. Nothing is deleted.">
+                {acting === "file" ? "Moving…" : `Move ${picked.size} to…`}
+              </button>
             )}
             {picked.size > 0 && !bin && (
               <button type="button" className="btn btn-sm" onClick={() => noEmail([...picked])} disabled={acting === "noemail"}
@@ -576,6 +607,52 @@ It goes to the bin and is deleted for good after ${binDays} days. You can put it
             </button>
 
           </div>
+
+          {/* The folders, as a list you click. Open only while something is
+              ticked, because that is the only time moving means anything. */}
+          {moveOpen && picked.size > 0 && !bin && (
+            <div className="card" style={{ marginBottom:10, padding:"12px 14px" }}
+              onKeyDown={e => { if (e.key === "Escape") { setMoveOpen(false); setNewName(""); } }}>
+              <div style={{ display:"flex", alignItems:"baseline", justifyContent:"space-between", gap:12, marginBottom:8 }}>
+                <span style={{ fontSize:12.5, fontWeight:700, color:"var(--text)" }}>
+                  Move {picked.size} lead{picked.size === 1 ? "" : "s"} to
+                </span>
+                <button type="button" className="btn-bare" onClick={() => { setMoveOpen(false); setNewName(""); }}
+                  style={{ fontSize:11.5, color:"var(--muted)" }}>Cancel</button>
+              </div>
+
+              <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:10 }}>
+                {/* Taking them out is a destination like any other, and on the
+                    Folders tab it is usually the one you want. */}
+                {view === "folders" && (
+                  <button type="button" className="btn btn-sm" onClick={() => moveTo(null)} disabled={acting === "file"}>
+                    New (out of any folder)
+                  </button>
+                )}
+                {folders.map(f => (
+                  <button key={f.id} type="button" className="btn btn-sm" disabled={acting === "file"}
+                    onClick={() => moveTo(f.name)}>
+                    {f.name} <span style={{ color:"var(--muted)" }}>({f.leads})</span>
+                  </button>
+                ))}
+                {folders.length === 0 && view !== "folders" && (
+                  <span style={{ fontSize:12, color:"var(--muted)" }}>No folders yet. Name one below.</span>
+                )}
+              </div>
+
+              <div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap",
+                            borderTop:"1px solid var(--border)", paddingTop:10 }}>
+                <input className="field" value={newName} onChange={e => setNewName(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") createAndMove(); }}
+                  placeholder="or a new folder name…" aria-label="New folder name"
+                  style={{ width:"auto", minWidth:200, flex:"0 1 260px", fontSize:12 }} />
+                <button type="button" className="btn btn-sm btn-active"
+                  onClick={createAndMove} disabled={!newName.trim() || acting === "file"}>
+                  Create and move
+                </button>
+              </div>
+            </div>
+          )}
 
           {err && <div style={{ fontSize:12, color:"var(--red)", margin:"0 0 10px" }} role="alert">{err}</div>}
 

@@ -236,8 +236,8 @@ describe('inside Folders', () => {
   });
 
   test('no folders yet says what to do about it', () => {
-    // Two ways in now: make an empty one, or fill one by moving leads into it.
-    assert.match(SRC, /No folders yet\. Make one, or tick leads on New and press Move to folder\./);
+    // Two ways in: make an empty one, or fill one by moving leads into it.
+    assert.match(SRC, /No folders yet\. Make one, or tick leads on New and press Move to\./);
   });
 
   test('deleting a folder keeps the leads, and says so before it does it', () => {
@@ -247,11 +247,14 @@ describe('inside Folders', () => {
     assert.match(SRC, /method: "DELETE"/);
   });
 
-  test('the move button flips to putting things back', () => {
-    // On Folders the useful action is the opposite one, and offering "move to
-    // folder" on something already in a folder is a button with no meaning.
-    assert.match(SRC, /Move \$\{picked\.size\} back to New/);
-    assert.match(SRC, /view === "folders"\s*\n\s*\? <button[^>]*onClick=\{\(\) => file\(null\)\}/);
+  test('taking leads out of a folder is one of the destinations', () => {
+    // It used to be a separate button that replaced Move while you were in a
+    // folder. Inside a picker it is just another place they can go, and it is
+    // usually the one you want from there.
+    const panel = SRC.slice(SRC.indexOf('{moveOpen && picked.size > 0'), SRC.indexOf('{err &&'));
+    assert.match(panel, /view === "folders" && \(/);
+    assert.match(panel, /onClick=\{\(\) => moveTo\(null\)\}/);
+    assert.match(panel, /New \(out of any folder\)/);
   });
 });
 
@@ -264,28 +267,72 @@ describe('the export follows the tab', () => {
 });
 
 describe('making a folder before there is anything to put in it', () => {
-  test('there is a button for it, on the tab where folders live', () => {
-    // A folder used to exist only once a lead had been moved into it, so you
-    // could not set up where things go before starting to sort - which is the
-    // order anybody actually works in.
-    assert.match(SRC, /const addFolder = async \(\) => \{/);
-    assert.match(SRC, /New folder/);
-    assert.match(SRC, /method: "POST",\s*\n\s*headers: \{ "Content-Type": "application\/json" \},\s*\n\s*body: JSON\.stringify\(\{ name: name\.trim\(\) \}\)/);
+  test('the name is typed in the page, not in a browser dialog', () => {
+    // A dialog cannot be styled, cannot be corrected without retyping the lot,
+    // and takes the keyboard away from a screen you are working down. There
+    // are none left in this panel.
+    assert.doesNotMatch(SRC, /window\.prompt/);
+    assert.match(SRC, /const \[folderDraft, setFolderDraft\] = useState\(null\)/);
+    assert.match(SRC, /placeholder="Folder name…"/);
   });
 
-  test('an empty name is not a folder, and cancelling is not an error', () => {
-    // window.prompt returns null on Cancel and "" on an empty OK. Both mean
-    // no, and neither should reach the server.
-    assert.match(SRC, /if \(name == null \|\| !name\.trim\(\)\) return;/);
+  test('the field replaces the button, and Escape puts the button back', () => {
+    assert.match(SRC, /folderDraft === null \? \(/);
+    assert.match(SRC, /if \(e\.key === "Escape"\) setFolderDraft\(null\)/);
+    assert.match(SRC, /if \(e\.key === "Enter"\) addFolder\(\)/);
   });
 
-  test('it opens the folder it just made', () => {
-    // Naming a folder is something you do in order to use it.
+  test('an empty name cannot be submitted', () => {
+    // Guarded twice on purpose: the button is disabled so it cannot be
+    // clicked, and the function refuses so Enter cannot get round it.
+    assert.match(SRC, /disabled=\{!folderDraft\.trim\(\) \|\| acting === "folder"\}/);
+    assert.match(SRC, /const name = String\(folderDraft \|\| ""\)\.trim\(\);\s*\n\s*if \(!name\) return;/);
+  });
+
+  test('it opens the folder it just made, and clears the field', () => {
+    // Naming a folder is something you do in order to use it. A field still
+    // holding the last name suggests it did not take.
     assert.match(SRC, /go\("folders", \{ \.\.\.d\.folder, leads: 0 \}\)/);
-    assert.match(SRC, /await loadFolders\(\);/);
+    assert.match(SRC, /setFolderDraft\(null\);/);
   });
 
-  test('the empty state now offers both ways in', () => {
-    assert.match(SRC, /No folders yet\. Make one, or tick leads on New and press Move to folder\./);
+  test('the empty state offers both ways in', () => {
+    assert.match(SRC, /No folders yet\. Make one, or tick leads on New and press Move to\./);
+  });
+});
+
+describe('choosing where ticked leads go', () => {
+  const PANEL = () => SRC.slice(SRC.indexOf('{moveOpen && picked.size > 0'), SRC.indexOf('{err &&'));
+
+  test('the folders are listed, not typed from memory', () => {
+    // The old flow asked you to type a folder name while the folders were on
+    // screen a few pixels away.
+    assert.match(PANEL(), /folders\.map\(f => \(/);
+    assert.match(PANEL(), /onClick=\{\(\) => moveTo\(f\.name\)\}/);
+    assert.match(PANEL(), /\{f\.name\} <span[^>]*>\(\{f\.leads\}\)<\/span>/);
+  });
+
+  test('a new folder can still be made from here, in one step', () => {
+    // Create, then go and find it, then move: three steps for one intention.
+    assert.match(PANEL(), /placeholder="or a new folder name…"/);
+    assert.match(SRC, /const createAndMove = async \(\) => \{/);
+    assert.match(SRC, /await moveTo\(n\);/);
+  });
+
+  test('it only opens while something is ticked', () => {
+    // Moving nothing somewhere is not an action, and a panel offering it
+    // reads as one that has lost track of the selection.
+    assert.match(SRC, /\{moveOpen && picked\.size > 0 && !bin && \(/);
+  });
+
+  test('it shuts itself after a move, and clears the name', () => {
+    // Left open over a list that has just changed underneath it, the next
+    // click lands on a different selection than the one you were looking at.
+    assert.match(SRC, /const moveTo = async \(name\) => \{\s*\n\s*setMoveOpen\(false\);\s*\n\s*setNewName\(""\);/);
+  });
+
+  test('Escape and Cancel both shut it', () => {
+    assert.match(PANEL(), /e\.key === "Escape"/);
+    assert.match(PANEL(), /Cancel<\/button>/);
   });
 });
