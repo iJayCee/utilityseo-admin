@@ -1095,7 +1095,7 @@ const AdminPanel = () => {
               const attention = [
                 errs > 0 && { text: `${errs} error${errs === 1 ? "" : "s"} in the last 24 hours`, tab: "monitoring", tone: "red" },
                 (overview.users?.new_7d || 0) > 0 && { text: `${overview.users.new_7d} new signup${overview.users.new_7d === 1 ? "" : "s"} this week to welcome`, tab: "users", tone: "green" },
-                users.filter(u => u.tempPlan).length > 0 && { text: `${users.filter(u => u.tempPlan).length} account${users.filter(u => u.tempPlan).length === 1 ? "" : "s"} on a trial or temporary plan`, tab: "upgrades", tone: "purple" },
+                users.filter(u => u.tempPlan).length > 0 && { text: `${users.filter(u => u.tempPlan).length} account${users.filter(u => u.tempPlan).length === 1 ? "" : "s"} on a trial or temporary plan`, tab: "users", tone: "purple", onClick: () => { setFilterPlan("trial"); setShowFilters(true); handleTabSwitch("users"); } },
                 countDeactivated > 0 && { text: `${countDeactivated} deactivated account${countDeactivated === 1 ? "" : "s"}`, tab: "users", tone: "grey", onClick: () => { setFilterStatus("deactivated"); setShowFilters(true); handleTabSwitch("users"); } },
               ].filter(Boolean);
               const tonePill = { red: "pill-red", green: "pill-green", purple: "pill-purple", grey: "pill-grey" };
@@ -1136,7 +1136,7 @@ const AdminPanel = () => {
 
                     <div className="card">
                       <p className="card-title">Plans</p>
-                      <p className="card-sub">{countPaid} paying of {users.length} accounts.</p>
+                      <p className="card-sub">{countPaid} on a paid plan of {users.length} accounts. {overview?.users?.paid ?? 0} paying through Stripe; the rest are trials or set by hand.</p>
                       <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:10, marginTop:14 }}>
                         {[["Free", countFree, "#94a3b8"], ["Entrepreneur", countEntrepreneur, "var(--purple-text)"], ["Enterprise", countEnterprise, "var(--gold)"]].map(([l, n, col]) => (
                           <div key={l} style={{ textAlign:"center", padding:"10px 6px", borderRadius:10, background:"rgba(255,255,255,0.02)", border:"1px solid var(--border)" }}>

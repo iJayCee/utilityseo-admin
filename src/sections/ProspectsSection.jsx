@@ -12,6 +12,7 @@
 // the choice is made with eyes open.
 import { useEffect, useState } from "react";
 import { EmptyState, Kpi, SkeletonRows } from "../Shell.jsx";
+import { usable } from '../lib/promo-usable.js';
 
 const STATUS_META = {
   new:        { label: "New",        pill: "pill-grey" },
@@ -58,7 +59,7 @@ const ProspectsSection = ({ adminFetch, API_URL }) => {
   useEffect(() => {
     load();
     adminFetch(`${API_URL}/admin/promo-codes`).then(r => r.ok ? r.json() : null)
-      .then(d => setCodes((d?.codes || d || []).filter(c => c.is_active)))
+      .then(d => setCodes((d?.codes || d || []).filter(usable)))
       .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
