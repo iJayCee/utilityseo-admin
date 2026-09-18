@@ -293,7 +293,12 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
           <button onClick={onToggleStar}
             title={starred ? "Unstar" : "Star user"}
             style={{ padding:"6px 14px", background: starred ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.04)", border:`1px solid ${starred ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.08)"}`, borderRadius:8, color: starred ? "#f59e0b" : "#475569", fontSize:14, cursor:"pointer", fontFamily:"Sora,sans-serif" }}>
-            {starred ? "" : ""}
+            {/* An SVG star, filled when starred. The emoji that was here was
+                removed in the no-emoji pass and nothing replaced it, so the
+                button rendered blank. */}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill={starred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 3.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 17l-5.4 3 1.2-6L3.3 9.8l6.1-.7L12 3.5z" />
+            </svg>
           </button>
           <button onClick={onInfo}
             style={{ padding:"6px 14px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:8, color:"#4ade80", fontSize:12, cursor:"pointer", fontFamily:"Sora,sans-serif", fontWeight:600 }}>

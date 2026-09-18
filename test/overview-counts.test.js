@@ -47,3 +47,13 @@ describe('a prospect is only offered a code that still works', () => {
   test('unlimited uses is never used up', () => assert.equal(usable({ ...live, max_uses: null, uses_count: 500 }), true));
   test('nothing at all is not a code', () => assert.equal(usable(null), false));
 });
+
+describe('the star button on a user row', () => {
+  test('draws a star, filled when starred, rather than an empty button', () => {
+    // The emoji was removed in the no-emoji pass and nothing replaced it, so
+    // the button was blank and James could not see what it was for.
+    const row = APP.slice(APP.indexOf('const UserRow = ('), APP.indexOf('const UserRow = (') + 6000);
+    assert.match(row, /fill=\{starred \? "currentColor" : "none"\}/);
+    assert.doesNotMatch(row, /\{starred \? "" : ""\}/);
+  });
+});
