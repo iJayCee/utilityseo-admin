@@ -1339,7 +1339,7 @@ const AdminPanel = () => {
 
         {/* ── PROMO CODES TAB ── */}
         {activeTab === "promos" && (
-          <PromosSection createPromo={createPromo} deletePromo={deletePromo} email={email} expandedPromo={expandedPromo} loadPromoSignups={loadPromoSignups} loading={loading} loadingPromos={loadingPromos} mainAppUrl={MAIN_APP_URL} promoForm={promoForm} promoFormError={promoFormError} promoSignups={promoSignups} promos={promos} savingPromo={savingPromo} setPromoForm={setPromoForm} stats={stats} togglePromoActive={togglePromoActive} users={users} />
+          <PromosSection createPromo={createPromo} deletePromo={deletePromo} email={email} expandedPromo={expandedPromo} loadCodeRevenue={loadCodeRevenue} loadPromoSignups={loadPromoSignups} loading={loading} loadingPromos={loadingPromos} mainAppUrl={MAIN_APP_URL} promoForm={promoForm} promoFormError={promoFormError} promoSignups={promoSignups} promos={promos} savingPromo={savingPromo} setPromoForm={setPromoForm} stats={stats} togglePromoActive={togglePromoActive} users={users} />
         )}
 
 
@@ -1452,12 +1452,53 @@ const AdminPanel = () => {
                 const d = revenueModal.data;
                 return (
                   <div>
+                    {/* What a payout is calculated from, above the period
+                        cards, because it is the question this is opened for.
+                        It ignores the period tabs on purpose: the share
+                        applies to each customer's first months, counted from
+                        their own first payment. */}
+                    {d.partner?.name ? (
+                      <div style={{ background:"rgba(52,211,153,0.07)", border:"1px solid rgba(52,211,153,0.25)", borderRadius:12, padding:"16px 18px", marginBottom:16 }}>
+                        <div style={{ fontSize:11, color:"#64748b", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:6 }}>
+                          Owed to {d.partner.name}
+                        </div>
+                        <div style={{ fontSize:30, fontWeight:800, color:"#34d399", fontFamily:"JetBrains Mono,monospace" }}>
+                          £{(d.owed ?? 0).toFixed(2)}
+                        </div>
+                        <div style={{ fontSize:12, color:"#94a3b8", marginTop:6, lineHeight:1.6 }}>
+                          {d.partner.share_pct}% of £{(d.revenue_in_window ?? 0).toFixed(2)}, which is what these customers
+                          paid in their first {d.partner.share_months} months. Lifetime, they have paid
+                          £{(d.lifetime_revenue ?? 0).toFixed(2)}.
+                          {d.partner.email ? ` Payout goes to ${d.partner.email}.` : " No payout address on this code."}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize:12, color:"#64748b", marginBottom:16 }}>
+                        No partner is named on this code, so there is nothing to pay out. Lifetime revenue
+                        £{(d.lifetime_revenue ?? 0).toFixed(2)}.
+                      </div>
+                    )}
+
+                    {d.mixed_currency && (
+                      <div style={{ fontSize:12, color:"#fbbf24", background:"rgba(251,191,36,0.08)", border:"1px solid rgba(251,191,36,0.3)", borderRadius:10, padding:"10px 14px", marginBottom:16 }}>
+                        These customers paid in more than one currency ({(d.currencies||[]).join(", ")}). The totals above add
+                        the minor units together, so treat them as an estimate and check Stripe before paying.
+                      </div>
+                    )}
+
+                    {d.stripe_failed > 0 && (
+                      <div style={{ fontSize:12, color:"#f87171", background:"rgba(248,113,113,0.08)", border:"1px solid rgba(248,113,113,0.3)", borderRadius:10, padding:"10px 14px", marginBottom:16 }}>
+                        Stripe could not be read for {d.stripe_failed} customer{d.stripe_failed === 1 ? "" : "s"}, so the
+                        figures above are lower than the truth. Refresh before paying.
+                      </div>
+                    )}
+
                     {/* Summary cards */}
                     <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:12, marginBottom:24 }}>
                       {[
                         { label:"Total signups",    val:d.total_signups,                    col:"#a78bfa" },
                         { label:"Paying customers", val:d.paying_users,                     col:"#34d399" },
-                        { label:"Revenue",          val:`£${d.total_revenue.toFixed(2)}`,   col:"#e2e8f0" },
+                        { label:"Revenue in period", val:`£${(d.total_revenue ?? 0).toFixed(2)}`, col:"#e2e8f0" },
                       ].map(s => (
                         <div key={s.label} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:"14px 18px" }}>
                           <div style={{ fontSize:22, fontWeight:800, color:s.col, fontFamily:"JetBrains Mono,monospace" }}>{s.val}</div>

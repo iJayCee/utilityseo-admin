@@ -45,7 +45,7 @@ const CopyLink = ({ code, mainAppUrl }) => {
 const PROMO_COLS = "160px 1fr 90px 70px 70px 100px 80px 110px";
 const fieldLabel = { display:"block", marginBottom:6 };
 
-const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPromoSignups, loading, loadingPromos, mainAppUrl, promoForm, promoFormError, promoSignups, promos, savingPromo, setPromoForm, stats, togglePromoActive, users }) => (
+const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadCodeRevenue, loadPromoSignups, loading, loadingPromos, mainAppUrl, promoForm, promoFormError, promoSignups, promos, savingPromo, setPromoForm, stats, togglePromoActive, users }) => (
           <div>
             <div className="card" style={{ marginBottom:20 }}>
               <p className="card-title" style={{ marginBottom:16 }}>Create Promo Code</p>
@@ -147,6 +147,12 @@ const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPro
                   <div style={{ display:"flex", gap:6 }}>
                     <button type="button" className={`btn btn-sm${expandedPromo === p.id ? " btn-active" : ""}`} onClick={() => loadPromoSignups(p.id)}>
                       {expandedPromo === p.id ? "▲ Hide" : "Signups"}
+                    </button>
+                    {/* What this code has earned, and what its partner is
+                        owed. Previously reachable only from Prospect Flow,
+                        which is not where you go to look at a code. */}
+                    <button type="button" className="btn btn-sm" onClick={() => loadCodeRevenue(p.code, 'all')} title="What this code has earned and what its partner is owed">
+                      Earnings
                     </button>
                     <button type="button" className={`btn btn-sm${p.is_active ? " btn-danger" : ""}`} onClick={() => togglePromoActive(p)} title={p.is_active?"Deactivate":"Activate"}
                       style={p.is_active ? undefined : { color:"var(--green)", borderColor:"rgba(52,211,153,0.35)" }}>
