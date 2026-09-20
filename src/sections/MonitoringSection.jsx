@@ -1,7 +1,65 @@
 // MonitoringSection - system health, business stats and captured backend
 // errors. Props carry the App-level state and handlers. Built from the
 // shell's shared parts; the shell's top bar carries the title.
+import { Fragment, useState } from "react";
 import { EmptyState, Kpi, KpiSkeleton } from "../Shell.jsx";
+
+// The captured errors, each row openable.
+//
+// Every row has had a stack stored with it from the start and the panel never
+// showed one, so an entry like "Cannot set headers after they are sent to the
+// client" named no route and could not be traced from the screen it appeared
+// on. Click a row and the stack opens underneath it, selectable, rather than
+// living in a title attribute nobody can copy out of.
+const ErrorTable = ({ errors, lvlColor }) => {
+  const [openError, setOpenError] = useState(null);
+  return (
+    <div className="scroll-x">
+      <table className="tbl mono" style={{ fontSize:12 }}>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Level</th>
+            <th>Source</th>
+            <th>Message</th>
+            <th>Path</th>
+          </tr>
+        </thead>
+        <tbody>
+          {errors.map(e => (
+            <Fragment key={e.id}>
+              <tr style={{ color:"var(--text-2)", cursor:"pointer" }}
+                onClick={() => setOpenError(openError === e.id ? null : e.id)}
+                title="Click for the stack">
+                <td style={{ whiteSpace:"nowrap" }}>
+                  <span style={{ color:"var(--muted)", marginRight:6 }}>{openError === e.id ? "▾" : "▸"}</span>
+                  {new Date(e.created_at).toLocaleString()}
+                </td>
+                <td style={{ color:lvlColor(e.level), fontWeight:700 }}>{e.level}</td>
+                <td>{e.source || "-"}</td>
+                <td style={{ color:"var(--text)", maxWidth:360, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }} title={e.message}>{e.message}</td>
+                <td>{e.method ? `${e.method} ${e.path || ""}` : "-"}</td>
+              </tr>
+              {openError === e.id && (
+                <tr>
+                  <td colSpan={5} style={{ padding:"0 0 12px" }}>
+                    <p style={{ color:"var(--text)", fontSize:12, margin:"4px 0 8px", whiteSpace:"pre-wrap", wordBreak:"break-word" }}>{e.message}</p>
+                    {e.stack ? (
+                      <pre style={{ margin:0, padding:"10px 12px", background:"var(--bg)", border:"1px solid var(--border)", borderRadius:8,
+                        fontSize:11, lineHeight:1.55, color:"var(--text-2)", whiteSpace:"pre-wrap", wordBreak:"break-word", maxHeight:280, overflowY:"auto" }}>{e.stack}</pre>
+                    ) : (
+                      <p style={{ margin:0, fontSize:12, color:"var(--muted)" }}>No stack was recorded for this one.</p>
+                    )}
+                  </td>
+                </tr>
+              )}
+            </Fragment>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 const MonitoringSection = ({ loadMonitoring, monData, monError, monLoading, stats }) => (
           <div style={{ width:"100%" }}>
@@ -69,30 +127,7 @@ const MonitoringSection = ({ loadMonitoring, monData, monError, monLoading, stat
                     {errors.length === 0 ? (
                       <div style={{ color:"var(--green)", fontSize:13, padding:"8px 0" }}>✓ No errors logged. All clear.</div>
                     ) : (
-                      <div className="scroll-x">
-                        <table className="tbl mono" style={{ fontSize:12 }}>
-                          <thead>
-                            <tr>
-                              <th>Time</th>
-                              <th>Level</th>
-                              <th>Source</th>
-                              <th>Message</th>
-                              <th>Path</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {errors.map(e => (
-                              <tr key={e.id} style={{ color:"var(--text-2)" }}>
-                                <td style={{ whiteSpace:"nowrap" }}>{new Date(e.created_at).toLocaleString()}</td>
-                                <td style={{ color:lvlColor(e.level), fontWeight:700 }}>{e.level}</td>
-                                <td>{e.source || "-"}</td>
-                                <td style={{ color:"var(--text)", maxWidth:360, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }} title={e.message}>{e.message}</td>
-                                <td>{e.method ? `${e.method} ${e.path || ""}` : "-"}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                      <ErrorTable errors={errors} lvlColor={lvlColor} />
                     )}
                   </div>
 

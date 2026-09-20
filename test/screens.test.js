@@ -138,3 +138,55 @@ describe('the list stays in step with the folder', () => {
     }
   });
 });
+
+// The first paint of Monitoring has no data, so PROPS above never reaches the
+// errors table. That is the blind spot this whole file exists to close: a
+// build stays green and the panel goes blank only once real rows arrive.
+describe('Monitoring with rows in it', () => {
+  const MON = {
+    health: { uptime: 4000, memory: {} },
+    stats: { users: 15, active: 15, signups7d: 1, errors1h: 0, errors24h: 0, plans: [{ plan: 'free', count: 3 }] },
+    errors: [
+      { id: 1, created_at: '2026-08-24T22:20:16Z', level: 'error', source: 'unhandledRejection',
+        message: 'Cannot set headers after they are sent to the client', method: null, path: null,
+        stack: 'Error: Cannot set headers\n    at ServerResponse.setHeader\n    at /app/src/routes/gsc.js:2506' },
+      { id: 2, created_at: '2026-08-18T00:49:18Z', level: 'error', source: 'dbPool',
+        message: 'Connection terminated unexpectedly', method: 'GET', path: '/api/x', stack: null },
+    ],
+    alerts: [],
+  };
+
+  test('renders the rows, and the one with no stack does not break it', async () => {
+    const Section = (await import('../src/sections/MonitoringSection.jsx')).default;
+    const html = renderToStaticMarkup(React.createElement(Section, {
+      loadMonitoring: noop, monData: MON, monError: null, monLoading: false, stats: STATS,
+    }));
+    assert.match(html, /Cannot set headers/);
+    assert.match(html, /Connection terminated unexpectedly/);
+    assert.match(html, /Recent Errors \(2\)/);
+  });
+
+  test('the stack stays folded away until a row is opened', async () => {
+    // Fifty stacks printed under fifty rows is not a panel, it is a log file.
+    // The row carries the summary; the stack is one click away. Static
+    // rendering is the closed state, so the stack must not be in the markup.
+    const Section = (await import('../src/sections/MonitoringSection.jsx')).default;
+    const html = renderToStaticMarkup(React.createElement(Section, {
+      loadMonitoring: noop, monData: MON, monError: null, monLoading: false, stats: STATS,
+    }));
+    assert.doesNotMatch(html, /ServerResponse\.setHeader/);
+    assert.doesNotMatch(html, /<pre/, 'nothing should be expanded before it is asked for');
+  });
+
+  test('a message with markup in it is escaped, not injected', async () => {
+    const Section = (await import('../src/sections/MonitoringSection.jsx')).default;
+    const html = renderToStaticMarkup(React.createElement(Section, {
+      loadMonitoring: noop,
+      monData: { ...MON, errors: [{ ...MON.errors[0], message: '<script>alert(1)</script>' }] },
+      monError: null, monLoading: false, stats: STATS,
+    }));
+    assert.doesNotMatch(html, /<script>/);
+    assert.match(html, /&lt;script&gt;/);
+  });
+
+});
