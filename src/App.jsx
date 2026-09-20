@@ -380,6 +380,13 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
 };
 
 
+// A new code, blank. One definition: the initial state and the post-create
+// reset had drifted to different plans and the reset was setting a legacy one,
+// so the second code you made in a session started from worse values than the
+// first. Attribution-only is the normal case, and these match the standard
+// signup trial exactly, so a code is never the reason somebody gets less.
+const BLANK_PROMO = { code:"", description:"", trial_plan:"entrepreneur", trial_days:"30", max_uses:"", expires_at:"" };
+
 const AdminPanel = () => {
   // `authed` must be true AND we must have creds in sessionStorage. Without
   // both, every admin API call silently 401s and the user sees empty tables
@@ -534,7 +541,7 @@ const AdminPanel = () => {
   const [revenueModal, setRevenueModal] = useState(null); // { code, period, data, loading }
   const [promos, setPromos] = useState([]);
   const [loadingPromos, setLoadingPromos] = useState(false);
-  const [promoForm, setPromoForm] = useState({ code:"", description:"", trial_plan:"enterprise", trial_days:"14", max_uses:"", expires_at:"" });
+  const [promoForm, setPromoForm] = useState(BLANK_PROMO);
   const [promoFormError, setPromoFormError] = useState("");
   const [expandedPromo, setExpandedPromo] = useState(null); // promo id
   const [promoSignups, setPromoSignups] = useState({}); // { [promoId]: { loading, data } }
@@ -743,7 +750,7 @@ const AdminPanel = () => {
       const data = await res.json();
       if (!res.ok) { setPromoFormError(data.error || "Failed"); return; }
       setPromos(prev => [data, ...prev]);
-      setPromoForm({ code:"", description:"", trial_plan:"pro", trial_days:"14", max_uses:"", expires_at:"" });
+      setPromoForm(BLANK_PROMO);
       showToast(`Code ${data.code} created`);
     } catch { setPromoFormError("Network error"); }
     finally { setSavingPromo(false); }

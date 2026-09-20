@@ -29,7 +29,8 @@ const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPro
                 </div>
                 <div>
                   <label className="label" style={fieldLabel}>Trial Days <span style={{ color:"var(--red)" }}>*</span></label>
-                  <input className="field" type="number" min="1" value={promoForm.trial_days} onChange={e => setPromoForm(f=>({...f,trial_days:e.target.value}))} placeholder="14" />
+                  <input className="field" type="number" min="30" value={promoForm.trial_days} onChange={e => setPromoForm(f=>({...f,trial_days:e.target.value}))} placeholder="30" />
+                  <p style={{ fontSize:11, color:"var(--muted)", margin:"4px 0 0" }}>Leave as-is for the standard 30-day trial. A code cannot give less.</p>
                 </div>
                 <div>
                   <label className="label" style={fieldLabel}>Max Uses <span style={{ color:"var(--dim)", fontSize:10, textTransform:"none", letterSpacing:0 }}>(blank = unlimited)</span></label>
