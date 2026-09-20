@@ -385,7 +385,12 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
 // so the second code you made in a session started from worse values than the
 // first. Attribution-only is the normal case, and these match the standard
 // signup trial exactly, so a code is never the reason somebody gets less.
-const BLANK_PROMO = { code:"", description:"", trial_plan:"entrepreneur", trial_days:"30", max_uses:"", expires_at:"" };
+const BLANK_PROMO = {
+  code:"", description:"", trial_plan:"entrepreneur", trial_days:"30", max_uses:"", expires_at:"",
+  // The programme terms, so a partner code is a complete deal without
+  // anybody having to remember what the standard split is.
+  partner_name:"", partner_email:"", partner_share_pct:"50", partner_share_months:"6", partner_notes:"",
+};
 
 const AdminPanel = () => {
   // `authed` must be true AND we must have creds in sessionStorage. Without
@@ -746,7 +751,11 @@ const AdminPanel = () => {
     if (!promoForm.trial_days || isNaN(promoForm.trial_days) || Number(promoForm.trial_days) < 1) { setPromoFormError("Trial days must be a positive number"); return; }
     setSavingPromo(true);
     try {
-      const res = await adminFetch(`${API_URL}/admin/promo-codes`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ code:promoForm.code.trim().toUpperCase(), description:promoForm.description.trim()||null, trial_plan:promoForm.trial_plan, trial_days:Number(promoForm.trial_days), max_uses:promoForm.max_uses?Number(promoForm.max_uses):null, expires_at:promoForm.expires_at||null }) });
+      const res = await adminFetch(`${API_URL}/admin/promo-codes`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ code:promoForm.code.trim().toUpperCase(), description:promoForm.description.trim()||null, trial_plan:promoForm.trial_plan, trial_days:Number(promoForm.trial_days), max_uses:promoForm.max_uses?Number(promoForm.max_uses):null, expires_at:promoForm.expires_at||null,
+        partner_name:promoForm.partner_name.trim()||null, partner_email:promoForm.partner_email.trim()||null,
+        partner_share_pct:promoForm.partner_share_pct===""?null:Number(promoForm.partner_share_pct),
+        partner_share_months:promoForm.partner_share_months===""?null:Number(promoForm.partner_share_months),
+        partner_notes:promoForm.partner_notes.trim()||null }) });
       const data = await res.json();
       if (!res.ok) { setPromoFormError(data.error || "Failed"); return; }
       setPromos(prev => [data, ...prev]);
@@ -1330,7 +1339,7 @@ const AdminPanel = () => {
 
         {/* ── PROMO CODES TAB ── */}
         {activeTab === "promos" && (
-          <PromosSection createPromo={createPromo} deletePromo={deletePromo} email={email} expandedPromo={expandedPromo} loadPromoSignups={loadPromoSignups} loading={loading} loadingPromos={loadingPromos} promoForm={promoForm} promoFormError={promoFormError} promoSignups={promoSignups} promos={promos} savingPromo={savingPromo} setPromoForm={setPromoForm} stats={stats} togglePromoActive={togglePromoActive} users={users} />
+          <PromosSection createPromo={createPromo} deletePromo={deletePromo} email={email} expandedPromo={expandedPromo} loadPromoSignups={loadPromoSignups} loading={loading} loadingPromos={loadingPromos} mainAppUrl={MAIN_APP_URL} promoForm={promoForm} promoFormError={promoFormError} promoSignups={promoSignups} promos={promos} savingPromo={savingPromo} setPromoForm={setPromoForm} stats={stats} togglePromoActive={togglePromoActive} users={users} />
         )}
 
 

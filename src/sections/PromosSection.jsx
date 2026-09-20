@@ -1,5 +1,40 @@
+import { useState } from "react";
 import { planMeta, planLabel, planShort } from "../shared.jsx";
 import { EmptyState, Kpi, SkeletonRows } from "../Shell.jsx";
+
+// The signup link for a code, and one click to copy it.
+//
+// This is the thing a partner is actually sent. Assembling it by hand every
+// time is both a chore and a chance to typo the code that attribution
+// depends on.
+//
+// navigator.clipboard is unavailable on plain http and can be refused
+// outright, so the fallback selects the text: a button that silently does
+// nothing is worse than one that hands you something to copy yourself.
+const CopyLink = ({ code, mainAppUrl }) => {
+  const [copied, setCopied] = useState(false);
+  const url = `${mainAppUrl}/auth/signup?code=${encodeURIComponent(code)}`;
+  const copy = async (e) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+      const field = e.currentTarget.parentElement?.querySelector("input");
+      if (field) { field.focus(); field.select(); }
+    }
+  };
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:6 }}>
+      <input className="field mono" readOnly value={url} onFocus={e => e.target.select()}
+        style={{ fontSize:11, padding:"4px 8px", flex:1, minWidth:0, color:"var(--text-2)" }} />
+      <button type="button" className="btn btn-sm" onClick={copy} title="Copy the signup link for this code">
+        {copied ? "✓ Copied" : "Copy link"}
+      </button>
+    </div>
+  );
+};
 // PromosSection - create promo codes and see who signed up with each. Props
 // carry the App-level state and handlers. Built from the shell's shared
 // parts; the shell's top bar carries the title.
@@ -10,7 +45,7 @@ import { EmptyState, Kpi, SkeletonRows } from "../Shell.jsx";
 const PROMO_COLS = "160px 1fr 90px 70px 70px 100px 80px 110px";
 const fieldLabel = { display:"block", marginBottom:6 };
 
-const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPromoSignups, loading, loadingPromos, promoForm, promoFormError, promoSignups, promos, savingPromo, setPromoForm, stats, togglePromoActive, users }) => (
+const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPromoSignups, loading, loadingPromos, mainAppUrl, promoForm, promoFormError, promoSignups, promos, savingPromo, setPromoForm, stats, togglePromoActive, users }) => (
           <div>
             <div className="card" style={{ marginBottom:20 }}>
               <p className="card-title" style={{ marginBottom:16 }}>Create Promo Code</p>
@@ -45,6 +80,28 @@ const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPro
                   <label className="label" style={fieldLabel}>Description <span style={{ color:"var(--dim)", fontSize:10, textTransform:"none", letterSpacing:0 }}>(internal note)</span></label>
                   <input className="field" value={promoForm.description} onChange={e => setPromoForm(f=>({...f,description:e.target.value}))} placeholder="e.g. Launch campaign - influencer outreach May 2025" />
                 </div>
+                {/* The deal, attached to the code. Six months from now this is
+                    the only record of what was agreed. */}
+                <div>
+                  <label className="label" style={fieldLabel}>Partner name</label>
+                  <input className="field" value={promoForm.partner_name} onChange={e => setPromoForm(f=>({...f,partner_name:e.target.value}))} placeholder="Leave blank if not a partner deal" />
+                </div>
+                <div>
+                  <label className="label" style={fieldLabel}>Partner email</label>
+                  <input className="field" type="email" value={promoForm.partner_email} onChange={e => setPromoForm(f=>({...f,partner_email:e.target.value}))} placeholder="Where the payout goes" />
+                </div>
+                <div>
+                  <label className="label" style={fieldLabel}>Their share (%)</label>
+                  <input className="field" type="number" min="0" max="100" value={promoForm.partner_share_pct} onChange={e => setPromoForm(f=>({...f,partner_share_pct:e.target.value}))} placeholder="50" />
+                </div>
+                <div>
+                  <label className="label" style={fieldLabel}>For how many months</label>
+                  <input className="field" type="number" min="1" max="60" value={promoForm.partner_share_months} onChange={e => setPromoForm(f=>({...f,partner_share_months:e.target.value}))} placeholder="6" />
+                </div>
+                <div>
+                  <label className="label" style={fieldLabel}>Notes</label>
+                  <input className="field" value={promoForm.partner_notes} onChange={e => setPromoForm(f=>({...f,partner_notes:e.target.value}))} placeholder="Anything agreed that is not in the fields above" />
+                </div>
               </div>
               {promoFormError && <p style={{ color:"var(--red)", fontSize:13, marginBottom:12 }}>{promoFormError}</p>}
               <button type="button" className="btn btn-primary" onClick={createPromo} disabled={savingPromo}>
@@ -71,7 +128,15 @@ const PromosSection = ({ createPromo, deletePromo, email, expandedPromo, loadPro
                       {planShort(p.trial_plan)}
                     </span>
                   </div>
-                  <span style={{ fontSize:12, color:"var(--muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.description||"-"}</span>
+                  <div style={{ minWidth:0 }}>
+                    <span style={{ fontSize:12, color:"var(--muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", display:"block" }}>{p.description||"-"}</span>
+                    {p.partner_name && (
+                      <span style={{ fontSize:11, color:"var(--purple-text)", fontWeight:600 }}>
+                        {p.partner_name} · {p.partner_share_pct ?? 50}% for {p.partner_share_months ?? 6} months
+                      </span>
+                    )}
+                    <CopyLink code={p.code} mainAppUrl={mainAppUrl} />
+                  </div>
                   <span style={{ display:"none" }}></span>
                   <div style={{ display:"flex", gap:16, flexWrap:"wrap" }}>
                     <span style={{ fontSize:12, color:"var(--text-2)" }}><span style={{ fontSize:10, color:"var(--dim)" }}>DAYS </span>{p.trial_days}</span>

@@ -79,7 +79,7 @@ const PROPS = {
   MarketingSection:       selfContained,
   MonitoringSection:      { loadMonitoring: noop, monData: null, monError: null, monLoading: false, stats: STATS },
   PrivacySection:         selfContained,
-  PromosSection:          { createPromo: noop, deletePromo: noop, email: '', expandedPromo: null, loadPromoSignups: noop, loading: false, loadingPromos: false, promoForm: { code: '', description: '', trial_plan: 'enterprise', trial_days: '14', max_uses: '', expires_at: '' }, promoFormError: '', promoSignups: {}, promos: [], savingPromo: false, setPromoForm: noop, stats: STATS, togglePromoActive: noop, users: [] },
+  PromosSection:          { createPromo: noop, deletePromo: noop, email: '', expandedPromo: null, loadPromoSignups: noop, loading: false, loadingPromos: false, mainAppUrl: 'https://app.utilityseo.com', promoForm: { code: '', description: '', trial_plan: 'entrepreneur', trial_days: '30', max_uses: '', expires_at: '', partner_name: '', partner_email: '', partner_share_pct: '50', partner_share_months: '6', partner_notes: '' }, promoFormError: '', promoSignups: {}, promos: [], savingPromo: false, setPromoForm: noop, stats: STATS, togglePromoActive: noop, users: [] },
   ProspectFlowSection:    { email: '', loadCodeRevenue: noop, loadProspectFlow: noop, pfCodeFilter: 'all', pfData: null, pfError: '', pfLoading: false, pfSearch: '', pfStatusFilter: 'all', setPfCodeFilter: noop, setPfData: noop, setPfSearch: noop, setPfStatusFilter: noop, stats: STATS, users: [] },
   ProspectsSection:       selfContained,
   UpgradesSection:        { loadUpgrades: noop, upgData: null, upgError: null, upgLoading: false, users: [] },
@@ -189,4 +189,47 @@ describe('Monitoring with rows in it', () => {
     assert.match(html, /&lt;script&gt;/);
   });
 
+});
+
+// PROPS above renders Promos with an empty code list, so the row, the copy
+// link and the partner line are never exercised by it. Same blind spot as
+// Monitoring: green build, blank panel once real rows arrive.
+describe('Promos with codes in it', () => {
+  const CODES = [
+    { id: 1, code: 'NICK50', description: 'Creator partner', trial_plan: 'entrepreneur', trial_days: 30,
+      uses_count: 4, max_uses: null, is_active: true, expires_at: null,
+      partner_name: 'Nick Example', partner_email: 'nick@example.com', partner_share_pct: 50, partner_share_months: 6 },
+    // A code with no partner on it, and no share values at all, which is
+    // every code that existed before the columns did.
+    { id: 2, code: 'LAUNCH', description: null, trial_plan: 'enterprise', trial_days: 30,
+      uses_count: 0, max_uses: 100, is_active: false, expires_at: '2026-01-01T00:00:00Z' },
+  ];
+
+  test('renders both, and the one with no partner does not break it', async () => {
+    const Section = (await import('../src/sections/PromosSection.jsx')).default;
+    const html = renderToStaticMarkup(React.createElement(Section, {
+      ...PROPS.PromosSection, promos: CODES,
+    }));
+    assert.match(html, /NICK50/);
+    assert.match(html, /LAUNCH/);
+    assert.match(html, /Nick Example/);
+    assert.match(html, /50% for 6 months/);
+  });
+
+  test('each code carries its own signup link', async () => {
+    const Section = (await import('../src/sections/PromosSection.jsx')).default;
+    const html = renderToStaticMarkup(React.createElement(Section, {
+      ...PROPS.PromosSection, promos: CODES,
+    }));
+    assert.match(html, /app\.utilityseo\.com\/auth\/signup\?code=NICK50/);
+    assert.match(html, /app\.utilityseo\.com\/auth\/signup\?code=LAUNCH/);
+  });
+
+  test('a code with characters needing escaping still makes a usable link', async () => {
+    const Section = (await import('../src/sections/PromosSection.jsx')).default;
+    const html = renderToStaticMarkup(React.createElement(Section, {
+      ...PROPS.PromosSection, promos: [{ ...CODES[0], code: 'A&B 50' }],
+    }));
+    assert.match(html, /code=A%26B%2050/);
+  });
 });
