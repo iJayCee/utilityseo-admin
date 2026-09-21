@@ -65,6 +65,12 @@ const MonthlyChart = ({ users }) => {
 // rows still render with a sensible label and colour.
 import { PLAN_META, planMeta, planLabel, planShort, isLegacyPlan, Badge, StatusBadge, Input, Spinner } from "./shared.jsx";
 
+// What "last seen" means: when a request last arrived carrying their token.
+// Nobody has one until they come back after this shipped, and their last
+// login is still the best thing we know about them until they do.
+const seenAt = (u) => u.lastSeen || u.lastLogin || null;
+
+
 // ─── EDIT MODAL ───────────────────────────────────────────────────────────────
 const EditModal = ({ user, onSave, onClose, adminFetch, apiUrl }) => {
   const [plan, setPlan] = useState(user.plan);
@@ -288,7 +294,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
           {u.cookieConsent === "accepted" ? "" : u.cookieConsent === "declined" ? "" : "⏳"}
         </span>
         <span style={{ fontSize:11, color:"#475569" }}>{new Date(u.joined).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' })}</span>
-        <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '-'}</span>
+        <span style={{ fontSize:11, color:"#475569" }}>{seenAt(u) ? new Date(seenAt(u)).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '-'}</span>
         <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
           <button onClick={onToggleStar}
             title={starred ? "Unstar" : "Star user"}
@@ -350,7 +356,7 @@ const UserRow = ({ u, i, total, onInfo, onEdit, onAccess, starred, onToggleStar 
             </div>
             <div style={{ display:"flex", justifyContent:"space-between" }}>
               <span style={{ fontSize:11, color:"#475569" }}>LAST SEEN</span>
-              <span style={{ fontSize:11, color:"#475569" }}>{u.lastLogin ? new Date(u.lastLogin).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '-'}</span>
+              <span style={{ fontSize:11, color:"#475569" }}>{seenAt(u) ? new Date(seenAt(u)).toLocaleString('en-GB', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'Europe/London' }) : '-'}</span>
             </div>
             <div style={{ display:"flex", gap:8 }}>
               <button onClick={onToggleStar}
@@ -638,6 +644,7 @@ const AdminPanel = () => {
         status: user.is_active === false ? 'deactivated' : 'active',
         joined: user.created_at,
         lastLogin: user.last_login || null,
+        lastSeen: user.last_seen_at || null,
         lastScanAt: user.last_scan_at || null,
         searches: user.scans_today || 0,
         totalScans: user.total_scans || 0,
@@ -1019,7 +1026,7 @@ const AdminPanel = () => {
       else if (sortCol === "searches") { av=a.searches; bv=b.searches; }
       else if (sortCol === "totalScans") { av=a.totalScans; bv=b.totalScans; }
       else if (sortCol === "joined") { av=new Date(a.joined); bv=new Date(b.joined); }
-      else if (sortCol === "lastLogin") { av=a.lastLogin?new Date(a.lastLogin):0; bv=b.lastLogin?new Date(b.lastLogin):0; }
+      else if (sortCol === "lastSeen") { av=seenAt(a)?new Date(seenAt(a)):0; bv=seenAt(b)?new Date(seenAt(b)):0; }
       else { av=a[sortCol]||""; bv=b[sortCol]||""; }
       if (av < bv) return sortDir==="asc"?-1:1;
       if (av > bv) return sortDir==="asc"?1:-1;
@@ -1027,8 +1034,8 @@ const AdminPanel = () => {
     });
 
   const exportCSV = () => {
-    const headers = ["ID","Email","First Name","Last Name","Phone","Company","Sector","Job Role","Referral Source","Plan","Status","Joined","Last Login","Scans Today","Lifetime Scans"];
-    const rows = filtered.map(u => [u.id,u.email,u.firstName,u.lastName,u.phone,u.companyName,u.companySector,u.jobRole,u.referralSource,u.plan,u.status,u.joined?new Date(u.joined).toLocaleDateString('en-GB'):'',u.lastLogin?new Date(u.lastLogin).toLocaleDateString('en-GB'):'',u.searches,u.totalScans]);
+    const headers = ["ID","Email","First Name","Last Name","Phone","Company","Sector","Job Role","Referral Source","Plan","Status","Joined","Last Seen","Last Login","Scans Today","Lifetime Scans"];
+    const rows = filtered.map(u => [u.id,u.email,u.firstName,u.lastName,u.phone,u.companyName,u.companySector,u.jobRole,u.referralSource,u.plan,u.status,u.joined?new Date(u.joined).toLocaleDateString('en-GB'):'',seenAt(u)?new Date(seenAt(u)).toLocaleDateString('en-GB'):'',u.lastLogin?new Date(u.lastLogin).toLocaleDateString('en-GB'):'',u.searches,u.totalScans]);
     const csv = [headers,...rows].map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(",")).join("\n");
     const a = Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),download:`utilityseo-users-${new Date().toISOString().slice(0,10)}.csv`});
     a.click();
@@ -1320,7 +1327,7 @@ const AdminPanel = () => {
               <SortTh col="totalScans" label="Lifetime" />
               <span title="Cookie Consent" style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}></span>
               <SortTh col="joined" label="Joined" />
-              <SortTh col="lastLogin" label="Last Seen" />
+              <SortTh col="lastSeen" label="Last Seen" />
               <span style={{ fontSize:11, color:"#334155", fontWeight:700, textTransform:"uppercase", letterSpacing:"0.05em" }}>Actions</span>
             </div>
             {filtered.length === 0 ? (
@@ -1648,6 +1655,7 @@ const AdminPanel = () => {
                 ["Plan", viewingUser.plan?viewingUser.plan.charAt(0).toUpperCase()+viewingUser.plan.slice(1):"-"],
                 ["Status", viewingUser.status],
                 ["Joined", viewingUser.joined?new Date(viewingUser.joined).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}):"-"],
+                ["Last Seen", viewingUser.lastSeen?new Date(viewingUser.lastSeen).toLocaleString("en-GB",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"Europe/London"}):"Not since this was added"],
                 ["Last Login", viewingUser.lastLogin?new Date(viewingUser.lastLogin).toLocaleString("en-GB",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"Europe/London"}):"Never"],
                 ["Last Scan", viewingUser.lastScanAt?new Date(viewingUser.lastScanAt).toLocaleString("en-GB",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"Europe/London"}):"Never"],
                 ["Scans Today", viewingUser.searches??"-"],
